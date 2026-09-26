@@ -1,3 +1,12 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * BINRO API: IFSC BANK LOOKUP ROUTER
+ * ───────────────────────────────────────────────────────────────────────────────
+ * Resolves Indian Financial System Codes (IFSC) to human-readable bank names.
+ * Features a high-speed local static lookup map and an in-memory 24-hour cache.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */
+
 import type { Express, Request, Response } from "express";
 
 const cache = new Map<string, { name: string; fetchedAt: number }>();
@@ -33,6 +42,9 @@ const STATIC_MAP: Record<string, string> = {
   HSBC: "HSBC India", SCBL: "Standard Chartered Bank",
 };
 
+/**
+ * Registers the IFSC code resolution route on the Express instance.
+ */
 export function registerIfscRoute(app: Express): void {
   app.get("/api/v1/ifsc/:code", async (req: Request, res: Response) => {
     const code = (req.params.code || "").toUpperCase().trim();
@@ -48,7 +60,7 @@ export function registerIfscRoute(app: Express): void {
       return;
     }
 
-    // 2. Check static map (covers 99% of common banks instantly)
+    // 2. Check static prefix map (covers 99% of common banks immediately)
     const prefix = code.slice(0, 4);
     if (STATIC_MAP[prefix]) {
       const name = STATIC_MAP[prefix];
@@ -57,24 +69,24 @@ export function registerIfscRoute(app: Express): void {
       return;
     }
 
-    // 3. Fetch from Razorpay free IFSC API (no key needed, covers all 160k+ branches)
+    // 3. Fallback: Fetch from public IFSC resolution directory
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
       const upstream = await fetch(`https://ifsc.razorpay.com/${code}`, {
         signal: controller.signal,
-        headers: { "Accept": "application/json" },
+        headers: { Accept: "application/json" },
       });
       clearTimeout(timeout);
       if (upstream.ok) {
-        const data = await upstream.json() as { BANK?: string; BANKCODE?: string };
+        const data = (await upstream.json()) as { BANK?: string; BANKCODE?: string };
         const name = data.BANK || "";
         cache.set(code, { name, fetchedAt: Date.now() });
         res.json({ ifsc: code, bank: name });
         return;
       }
     } catch {
-      // Network error or timeout — fall through to unknown
+      // Fall through to empty bank name on network timeout
     }
 
     cache.set(code, { name: "", fetchedAt: Date.now() });

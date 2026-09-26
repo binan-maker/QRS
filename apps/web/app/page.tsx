@@ -17,17 +17,17 @@ export default function HomePage() {
           <Link href="/download" className={styles.signIn}><span aria-hidden="true">↪</span> Sign In</Link>
         </header>
 
-        <section className={`${styles.scanHero} page-enter`} aria-labelledby="scan-hero-title">
+        <Link href="/scanner" className={`${styles.scanHero} page-enter`} aria-label="Scan QR Code with Camera">
           <div className={styles.heroIcon}><Icon name="qr" size={42} /></div>
           <div className={styles.heroCopy}>
             <strong id="scan-hero-title">BinRo</strong>
             <span>Scan QR Code</span>
             <small>BinRo — Know Before You Scan</small>
           </div>
-          <Link href="/scanner" className={styles.heroArrow} aria-label="Open scanner"><Icon name="arrow" size={24} /></Link>
+          <div className={styles.heroArrow} aria-hidden="true"><Icon name="arrow" size={24} /></div>
           <span className={styles.heroOrbOne} aria-hidden="true" />
           <span className={styles.heroOrbTwo} aria-hidden="true" />
-        </section>
+        </Link>
 
         <section className={`${styles.recentSection} page-enter delay-1`} aria-labelledby="recent-title">
           <h2 id="recent-title"><span /> Recent Scans</h2>

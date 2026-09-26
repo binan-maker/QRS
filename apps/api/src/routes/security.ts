@@ -1,3 +1,13 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * BINRO API: SECURITY & IMAGE UTILITIES ROUTER
+ * ───────────────────────────────────────────────────────────────────────────────
+ * Provides security utilities including:
+ * - Disposable / temporary email filtering
+ * - Server-side QR matrix decoding from base64 image data
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */
+
 import { Router, type Request, type Response } from "express";
 import { decodeQrFromImage } from "../image-decode";
 import { validateEmail } from "@shared/utils/email-validator";
@@ -6,7 +16,10 @@ import { checkRateLimit, getClientIp } from "../middleware/rate-limiter";
 
 export const securityRouter = Router();
 
-// POST /api/v1/validate-email
+/**
+ * POST /validate-email
+ * Checks whether an email address is valid and not from a disposable domain.
+ */
 securityRouter.post("/validate-email", (req: Request, res: Response) => {
   const { email } = req.body;
   if (!email || typeof email !== "string") {
@@ -15,7 +28,10 @@ securityRouter.post("/validate-email", (req: Request, res: Response) => {
   return res.json(validateEmail(email.trim()));
 });
 
-// POST /api/v1/qr/decode-image
+/**
+ * POST /qr/decode-image
+ * Extracts the raw QR content and safety classification from an uploaded base64 image.
+ */
 securityRouter.post("/qr/decode-image", async (req: Request, res: Response) => {
   const authHeader = req.headers["authorization"];
   if (!authHeader || !authHeader.startsWith("Bearer ") || authHeader.length < 16) {
@@ -38,7 +54,9 @@ securityRouter.post("/qr/decode-image", async (req: Request, res: Response) => {
     }
 
     const content = await decodeQrFromImage(imageBase64);
-    if (!content) return res.status(404).json({ message: "No QR code found in image" });
+    if (!content) {
+      return res.status(404).json({ message: "No QR code found in image" });
+    }
 
     const validation = validateQrContent(content);
     if (!validation.valid) {
@@ -49,9 +67,8 @@ securityRouter.post("/qr/decode-image", async (req: Request, res: Response) => {
     }
 
     return res.json({ content, kind: validation.kind });
-  } catch (e: any) {
-    console.error("[v1/decode-image] error:", e);
+  } catch (error: any) {
+    console.error("[security/decode-image] Error:", error);
     return res.status(500).json({ message: "Image decode failed" });
   }
 });
-

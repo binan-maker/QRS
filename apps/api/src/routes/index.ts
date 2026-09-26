@@ -1,31 +1,17 @@
 /**
- * API route registry
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * BINRO API: VERSION 1 ROUTE REGISTRY
+ * ───────────────────────────────────────────────────────────────────────────────
+ * Mounts all domain-specific routers under /api/v1/.
  *
- * All versioned routes are mounted under /api/v1/.
- *
- * ─── Route map ────────────────────────────────────────────────────────────────
- *
- * Users
- *   GET    /api/v1/users/me                             Own profile
- *   PATCH  /api/v1/users/me                             Update profile
- *   GET    /api/v1/users/:userId                        Public profile
- *   GET    /api/v1/users/me/scans                       Scan history (paginated)
- *
- * QR codes
- *   GET    /api/v1/qr/:qrId                            Get QR code details
- *   POST   /api/v1/qr/:qrId/comment-count              Increment/decrement counter
- *
- * Comments
- *   GET    /api/v1/qr/:qrId/comments                   List comments (paginated)
- *   POST   /api/v1/qr/:qrId/comments                   Create comment
- *   PATCH  /api/v1/qr/:qrId/comments/:commentId        Edit comment
- *   DELETE /api/v1/qr/:qrId/comments/:commentId        Delete comment
- *   POST   /api/v1/qr/:qrId/comments/:commentId/like   Toggle like
- *
- * Security / Utilities
- *   POST   /api/v1/qr/decode-image                    Decode a QR image
- *   GET    /api/v1/ifsc/:ifsc                          IFSC bank lookup
- *   POST   /api/v1/validate-email                      Email validator
+ * Route Map:
+ *   /api/v1/users                 User profile, handle update, scan history
+ *   /api/v1/qr                    QR details, scan counters
+ *   /api/v1/qr/:qrId/comments     QR comments and like toggles
+ *   /api/v1/feedback              App crash and feedback submissions
+ *   /api/v1/validate-email        Disposable email blocking
+ *   /api/v1/qr/decode-image       Server-side QR image matrix decoding
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 import type { Express } from "express";
@@ -35,18 +21,20 @@ import { feedbackRouter } from "./feedback";
 import { qrRouter } from "./qr";
 import { commentsRouter } from "./comments";
 
+/**
+ * Registers all Version 1 API endpoints onto the Express app instance.
+ */
 export function registerV1Routes(app: Express): void {
-  // ── Utilities & security (existing) ────────────────────────────────────────
+  // ── 1. Security & Validation Utilities ──────────────────────────────────────
   app.use("/api/v1", securityRouter);
 
-  // ── User profile and scan history ───────────────────────────────────────────
-  // NOTE: /me routes must be registered before /:userId so Express doesn't
-  // match "me" as a userId parameter.
+  // ── 2. User Profiles & Scan Logs ────────────────────────────────────────────
   app.use("/api/v1/users", usersRouter);
 
-  // ── Feedback & bug reports ─────────────────────────────────────────────────
+  // ── 3. Diagnostic & User Feedback ───────────────────────────────────────────
   app.use("/api/v1/feedback", feedbackRouter);
+
+  // ── 4. QR Codes & Comments ──────────────────────────────────────────────────
   app.use("/api/v1/qr", qrRouter);
   app.use("/api/v1/qr/:qrId/comments", commentsRouter);
-
 }

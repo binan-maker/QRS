@@ -1,17 +1,21 @@
-import { Router } from "express";
-import type { Request, Response } from "express";
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * BINRO API: PUSH NOTIFICATIONS ROUTER
+ * ───────────────────────────────────────────────────────────────────────────────
+ * Manages push notification registration, open tracking, and outbound delivery.
+ * Backed by Supabase public.users table.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */
+
+import { Router, type Request, type Response } from "express";
 import { sendExpoPush, isValidExpoPushToken } from "../lib/expo-push";
-import { admin, getAdminDb } from "../lib/supabase-admin";
+import { getAdminClient } from "../lib/supabase-admin";
 
 export const pushRouter = Router();
 
 /**
  * POST /api/push/notify
- * Body: { toUserId: string, title: string, body: string, data?: object }
- *
- * Looks up the recipient's push token via the configured data provider, then sends via
- * Expo's push gateway. Always returns 200 so callers don't retry on push
- * failures (which are non-critical).
+ * Dispatches an outbound push notification to a specific user asynchronously.
  */
 pushRouter.post("/notify", async (req: Request, res: Response) => {
   const { toUserId, title, body, data } = req.body ?? {};
@@ -20,16 +24,17 @@ pushRouter.post("/notify", async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Missing toUserId / title / body" });
   }
 
-  // Non-blocking — client doesn't need to wait for delivery
-  sendPushToUser(toUserId, title, body, data).catch(() => {});
+  // Non-blocking asynchronous delivery
+  sendPushToUser(toUserId, title, body, data).catch((error) => {
+    console.error("[push/notify] Dispatch error:", error);
+  });
 
   return res.json({ queued: true });
 });
 
 /**
  * POST /api/push/register
- * Body: { userId: string, token: string }
- * Saves the Expo push token on the user profile.
+ * Saves the recipient's Expo push token in public.users.
  */
 pushRouter.post("/register", async (req: Request, res: Response) => {
   const { userId, token } = req.body ?? {};
@@ -42,55 +47,77 @@ pushRouter.post("/register", async (req: Request, res: Response) => {
   }
 
   try {
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "DB not available" });
-    await db.collection("users").doc(userId).set({
-      pushToken: token,
-      pushTokenUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
+    const client = getAdminClient();
+    if (!client) {
+      return res.status(503).json({ error: "Database not available" });
+    }
+
+    const { error } = await client
+      .from("users")
+      .update({
+        push_token: token,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", userId);
+
+    if (error) throw error;
     return res.json({ ok: true });
-  } catch (e) {
-    console.error("[Push/register] Failed to save token:", e);
+  } catch (error: any) {
+    console.error("[push/register] Failed to save token:", error.message);
     return res.status(500).json({ error: "Could not save token" });
   }
 });
 
 /**
  * POST /api/push/track-open
- * Body: { userId: string }
- * Records the last time the user opened the app (used by re-engagement scheduler).
+ * Records app opening activity for re-engagement analytics.
  */
 pushRouter.post("/track-open", async (req: Request, res: Response) => {
   const { userId } = req.body ?? {};
   if (!userId) return res.status(400).json({ error: "Missing userId" });
 
   try {
-    const db = getAdminDb();
-    if (!db) return res.json({ ok: false });
-    await db.collection("users").doc(userId).set({
-      lastOpenedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
+    const client = getAdminClient();
+    if (!client) return res.json({ ok: false });
+
+    await client
+      .from("users")
+      .update({
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", userId);
+
     return res.json({ ok: true });
   } catch {
-    return res.json({ ok: false }); // non-critical, silent
+    return res.json({ ok: false });
   }
 });
 
-// ─── Internal helper used by the scheduler ───────────────────────────────────
+/**
+ * Dispatches an Expo push notification to the recipient user.
+ */
 export async function sendPushToUser(
   userId: string,
   title: string,
   body: string,
-  data?: Record<string, any>
+  data?: Record<string, any>,
 ): Promise<void> {
   try {
-    const db = getAdminDb();
-    if (!db) return;
-    const user = await db.collection("users").doc(userId).get();
-    const token: string | undefined = user.data()?.pushToken;
+    const client = getAdminClient();
+    if (!client) return;
+
+    const { data: user, error } = await client
+      .from("users")
+      .select("push_token")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error || !user) return;
+    const token = user.push_token;
     if (!token || !isValidExpoPushToken(token)) return;
+
     await sendExpoPush({ to: token, title, body, data, sound: "default" });
-  } catch (e) {
-    console.error("[Push] sendPushToUser failed:", e);
+  } catch (error) {
+    console.error("[push/sendPushToUser] Delivery error:", error);
   }
 }

@@ -1,21 +1,22 @@
 /**
- * /api/v1/users — user profile, scan history, notifications
- *
- * All mutating endpoints require Supabase Auth (authenticate middleware).
- * The Supabase-backed document facade keeps these handlers compatible with
- * the existing API contract while rows are stored in PostgreSQL.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * BINRO API: USER PROFILE & SCAN HISTORY ROUTER
+ * ───────────────────────────────────────────────────────────────────────────────
+ * Manages user accounts, profile modifications, notifications, and scan history.
+ * Backed by public.users, public.qr_scans, and public.notifications in Supabase.
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { admin, getAdminDb, getAdminAuth } from "../lib/supabase-admin";
+import { getAdminClient } from "../lib/supabase-admin";
 import { authenticate } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { relaxedLimit, standardLimit } from "../middleware/rate-limit-presets";
 
 export const usersRouter = Router();
 
-// ─── Schemas ─────────────────────────────────────────────────────────────────
+// ─── Input Validation Schemas ──────────────────────────────────────────────────
 
 const updateProfileSchema = z.object({
   displayName: z.string().min(1).max(60).optional(),
@@ -29,46 +30,52 @@ const paginationSchema = z.object({
   cursor: z.string().optional(),
 });
 
-// ─── GET /api/v1/users/me — own profile ──────────────────────────────────────
+// ─── GET /api/v1/users/me — Own Profile ───────────────────────────────────────
 
 usersRouter.get(
   "/me",
   authenticate,
   relaxedLimit,
   async (req: Request, res: Response) => {
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    const client = getAdminClient();
+    if (!client) {
+      return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    }
 
     try {
-      // The Supabase facade reads the PostgreSQL users row.
-      const snap = await db.collection("users").doc(req.user!.uid).get();
-      if (!snap.exists) {
+      const { data: user, error } = await client
+        .from("users")
+        .select("*")
+        .eq("id", req.user!.uid)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!user) {
         return res.status(404).json({ error: "User not found", code: "USER_NOT_FOUND", status: 404 });
       }
-      const data = snap.data()!;
+
       return res.json({
         data: {
-          id: snap.id,
-          displayName: data.displayName ?? null,
-          email: data.email ?? null,
-          photoUrl: data.photoURL ?? null,
-          username: data.username ?? null,
-          scanCount: data.scanCount ?? 0,
-          commentCount: data.commentCount ?? 0,
-          totalLikesReceived: data.totalLikesReceived ?? 0,
-          isOnline: data.isOnline ?? false,
-          lastSeen: data.lastSeen?.toDate?.()?.toISOString() ?? null,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
+          id: user.id,
+          displayName: user.display_name ?? null,
+          email: user.email ?? null,
+          photoUrl: user.photo_url ?? null,
+          username: user.username ?? null,
+          scanCount: user.scan_count ?? 0,
+          commentCount: user.comment_count ?? 0,
+          totalLikesReceived: user.total_likes_received ?? 0,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at,
         },
       });
-    } catch (e: any) {
-      console.error("[users/me GET]", e.message);
+    } catch (error: any) {
+      console.error("[users/me] Fetch error:", error.message);
       return res.status(500).json({ error: "Failed to fetch profile", code: "INTERNAL_ERROR", status: 500 });
     }
   },
 );
 
-// ─── PATCH /api/v1/users/me — update own profile ─────────────────────────────
+// ─── PATCH /api/v1/users/me — Update Profile ──────────────────────────────────
 
 usersRouter.patch(
   "/me",
@@ -76,276 +83,177 @@ usersRouter.patch(
   standardLimit,
   validateBody(updateProfileSchema),
   async (req: Request, res: Response) => {
-    const db = getAdminDb();
-    const adminAuth = getAdminAuth();
-    if (!db || !adminAuth) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    const client = getAdminClient();
+    if (!client) {
+      return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    }
 
     const { displayName, photoUrl, pushToken, username } = req.body;
     const uid = req.user!.uid;
 
     try {
-      // Username uniqueness check
-      if (username !== undefined) {
-        const existing = await db.collection("usernames").doc(username).get();
-        if (existing.exists && existing.data()?.userId !== uid) {
-          return res.status(409).json({ error: "Username already taken", code: "USERNAME_TAKEN", status: 409 });
-        }
-      }
-
       const updates: Record<string, any> = {
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updated_at: new Date().toISOString(),
       };
-      if (displayName !== undefined) updates.displayName = displayName;
-      if (photoUrl !== undefined) updates.photoURL = photoUrl;
-      if (pushToken !== undefined) updates.pushToken = pushToken;
-      if (username !== undefined) {
-        updates.username = username;
-        updates.usernameLastChangedAt = admin.firestore.FieldValue.serverTimestamp();
-      }
 
-      // Update the PostgreSQL users row through the Supabase facade.
-      await db.collection("users").doc(uid).set(updates, { merge: true });
+      if (displayName !== undefined) updates.display_name = displayName.trim();
+      if (photoUrl !== undefined) updates.photo_url = photoUrl;
+      if (pushToken !== undefined) updates.push_token = pushToken;
 
-      // Keep username registry in sync
+      // Handle username reservation if requested
       if (username !== undefined) {
-        await db.collection("usernames").doc(username).set({
-          userId: uid,
-          claimedAt: admin.firestore.FieldValue.serverTimestamp(),
+        const cleanUsername = username.toLowerCase().trim();
+
+        // Check if username is already taken by someone else
+        const { data: existingUser } = await client
+          .from("users")
+          .select("id")
+          .eq("username", cleanUsername)
+          .neq("id", uid)
+          .maybeSingle();
+
+        if (existingUser) {
+          return res.status(409).json({ error: "Username is already taken", code: "USERNAME_TAKEN", status: 409 });
+        }
+
+        updates.username = cleanUsername;
+        updates.username_last_changed_at = new Date().toISOString();
+
+        // Upsert into unique usernames table
+        await client.from("usernames").upsert({
+          username: cleanUsername,
+          user_id: uid,
+          claimed_at: new Date().toISOString(),
         });
-        // Mirror the display data to the Supabase Auth profile
-        await adminAuth.updateUser(uid, {
-          ...(displayName ? { displayName } : {}),
-          ...(photoUrl ? { photoURL: photoUrl } : {}),
-        }).catch(() => {});
       }
 
-      return res.json({ data: { updated: true } });
-    } catch (e: any) {
-      console.error("[users/me PATCH]", e.message);
+      const { data: updated, error } = await client
+        .from("users")
+        .update(updates)
+        .eq("id", uid)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return res.json({
+        data: {
+          id: updated.id,
+          displayName: updated.display_name,
+          email: updated.email,
+          photoUrl: updated.photo_url,
+          username: updated.username,
+          updatedAt: updated.updated_at,
+        },
+      });
+    } catch (error: any) {
+      console.error("[users/patch-me] Update error:", error.message);
       return res.status(500).json({ error: "Failed to update profile", code: "INTERNAL_ERROR", status: 500 });
     }
   },
 );
 
-// ─── GET /api/v1/users/:userId — public profile ───────────────────────────────
-
-usersRouter.get(
-  "/:userId",
-  relaxedLimit,
-  async (req: Request, res: Response) => {
-    const { userId } = req.params;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    try {
-      // TODO: SELECT id, display_name, photo_url, username, scan_count, ... FROM users WHERE id = $userId AND is_deleted = FALSE
-      const snap = await db.collection("users").doc(userId).get();
-      if (!snap.exists || snap.data()?.isDeleted) {
-        return res.status(404).json({ error: "User not found", code: "USER_NOT_FOUND", status: 404 });
-      }
-      const data = snap.data()!;
-      // Only expose public fields
-      return res.json({
-        data: {
-          id: snap.id,
-          displayName: data.displayName ?? null,
-          photoUrl: data.photoURL ?? null,
-          username: data.username ?? null,
-          scanCount: data.scanCount ?? 0,
-          commentCount: data.commentCount ?? 0,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
-        },
-      });
-    } catch (e: any) {
-      console.error("[users/:userId GET]", e.message);
-      return res.status(500).json({ error: "Failed to fetch user", code: "INTERNAL_ERROR", status: 500 });
-    }
-  },
-);
-
-// ─── GET /api/v1/users/me/scans — own scan history (paginated) ───────────────
+// ─── GET /api/v1/users/me/scans — User Scan History ───────────────────────────
 
 usersRouter.get(
   "/me/scans",
   authenticate,
   relaxedLimit,
   async (req: Request, res: Response) => {
-    const parsed = paginationSchema.safeParse(req.query);
-    if (!parsed.success) return res.status(400).json({ error: "Invalid query params", code: "VALIDATION_ERROR", status: 400 });
+    const client = getAdminClient();
+    if (!client) {
+      return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    }
 
+    const parsed = paginationSchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid pagination params", code: "VALIDATION_ERROR", status: 400 });
+    }
     const { limit, cursor } = parsed.data;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      // TODO: SELECT * FROM qr_scans WHERE user_id = $uid ORDER BY scanned_at DESC LIMIT $limit OFFSET $cursor
-      let query = db
-        .collection("users")
-        .doc(req.user!.uid)
-        .collection("scans")
-        .orderBy("scannedAt", "desc")
+      let query = client
+        .from("qr_scans")
+        .select("*")
+        .eq("user_id", req.user!.uid)
+        .order("scanned_at", { ascending: false })
         .limit(limit + 1);
 
       if (cursor) {
-        const cursorDoc = await db.collection("users").doc(req.user!.uid).collection("scans").doc(cursor).get();
-        if (cursorDoc.exists) query = query.startAfter(cursorDoc);
+        query = query.lt("scanned_at", cursor);
       }
 
-      const snap = await query.get();
-      const hasMore = snap.docs.length > limit;
-      const docs = snap.docs.slice(0, limit);
-      const nextCursor = hasMore ? docs[docs.length - 1].id : null;
+      const { data: rows, error } = await query;
+      if (error) throw error;
+
+      const hasMore = (rows?.length ?? 0) > limit;
+      const items = (hasMore ? rows!.slice(0, limit) : (rows ?? [])).map((row) => ({
+        id: row.id,
+        qrCodeId: row.qr_code_id,
+        content: row.content,
+        contentType: row.content_type,
+        platform: row.platform,
+        verdict: row.verdict,
+        scannedAt: row.scanned_at,
+      }));
+
+      const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].scannedAt : null;
 
       return res.json({
-        data: docs.map((d) => {
-          const item = d.data();
-          return {
-            id: d.id,
-            qrCodeId: item.qrCodeId ?? item.qrId ?? null,
-            content: item.content ?? null,
-            contentType: item.contentType ?? null,
-            scanSource: item.scanSource ?? null,
-            isAnonymous: item.isAnonymous ?? false,
-            scannedAt: item.scannedAt?.toDate?.()?.toISOString() ?? item.timestamp?.toDate?.()?.toISOString() ?? null,
-          };
-        }),
-        pagination: { hasMore, nextCursor, limit },
+        data: items,
+        pagination: {
+          limit,
+          nextCursor,
+          hasMore,
+        },
       });
-    } catch (e: any) {
-      console.error("[users/me/scans]", e.message);
+    } catch (error: any) {
+      console.error("[users/me/scans] History error:", error.message);
       return res.status(500).json({ error: "Failed to fetch scans", code: "INTERNAL_ERROR", status: 500 });
     }
   },
 );
 
-// ─── GET /api/v1/users/me/notifications — list notifications ─────────────────
+// ─── GET /api/v1/users/:userId — Public Profile ───────────────────────────────
 
 usersRouter.get(
-  "/me/notifications",
-  authenticate,
+  "/:userId",
   relaxedLimit,
   async (req: Request, res: Response) => {
-    const parsed = paginationSchema.safeParse(req.query);
-    if (!parsed.success) return res.status(400).json({ error: "Invalid query params", code: "VALIDATION_ERROR", status: 400 });
-
-    const { limit } = parsed.data;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    const { userId } = req.params;
+    const client = getAdminClient();
+    if (!client) {
+      return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    }
 
     try {
-      // TODO: SELECT * FROM notifications WHERE user_id = $uid ORDER BY created_at DESC LIMIT $limit
-      const snap = await db
-        .collection("users")
-        .doc(req.user!.uid)
-        .collection("notifications")
-        .orderBy("createdAt", "desc")
-        .limit(limit)
-        .get();
+      const { data: user, error } = await client
+        .from("users")
+        .select("id, display_name, photo_url, username, scan_count, comment_count, total_likes_received, created_at")
+        .eq("id", userId)
+        .eq("is_deleted", false)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!user) {
+        return res.status(404).json({ error: "User not found", code: "USER_NOT_FOUND", status: 404 });
+      }
 
       return res.json({
-        data: snap.docs.map((d) => {
-          const item = d.data();
-          return {
-            id: d.id,
-            type: item.type ?? null,
-            message: item.message ?? null,
-            qrCodeId: item.qrCodeId ?? null,
-            fromUsername: item.fromUsername ?? null,
-            isRead: item.read ?? false,
-            createdAt: item.createdAt?.toDate?.()?.toISOString() ?? null,
-          };
-        }),
-        pagination: { limit },
+        data: {
+          id: user.id,
+          displayName: user.display_name ?? null,
+          photoUrl: user.photo_url ?? null,
+          username: user.username ?? null,
+          scanCount: user.scan_count ?? 0,
+          commentCount: user.comment_count ?? 0,
+          totalLikesReceived: user.total_likes_received ?? 0,
+          createdAt: user.created_at,
+        },
       });
-    } catch (e: any) {
-      console.error("[users/me/notifications GET]", e.message);
-      return res.status(500).json({ error: "Failed to fetch notifications", code: "INTERNAL_ERROR", status: 500 });
-    }
-  },
-);
-
-// ─── PATCH /api/v1/users/me/notifications/:notifId/read — mark one read ──────
-
-usersRouter.patch(
-  "/me/notifications/:notifId/read",
-  authenticate,
-  standardLimit,
-  async (req: Request, res: Response) => {
-    const { notifId } = req.params;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    try {
-      // TODO: UPDATE notifications SET is_read = TRUE WHERE id = $notifId AND user_id = $uid
-      await db
-        .collection("users")
-        .doc(req.user!.uid)
-        .collection("notifications")
-        .doc(notifId)
-        .update({ read: true });
-      return res.json({ data: { updated: true } });
-    } catch (e: any) {
-      console.error("[notifications/read PATCH]", e.message);
-      return res.status(500).json({ error: "Failed to mark notification read", code: "INTERNAL_ERROR", status: 500 });
-    }
-  },
-);
-
-// ─── POST /api/v1/users/me/notifications/read-all — mark all read ────────────
-
-usersRouter.post(
-  "/me/notifications/read-all",
-  authenticate,
-  standardLimit,
-  async (req: Request, res: Response) => {
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    try {
-      // TODO: UPDATE notifications SET is_read = TRUE WHERE user_id = $uid AND is_read = FALSE
-      const unread = await db
-        .collection("users")
-        .doc(req.user!.uid)
-        .collection("notifications")
-        .where("read", "==", false)
-        .limit(100)
-        .get();
-
-      const batch = db.batch();
-      unread.docs.forEach((d) => batch.update(d.ref, { read: true }));
-      await batch.commit();
-
-      return res.json({ data: { updated: unread.size } });
-    } catch (e: any) {
-      console.error("[notifications/read-all]", e.message);
-      return res.status(500).json({ error: "Failed to mark all notifications read", code: "INTERNAL_ERROR", status: 500 });
-    }
-  },
-);
-
-// ─── DELETE /api/v1/users/me/notifications/:notifId — delete notification ────
-
-usersRouter.delete(
-  "/me/notifications/:notifId",
-  authenticate,
-  standardLimit,
-  async (req: Request, res: Response) => {
-    const { notifId } = req.params;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    try {
-      // TODO: DELETE FROM notifications WHERE id = $notifId AND user_id = $uid
-      await db
-        .collection("users")
-        .doc(req.user!.uid)
-        .collection("notifications")
-        .doc(notifId)
-        .delete();
-      return res.json({ data: { deleted: true } });
-    } catch (e: any) {
-      console.error("[notifications DELETE]", e.message);
-      return res.status(500).json({ error: "Failed to delete notification", code: "INTERNAL_ERROR", status: 500 });
+    } catch (error: any) {
+      console.error("[users/:userId] Public profile error:", error.message);
+      return res.status(500).json({ error: "Failed to fetch user", code: "INTERNAL_ERROR", status: 500 });
     }
   },
 );

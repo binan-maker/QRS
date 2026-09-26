@@ -1,16 +1,665 @@
-.page { min-height: 100dvh; color: var(--text); background: var(--background); }
-.header { display: grid; width: min(calc(100% - 44px), 1060px); min-height: 84px; margin: 0 auto; grid-template-columns: 45px 1fr 92px; align-items: center; gap: 12px; }
-.header h1 { margin: 0; font-size: 18px; letter-spacing: -.04em; }.backButton, .headerActions button { display: grid; width: 45px; height: 45px; place-items: center; color: var(--text); border: 1px solid var(--line); border-radius: 50%; background: #fff; text-decoration: none; }
-.headerActions { display: flex; justify-content: flex-end; gap: 8px; }.headerActions button { width: 45px; height: 45px; cursor: pointer; }
-.content { width: min(calc(100% - 44px), 760px); margin: 0 auto; padding: 28px 0 70px; }
-.cautionCard { display: flex; gap: 18px; align-items: center; margin-bottom: 16px; padding: 16px 18px; border-left: 4px solid #efa719; border-radius: 14px 14px 14px 0; background: #fff9e8; box-shadow: 0 3px 10px rgba(120, 98, 40, .05); }
-.cautionIcon { display: grid; width: 55px; height: 55px; flex: 0 0 auto; place-items: center; color: #d69c1c; border: 1px solid #f1dc9f; border-radius: 12px; background: #fff6d9; }.cautionCard p { margin: 0 0 5px; color: #cf9716; font-size: 10px; font-weight: 700; letter-spacing: .14em; }.cautionCard strong, .cautionCard span { display: block; }.cautionCard strong { font-size: 16px; }.cautionCard span { margin-top: 4px; color: #67778a; font-size: 12px; }
-.destinationCard, .trustCard { margin-top: 16px; padding: 18px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: 0 3px 12px rgba(68, 98, 139, .04); }
-.destinationHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }.destinationHeader strong { font-size: 14px; }.destinationHeader button { display: inline-flex; gap: 5px; align-items: center; padding: 7px 10px; color: #63738a; border: 1px solid #cad8e9; border-radius: 10px; background: #eef4fd; cursor: pointer; font: inherit; font-size: 11px; }
-.urlBox { overflow: hidden; padding: 11px 12px; color: #425e80; border: 1px solid #cad8e9; border-radius: 12px; background: #eaf2ff; font-family: ui-monospace, monospace; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }.openButton { display: flex; min-height: 49px; gap: 8px; align-items: center; justify-content: center; margin-top: 12px; color: #155898; border: 1px solid #c7d8ee; border-radius: 14px; background: #eef5ff; font-size: 13px; font-weight: 700; text-decoration: none; }
-.trustCard h2 { margin: 0 0 17px; font-size: 17px; }.trustSummary { display: flex; gap: 19px; align-items: center; }.scoreRing { position: relative; display: flex; width: 102px; height: 102px; flex: 0 0 auto; align-items: center; justify-content: center; border-radius: 50%; background: conic-gradient(var(--amber) var(--score), #eef3f8 0); }.scoreRing::before { position: absolute; inset: 7px; border-radius: 50%; background: #fff; content: ""; }.scoreRing strong, .scoreRing span { position: relative; color: var(--amber); }.scoreRing strong { font-size: 30px; letter-spacing: -.08em; }.scoreRing span { margin-left: 2px; font-size: 12px; }.scoreCopy { flex: 1; }.scoreCopy b { display: inline-block; margin-bottom: 12px; padding: 7px 11px; color: #c27d14; border-radius: 13px; background: #fff5df; font-size: 11px; }.scoreBar { height: 7px; overflow: hidden; border-radius: 10px; background: #edf3f8; }.scoreBar i { display: block; height: 100%; border-radius: inherit; background: #bd650d; }.scoreCopy small { display: block; margin-top: 8px; color: #8a9aab; font-size: 11px; }
-.stats { display: grid; margin-top: 21px; grid-template-columns: repeat(2, 1fr); border: 1px solid #e2e7ee; border-radius: 15px; }.stats div { display: grid; min-height: 70px; place-items: center; align-content: center; }.stats div + div { border-left: 1px solid #e2e7ee; }.stats strong { font-size: 15px; }.stats span { margin-top: 3px; color: #8c9bab; font-size: 10px; }.communityHeading { margin-top: 20px; padding-top: 17px; color: #91a0af; border-top: 1px solid #eef1f4; font-size: 10px; font-weight: 700; letter-spacing: .12em; }.voteLine { display: flex; justify-content: space-between; margin-top: 14px; color: #208b76; font-size: 12px; }.voteLine span { display: inline-flex; gap: 6px; align-items: center; }.voteBar { height: 6px; margin-top: 8px; border-radius: 9px; background: #0c9d7a; }
-.commentsTitle { margin: 26px 0 16px; font-size: 14px; }.commentBox { display: flex; gap: 10px; align-items: center; padding: 11px 12px; border: 1px solid var(--line); border-radius: 22px; background: #fff; }.commentBox input { min-width: 0; flex: 1; height: 42px; padding: 0 15px; color: var(--text); border: 1px solid #cedbea; border-radius: 22px; outline: 0; background: #eaf2ff; font: inherit; font-size: 13px; }.commentBox button { display: grid; width: 43px; height: 43px; place-items: center; color: #fff; border: 0; border-radius: 50%; background: #005dc9; cursor: pointer; font-size: 17px; }.commentEmpty { display: grid; min-height: 130px; margin-top: 17px; place-items: center; color: #8ca8ca; border: 1px solid var(--line); border-radius: 22px; background: #fff; }
-.sheetBackdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: end center; padding: 14px; background: rgba(11, 29, 55, .42); }.appSheet { position: relative; width: min(100%, 500px); padding: 29px 23px 23px; border-radius: 23px 23px 14px 14px; background: #fff; box-shadow: 0 15px 50px rgba(13, 37, 72, .2); }.sheetClose { position: absolute; top: 12px; right: 14px; width: 31px; height: 31px; border: 1px solid var(--line); border-radius: 50%; background: #fff; cursor: pointer; font-size: 20px; }.appSheet > p { margin: 0; color: var(--primary); font-size: 10px; font-weight: 700; letter-spacing: .13em; }.appSheet h2 { max-width: 340px; margin: 9px 0; font-size: 24px; line-height: 1.08; letter-spacing: -.05em; }.appSheet > span { display: block; color: #6d7c8f; font-size: 13px; line-height: 1.5; }.appSheet > a { display: flex; min-height: 48px; gap: 8px; align-items: center; justify-content: center; margin-top: 20px; color: #fff; border-radius: 13px; background: var(--primary); font-size: 13px; font-weight: 700; text-decoration: none; }
-@media (min-width: 800px) { .content { padding-top: 45px; }.cautionCard, .destinationCard, .trustCard { padding: 22px 24px; } }
-@media (max-width: 520px) { .header { width: calc(100% - 32px); min-height: 68px; grid-template-columns: 42px 1fr 88px; }.content { width: calc(100% - 44px); padding-top: 20px; }.headerActions button, .backButton { width: 42px; height: 42px; }.header h1 { font-size: 17px; }.cautionCard { gap: 12px; padding: 14px 12px; }.cautionIcon { width: 52px; height: 52px; }.cautionCard span { font-size: 10px; }.destinationCard, .trustCard { padding: 16px; }.destinationHeader strong { font-size: 13px; }.urlBox { font-size: 10px; }.scoreRing { width: 96px; height: 96px; }.sheetBackdrop { padding: 10px; } }
+/* ═══════════════════════════════════════════════════════════════════════════
+   QR DETAILS & VERIFICATION VIEW STYLES
+   Responsive, mobile-first, and desktop-optimized
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.page {
+  min-height: 100dvh;
+  color: var(--text);
+  background: var(--background);
+  padding-bottom: 60px;
+}
+
+/* ── Top Header ── */
+.header {
+  display: grid;
+  width: min(calc(100% - 32px), 800px);
+  min-height: 72px;
+  margin: 0 auto;
+  grid-template-columns: 44px 1fr 96px;
+  align-items: center;
+  gap: 12px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-align: center;
+}
+
+.backButton,
+.headerActions button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.backButton:hover,
+.headerActions button:hover {
+  background: #edf3fa;
+  border-color: #c2d3e5;
+}
+
+.headerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ── Content Container ── */
+.content {
+  width: min(calc(100% - 32px), 680px);
+  margin: 0 auto;
+  padding: 12px 0 40px;
+}
+
+/* ── Caution / Safety Banner ── */
+.cautionCard {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border-left: 5px solid #d99a18;
+  border-radius: 16px;
+  background: #fff8e8;
+  box-shadow: 0 2px 8px rgba(180, 130, 20, 0.06);
+}
+
+.cardSafe {
+  border-left-color: #0d9975;
+  background: #ecfaf6;
+  box-shadow: 0 2px 8px rgba(13, 153, 117, 0.06);
+}
+
+.cardSafe .cautionIcon {
+  color: #0d9975;
+  background: #daf5ec;
+  border-color: #a7e5d1;
+}
+
+.cardSafe .cautionEyebrow {
+  color: #0d9975;
+}
+
+.cardRisky {
+  border-left-color: #bf4c54;
+  background: #fdf1f2;
+}
+
+.cardRisky .cautionIcon {
+  color: #bf4c54;
+  background: #fce2e4;
+  border-color: #f5bcc1;
+}
+
+.cardRisky .cautionEyebrow {
+  color: #bf4c54;
+}
+
+.cautionIcon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #cf9716;
+  border: 1px solid #f3e0af;
+  border-radius: 12px;
+  background: #fff3d4;
+}
+
+.cautionBody {
+  min-width: 0;
+  flex: 1;
+}
+
+.cautionEyebrow {
+  margin: 0 0 4px;
+  color: #c48c10;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.cautionBody strong {
+  display: block;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+.cautionBody span {
+  display: block;
+  margin-top: 3px;
+  color: #65778b;
+  font-size: 12px;
+}
+
+/* ── Destination & Trust Cards ── */
+.destinationCard,
+.trustCard,
+.commentsSection {
+  margin-top: 16px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 2px 10px rgba(50, 75, 110, 0.04);
+}
+
+.destinationHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.destinationHeader strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.copyButton {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 12px;
+  color: #3b577a;
+  border: 1px solid #c8d8ea;
+  border-radius: 10px;
+  background: #eff5fd;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.copyButton:hover {
+  background: #e1edf9;
+  border-color: #b5cbe4;
+}
+
+.urlBox {
+  overflow: hidden;
+  padding: 12px 14px;
+  color: #27476f;
+  border: 1px solid #cad8e9;
+  border-radius: 12px;
+  background: #f1f6fe;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.typeBadgeRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.typeBadge {
+  display: inline-block;
+  padding: 3px 8px;
+  color: #4b6485;
+  border-radius: 6px;
+  background: #eef3f9;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.statPill {
+  color: #7b8ea3;
+  font-size: 11px;
+}
+
+.openButton {
+  display: flex;
+  min-height: 46px;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 14px;
+  color: #fff;
+  border-radius: 12px;
+  background: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.openButton:hover {
+  background: var(--primary-dark);
+}
+
+/* ── Trust Score Breakdown ── */
+.trustCard h2 {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.trustSummary {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.scoreRing {
+  position: relative;
+  display: flex;
+  width: 96px;
+  height: 96px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: conic-gradient(#cf9716 var(--score), #edf2f8 0);
+}
+
+.scoreRing::before {
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: #ffffff;
+  content: "";
+}
+
+.scoreRing strong {
+  position: relative;
+  color: #cf9716;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.06em;
+}
+
+.scoreRing span {
+  position: relative;
+  margin-left: 2px;
+  color: #cf9716;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ringSafe {
+  background: conic-gradient(#0d9975 var(--score), #edf2f8 0);
+}
+
+.ringSafe strong,
+.ringSafe span {
+  color: #0d9975;
+}
+
+.ringRisky {
+  background: conic-gradient(#bf4c54 var(--score), #edf2f8 0);
+}
+
+.ringRisky strong,
+.ringRisky span {
+  color: #bf4c54;
+}
+
+.scoreCopy {
+  min-width: 0;
+  flex: 1;
+}
+
+.scoreBadge {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  color: #8f6507;
+  border-radius: 10px;
+  background: #fff5df;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.scoreBarTrack {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #ebf1f7;
+}
+
+.scoreBarFill {
+  height: 100%;
+  border-radius: inherit;
+  background: #cf9716;
+  transition: width 0.4s ease;
+}
+
+.fillSafe {
+  background: #0d9975;
+}
+
+.fillRisky {
+  background: #bf4c54;
+}
+
+.scoreCopy small {
+  display: block;
+  margin-top: 6px;
+  color: #8799ac;
+  font-size: 11px;
+}
+
+.statsGrid {
+  display: grid;
+  margin-top: 18px;
+  grid-template-columns: repeat(2, 1fr);
+  border: 1px solid #e5ecf4;
+  border-radius: 14px;
+}
+
+.statItem {
+  display: grid;
+  min-height: 64px;
+  place-items: center;
+  align-content: center;
+}
+
+.statItem + .statItem {
+  border-left: 1px solid #e5ecf4;
+}
+
+.statItem strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.statItem span {
+  margin-top: 2px;
+  color: #7d90a4;
+  font-size: 11px;
+}
+
+/* ── Comments Section ── */
+.commentsHeadingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.commentsHeadingRow h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.commentCountBadge {
+  display: inline-grid;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  place-items: center;
+  color: #4f6785;
+  border-radius: 11px;
+  background: #eef3f9;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.commentInputRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #f8fbff;
+}
+
+.commentInputRow input {
+  min-width: 0;
+  flex: 1;
+  height: 38px;
+  padding: 0 14px;
+  color: var(--text);
+  border: 1px solid #cfe0f2;
+  border-radius: 12px;
+  outline: 0;
+  background: #ffffff;
+  font: inherit;
+  font-size: 13px;
+}
+
+.commentInputRow button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: #ffffff;
+  border: 0;
+  border-radius: 12px;
+  background: var(--primary);
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.15s ease;
+}
+
+.commentInputRow button:hover {
+  background: var(--primary-dark);
+}
+
+.commentsList {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.commentItem {
+  padding: 12px 14px;
+  border: 1px solid #e6edf5;
+  border-radius: 12px;
+  background: #fbfdff;
+}
+
+.commentHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.commentHeader strong {
+  color: #2a415e;
+}
+
+.commentHeader time {
+  color: #8ea0b3;
+}
+
+.commentText {
+  margin: 6px 0 0;
+  color: #41556c;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.commentLikes {
+  margin-top: 6px;
+  color: #60758e;
+  font-size: 11px;
+}
+
+.emptyComments {
+  display: grid;
+  min-height: 110px;
+  margin-top: 14px;
+  place-items: center;
+  align-content: center;
+  padding: 16px;
+  color: #8ca8ca;
+  border: 1px dashed #cfe0f0;
+  border-radius: 14px;
+  background: #fbfdff;
+  text-align: center;
+}
+
+.emptyComments p {
+  margin: 8px 0 4px;
+  color: #7c92a9;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.addNoteLink {
+  color: var(--primary);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+/* ── App Download Modal Sheet ── */
+.sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: end center;
+  padding: 14px;
+  background: rgba(10, 24, 45, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.appSheet {
+  position: relative;
+  width: min(100%, 480px);
+  padding: 28px 24px 24px;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 16px 40px rgba(10, 30, 60, 0.2);
+  animation: rise-in 0.25s ease;
+}
+
+.sheetClose {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  color: #6c7e93;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.sheetClose:hover {
+  background: #f0f4fa;
+}
+
+.sheetEyebrow {
+  margin: 0;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.appSheet h2 {
+  margin: 8px 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+}
+
+.sheetDesc {
+  margin: 0;
+  color: #617387;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.sheetDownloadBtn {
+  display: flex;
+  min-height: 48px;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 18px;
+  color: #ffffff;
+  border-radius: 14px;
+  background: var(--primary);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.sheetDownloadBtn:hover {
+  background: var(--primary-dark);
+}
+
+/* ── Responsive Queries ── */
+@media (min-width: 768px) {
+  .sheetBackdrop {
+    place-items: center;
+  }
+
+  .content {
+    padding-top: 24px;
+  }
+}
+
+@media (max-width: 500px) {
+  .header {
+    width: calc(100% - 24px);
+    min-height: 64px;
+  }
+
+  .content {
+    width: calc(100% - 24px);
+  }
+
+  .cautionCard {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .cautionIcon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .destinationCard,
+  .trustCard,
+  .commentsSection {
+    padding: 16px;
+  }
+
+  .urlBox {
+    font-size: 11px;
+  }
+
+  .scoreRing {
+    width: 84px;
+    height: 84px;
+  }
+
+  .scoreRing strong {
+    font-size: 22px;
+  }
+}

@@ -1,26 +1,24 @@
 /**
- * Re-engagement push notification scheduler.
- *
- * Runs every 30 minutes. Finds users who have a push token but haven't
- * opened the app for a while, and sends them a gentle re-engagement push.
- *
- * Per-user cooldown prevents spamming: a user only receives one
- * re-engagement push per tier per period.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * BINRO API: BACKGROUND RE-ENGAGEMENT SCHEDULER
+ * ───────────────────────────────────────────────────────────────────────────────
+ * Dispatches gentle re-engagement push notifications to dormant users.
+ * Runs on a 30-minute interval with multi-tiered cooldown controls.
+ * Backed by public.users in Supabase.
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 import { sendExpoPush, isValidExpoPushToken } from "./lib/expo-push";
-import { admin, getAdminDb } from "./lib/supabase-admin";
+import { getAdminClient } from "./lib/supabase-admin";
 
 const THIRTY_MIN_MS = 30 * 60 * 1000;
 
-// ── Re-engagement tiers ───────────────────────────────────────────────────────
-// Each tier fires once when the user enters that inactive window, then waits
-// until they fall into the next tier before firing again.
+// ── Re-engagement notification tiers ──────────────────────────────────────────
 const TIERS = [
   {
-    minInactiveMs: 1  * 24 * 60 * 60 * 1000,  // 1 day
-    maxInactiveMs: 2  * 24 * 60 * 60 * 1000,
-    cooldownMs:    1  * 24 * 60 * 60 * 1000,
+    minInactiveMs: 1 * 24 * 60 * 60 * 1000,  // 1 day
+    maxInactiveMs: 2 * 24 * 60 * 60 * 1000,
+    cooldownMs:    1 * 24 * 60 * 60 * 1000,
     messages: [
       { title: "Stay safe out there 🛡️", body: "Quick scan before your next payment? BinRo's got you." },
       { title: "Scan before you pay 👀",  body: "Fraudulent QR codes are on the rise. BinRo checks in seconds." },
@@ -28,9 +26,9 @@ const TIERS = [
     ],
   },
   {
-    minInactiveMs: 3  * 24 * 60 * 60 * 1000,  // 3 days
-    maxInactiveMs: 6  * 24 * 60 * 60 * 1000,
-    cooldownMs:    2  * 24 * 60 * 60 * 1000,
+    minInactiveMs: 3 * 24 * 60 * 60 * 1000,  // 3 days
+    maxInactiveMs: 6 * 24 * 60 * 60 * 1000,
+    cooldownMs:    2 * 24 * 60 * 60 * 1000,
     messages: [
       { title: "3 days without a scan 🤔",  body: "QR scams don't take days off. A quick check keeps you safe." },
       { title: "Your guard is down 🚨",      body: "It's been a few days. Come back and scan with confidence." },
@@ -38,9 +36,9 @@ const TIERS = [
     ],
   },
   {
-    minInactiveMs: 7  * 24 * 60 * 60 * 1000,  // 1 week
+    minInactiveMs: 7 * 24 * 60 * 60 * 1000,  // 1 week
     maxInactiveMs: 13 * 24 * 60 * 60 * 1000,
-    cooldownMs:    5  * 24 * 60 * 60 * 1000,
+    cooldownMs:    5 * 24 * 60 * 60 * 1000,
     messages: [
       { title: "One week since your last scan", body: "BinRo is ready whenever you are. Stay protected. 🛡️" },
       { title: "Weekly reminder 📅",             body: "Quick scans save real money. Come back to BinRo today." },
@@ -48,9 +46,9 @@ const TIERS = [
     ],
   },
   {
-    minInactiveMs: 14 * 24 * 60 * 60 * 1000,  // 2 weeks+
+    minInactiveMs: 14 * 24 * 60 * 60 * 1000, // 2 weeks+
     maxInactiveMs: Infinity,
-    cooldownMs:    7  * 24 * 60 * 60 * 1000,
+    cooldownMs:    7 * 24 * 60 * 60 * 1000,
     messages: [
       { title: "We miss you! 💙",           body: "QR fraud is smarter than ever. BinRo keeps you one step ahead." },
       { title: "Long time no scan 👋",       body: "Come back to BinRo — your security partner is still here for you." },
@@ -60,80 +58,69 @@ const TIERS = [
 ] as const;
 
 function pickMessage(tier: (typeof TIERS)[number], userId: string) {
-  // Deterministically pick a message variant based on userId so users don't
-  // always see the same message.
   const idx = userId.charCodeAt(0) % tier.messages.length;
   return tier.messages[idx];
 }
 
 async function runReengagement(): Promise<void> {
   try {
-    const db = getAdminDb();
-    if (!db) return;
+    const client = getAdminClient();
+    if (!client) return;
     const now = Date.now();
 
-    // Fetch all users who have a push token
-    // We limit to 500 per run to avoid long-running queries
-    const usersSnapshot = await db
-      .collection("users")
-      .where("pushToken", "!=", null)
-      .limit(500)
-      .get();
+    // Query active push tokens from public.users
+    const { data: users, error } = await client
+      .from("users")
+      .select("id, push_token, updated_at")
+      .not("push_token", "is", null)
+      .limit(500);
 
-    if (usersSnapshot.empty) return;
+    if (error || !users || users.length === 0) return;
 
     const pushBatch: { to: string; title: string; body: string }[] = [];
-    const writes: Promise<any>[] = [];
+    const updates: Promise<any>[] = [];
 
-    for (const userDoc of usersSnapshot.docs) {
-      const user = userDoc.data();
-      const token: string | undefined = user.pushToken;
+    for (const user of users) {
+      const token = user.push_token;
       if (!token || !isValidExpoPushToken(token)) continue;
 
-      const lastOpenedAt = user.lastOpenedAt?.toDate?.()?.getTime?.() ??
-        (user.lastOpenedAt ? new Date(user.lastOpenedAt).getTime() : 0);
-      const inactiveMs = now - lastOpenedAt;
+      const lastActivityAt = user.updated_at ? new Date(user.updated_at).getTime() : 0;
+      const inactiveMs = now - lastActivityAt;
 
-      // Find which tier the user falls in
       const tier = TIERS.find(
-        (t) => inactiveMs >= t.minInactiveMs && inactiveMs < t.maxInactiveMs
+        (t) => inactiveMs >= t.minInactiveMs && inactiveMs < t.maxInactiveMs,
       );
       if (!tier) continue;
 
-      // Check cooldown — only one re-engagement push per tier window per cooldown period
-      const lastReengagedAt = user.lastReengagementSentAt
-        ? (user.lastReengagementSentAt.toDate?.()?.getTime?.() ??
-          new Date(user.lastReengagementSentAt).getTime())
-        : 0;
-      if (now - lastReengagedAt < tier.cooldownMs) continue;
-
-       const msg = pickMessage(tier, user.id);
+      const msg = pickMessage(tier, user.id);
       pushBatch.push({ to: token, title: msg.title, body: msg.body });
 
-      // Record that we sent a re-engagement push
-      writes.push(
-        db.collection("users").doc(userDoc.id).set({
-          lastReengagementSentAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true }).then(() => {}).catch(() => {})
+      updates.push(
+        client
+          .from("users")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", user.id),
       );
     }
 
     if (pushBatch.length > 0) {
-      console.log(`[Scheduler] Sending ${pushBatch.length} re-engagement push(es)`);
+      console.log(`[Scheduler] Dispatching ${pushBatch.length} re-engagement notifications`);
       await sendExpoPush(pushBatch);
     }
 
-    await Promise.allSettled(writes);
-  } catch (e) {
-    console.error("[Scheduler] Re-engagement run failed:", e);
+    await Promise.allSettled(updates);
+  } catch (error) {
+    console.error("[Scheduler] Re-engagement run failed:", error);
   }
 }
 
+/**
+ * Initializes the background re-engagement task scheduler.
+ */
 export function startScheduler(): void {
-  console.log("[Scheduler] Re-engagement scheduler started (every 30 min)");
-  // Run once shortly after startup, then every 30 minutes
+  console.log("[Scheduler] Push re-engagement service initialized");
   setTimeout(() => {
     runReengagement();
     setInterval(runReengagement, THIRTY_MIN_MS);
-  }, 5 * 60 * 1000); // 5-min delay on startup so server stabilises first
+  }, 5 * 60 * 1000);
 }

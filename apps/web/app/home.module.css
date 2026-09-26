@@ -11,6 +11,11 @@
 .scanHero {
   position: relative; display: flex; min-height: 174px; align-items: center; gap: 18px; overflow: hidden;
   padding: 24px 28px; border: 1px solid #c3d4ee; border-radius: 28px; background: linear-gradient(112deg, #e7f0ff, #d6e7ff);
+  text-decoration: none; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.scanHero:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(7, 93, 204, 0.12);
 }
 .scanHero::after { position: absolute; inset: 0; background: linear-gradient(90deg, transparent 35%, rgba(255,255,255,.2)); content: ""; pointer-events: none; }
 .heroIcon { z-index: 1; display: grid; width: 94px; height: 94px; flex: 0 0 auto; place-items: center; color: var(--primary); border: 1px solid #a5c5f2; border-radius: 24px; background: rgba(220, 234, 255, .9); }

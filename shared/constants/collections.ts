@@ -1,60 +1,73 @@
 /**
- * Data collection name constants.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * CANONICAL DATABASE TABLES & ENTITY REGISTRY
+ * ───────────────────────────────────────────────────────────────────────────────
+ * Standardized database collection and relational table constants.
  *
- * ALWAYS use these constants — never write collection name strings inline.
- * A typo in a collection name creates a silent new empty collection instead
- * of erroring, making it impossible to detect at runtime.
+ * Always import and use these constants — never hardcode raw table names.
+ * This guarantees zero typos across queries, migrations, and repository adapters.
  *
  * Usage:
- *   import { COLLECTIONS } from '@/shared/constants/collections';
- *   db.get([COLLECTIONS.USERS, uid]);
+ *   import { TABLES } from '@/shared/constants';
+ *   supabase.from(TABLES.USERS).select('*');
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
-export const COLLECTIONS = {
-  /** Top-level user profiles — own row only (email and consent included) */
+
+export const TABLES = {
+  /** User account profiles, display names, avatars, and aggregate counts */
   USERS: "users",
-  /**
-   * Public-safe subset of user profiles for community reads (comment authors,
-    * creator cards). Excludes email, consent, etc.
-   * Use this whenever reading another user's data; use USERS only for the
-   * currently-authenticated user's own row.
-   */
-  PUBLIC_PROFILES: "publicProfiles",
-  /** Username → userId reservation index */
+  /** Unique username reservation index (handles) */
   USERNAMES: "usernames",
-   /** Standard redirect links */
-   STANDARD_LINKS: "standardLinks",
-  /** Legacy QR registry */
-  QR_CODES: "qrCodes",
-  /** New unified QR registry */
-  QRS: "qrs",
-  /** QR community comments */
-  COMMENTS: "comments",
-  /** Comment likes/dislikes */
-  LIKES: "likes",
-  /** QR scan history and scan events */
-  SCANS: "scans",
-  EVENTS: "events",
-  SCAN_VELOCITY: "scanVelocity",
-  /** User-generated QR records */
-  GENERATED_QRS: "generatedQrs",
-  /** Saved QR records */
-  FAVORITES: "favorites",
-  /** User notifications */
+  /** Universal QR code registry (metadata, type, aggregate counters) */
+  QR_CODES: "qr_codes",
+  /** Historical scan events (platform, safety verdict, timestamps) */
+  QR_SCANS: "qr_scans",
+  /** Community comments and threaded notes on QR codes */
+  QR_COMMENTS: "qr_comments",
+  /** User upvotes and likes on specific comments */
+  COMMENT_LIKES: "comment_likes",
+  /** Community abuse and violation reports on comments */
+  COMMENT_REPORTS: "comment_reports",
+  /** Weighted scam, phishing, and fraud reports on QR codes */
+  QR_REPORTS: "qr_reports",
+  /** User-bookmarked and starred QR codes */
+  USER_FAVORITES: "user_favorites",
+  /** In-app and push notification message queue */
   NOTIFICATIONS: "notifications",
-  /** QR/user abuse reports */
-  REPORTS: "reports",
-  /** Reports submitted against comments */
-  COMMENT_REPORTS: "commentReports",
-  /** Moderation report log */
-  REPORT_LOG: "reportLog",
-  /** Per-user personal scan count */
-  PERSONAL_SCAN_COUNT: "personalScanCount",
-  /** Feature flag votes */
-  FEATURE_VOTES: "featureVotes",
-  /** User feedback submissions */
+  /** User bug reports, exceptions, and feedback */
   FEEDBACK: "feedback",
-  /** DPDP/RBI compliance audit log (keyed by year-month) */
-  AUDIT_LOGS: "auditLogs",
+  /** Regulatory compliance audit trails (DPDP / RBI transaction guidelines) */
+  AUDIT_LOGS: "audit_logs",
+  /** Community feature-flag votes */
+  FEATURE_VOTES: "feature_votes",
 } as const;
 
+/**
+ * Backward compatibility alias for legacy collection references
+ */
+export const COLLECTIONS = {
+  USERS: TABLES.USERS,
+  PUBLIC_PROFILES: "public_profiles",
+  USERNAMES: TABLES.USERNAMES,
+  STANDARD_LINKS: "standard_links",
+  QR_CODES: TABLES.QR_CODES,
+  QRS: TABLES.QR_CODES,
+  COMMENTS: TABLES.QR_COMMENTS,
+  LIKES: TABLES.COMMENT_LIKES,
+  SCANS: TABLES.QR_SCANS,
+  EVENTS: TABLES.QR_SCANS,
+  SCAN_VELOCITY: "scan_velocity",
+  GENERATED_QRS: "generated_qrs",
+  FAVORITES: TABLES.USER_FAVORITES,
+  NOTIFICATIONS: TABLES.NOTIFICATIONS,
+  REPORTS: TABLES.QR_REPORTS,
+  COMMENT_REPORTS: TABLES.COMMENT_REPORTS,
+  REPORT_LOG: "report_log",
+  PERSONAL_SCAN_COUNT: "personal_scan_count",
+  FEATURE_VOTES: TABLES.FEATURE_VOTES,
+  FEEDBACK: TABLES.FEEDBACK,
+  AUDIT_LOGS: TABLES.AUDIT_LOGS,
+} as const;
+
+export type TableName = (typeof TABLES)[keyof typeof TABLES];
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];

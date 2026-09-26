@@ -1,3 +1,12 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * BINRO API: COMMUNITY COMMENTS ROUTER
+ * ───────────────────────────────────────────────────────────────────────────────
+ * Provides threaded community discussions, notes, and like toggles on QR codes.
+ * Stores records in public.qr_comments and public.comment_likes.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */
+
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { getAdminClient } from "../lib/supabase-admin";
@@ -21,30 +30,40 @@ const paginationSchema = z.object({
   cursor: z.string().optional(),
 });
 
-function mapCommentDoc(id: string, data: Record<string, any>) {
+function mapCommentRow(row: Record<string, any>) {
   return {
-    id,
-    qrCodeId: data.qr_code_id ?? data.qrCodeId ?? null,
-    userId: data.user_id ?? data.userId,
-    userName: data.user_name ?? data.userName,
-    parentId: data.parent_id ?? data.parentId ?? null,
-    text: data.text,
-    likes: data.likes ?? 0,
-    isEdited: data.isEdited ?? false,
-    createdAt: data.created_at ?? data.createdAt ?? null,
-    updatedAt: data.updated_at ?? data.updatedAt ?? null,
+    id: row.id,
+    qrCodeId: row.qr_code_id,
+    userId: row.user_id,
+    userName: row.user_name,
+    parentId: row.parent_id ?? null,
+    text: row.text,
+    likes: row.likes ?? 0,
+    isEdited: row.is_edited ?? false,
+    createdAt: row.created_at ?? null,
+    updatedAt: row.updated_at ?? null,
   };
 }
 
 async function adjustQrCommentCount(client: any, qrId: string, delta: number) {
-  const { data, error } = await client.from("qr_codes").select("comment_count").eq("id", qrId).maybeSingle();
+  const { data, error } = await client
+    .from("qr_codes")
+    .select("comment_count")
+    .eq("id", qrId)
+    .maybeSingle();
+
   if (error || !data) return;
   const newCount = Math.max(0, (data.comment_count ?? 0) + delta);
-  await client.from("qr_codes").update({ comment_count: newCount, updated_at: new Date().toISOString() }).eq("id", qrId);
+  await client
+    .from("qr_codes")
+    .update({ comment_count: newCount, updated_at: new Date().toISOString() })
+    .eq("id", qrId);
 }
 
-// ─── GET /api/v1/qr/:qrId/comments ───────────────────────────────────────────
-
+/**
+ * GET /api/v1/qr/:qrId/comments
+ * Returns paginated comments for the given QR code.
+ */
 commentsRouter.get(
   "/",
   optionalAuth,
@@ -52,18 +71,19 @@ commentsRouter.get(
   async (req: Request, res: Response) => {
     const { qrId } = req.params;
     const parsed = paginationSchema.safeParse(req.query);
-    if (!parsed.success) return res.status(400).json({ error: "Invalid query params", code: "VALIDATION_ERROR", status: 400 });
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid query params", code: "VALIDATION_ERROR", status: 400 });
+    }
     const { limit, cursor } = parsed.data;
 
     const client = getAdminClient();
-    if (!client) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    if (!client) {
+      return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    }
 
     try {
-      const { data: qr, error: qrError } = await client.from("qr_codes").select("id").eq("id", qrId).maybeSingle();
-      if (qrError) throw qrError;
-      if (!qr) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
-
-      let query = client.from("qr_comments")
+      let query = client
+        .from("qr_comments")
         .select("*")
         .eq("qr_code_id", qrId)
         .eq("is_deleted", false)
@@ -71,29 +91,35 @@ commentsRouter.get(
         .limit(limit + 1);
 
       if (cursor) {
-        const cursorRow = await client.from("qr_comments").select("created_at").eq("id", cursor).maybeSingle();
-        if (cursorRow.error) throw cursorRow.error;
-        if (cursorRow.data?.created_at) query = query.lt("created_at", cursorRow.data.created_at);
+        query = query.lt("created_at", cursor);
       }
-      const { data, error } = await query;
+
+      const { data: rows, error } = await query;
       if (error) throw error;
-      const rows = (data ?? []) as any[];
-      const hasMore = rows.length > limit;
-      const docs = rows.slice(0, limit);
+
+      const hasMore = (rows?.length ?? 0) > limit;
+      const items = (hasMore ? rows!.slice(0, limit) : (rows ?? [])).map(mapCommentRow);
+      const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].createdAt : null;
 
       return res.json({
-        data: docs.map((row) => mapCommentDoc(row.id, row)),
-        pagination: { hasMore, nextCursor: hasMore ? docs[docs.length - 1].id : null, limit },
+        data: items,
+        pagination: {
+          limit,
+          nextCursor,
+          hasMore,
+        },
       });
-    } catch (e: any) {
-      console.error("[comments GET /]", e.message);
-      return res.status(500).json({ error: "Failed to fetch comments", code: "INTERNAL_ERROR", status: 500 });
+    } catch (error: any) {
+      console.error("[comments/list] Error:", error.message);
+      return res.status(500).json({ error: "Failed to list comments", code: "INTERNAL_ERROR", status: 500 });
     }
   },
 );
 
-// ─── POST /api/v1/qr/:qrId/comments ──────────────────────────────────────────
-
+/**
+ * POST /api/v1/qr/:qrId/comments
+ * Adds a new comment or reply to a QR code.
+ */
 commentsRouter.post(
   "/",
   authenticate,
@@ -103,97 +129,100 @@ commentsRouter.post(
     const { qrId } = req.params;
     const { text, parentId } = req.body;
     const client = getAdminClient();
-    if (!client) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    const uid = req.user!.uid;
+    if (!client) {
+      return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    }
 
     try {
-      const [{ data: user, error: userError }, { data: qr, error: qrError }] = await Promise.all([
-        client.from("users").select("display_name,username").eq("id", uid).maybeSingle(),
-        client.from("qr_codes").select("id").eq("id", qrId).maybeSingle(),
-      ]);
-      if (userError) throw userError;
-      if (qrError) throw qrError;
-      if (!qr) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
+      const user = req.user!;
+      const { data: newComment, error } = await client
+        .from("qr_comments")
+        .insert({
+          qr_code_id: qrId,
+          user_id: user.uid,
+          user_name: user.name || "Anonymous",
+          parent_id: parentId ?? null,
+          text: text.trim(),
+          likes: 0,
+          report_count: 0,
+          is_deleted: false,
+          is_pinned: false,
+          is_edited: false,
+        })
+        .select()
+        .single();
 
-      if (parentId) {
-        const { data: parent, error: parentError } = await client
-          .from("qr_comments")
-          .select("id")
-          .eq("id", parentId)
-          .eq("qr_code_id", qrId)
-          .maybeSingle();
-        if (parentError) throw parentError;
-        if (!parent) return res.status(404).json({ error: "Parent comment not found", code: "PARENT_NOT_FOUND", status: 404 });
-      }
+      if (error) throw error;
 
-      const userName = user?.display_name ?? user?.username ?? "Anonymous";
-      const { data: inserted, error: insertError } = await client.from("qr_comments").insert({
-        qr_code_id: qrId,
-        user_id: uid,
-        user_name: userName,
-        text,
-        parent_id: parentId ?? null,
-      }).select("*").single();
-      if (insertError) throw insertError;
-
+      // Increment comment count on the QR code record
       await adjustQrCommentCount(client, qrId, 1);
 
-      return res.status(201).json({
-        data: mapCommentDoc(inserted.id, inserted),
-      });
-    } catch (e: any) {
-      console.error("[comments POST /]", e.message);
+      return res.status(201).json({ data: mapCommentRow(newComment) });
+    } catch (error: any) {
+      console.error("[comments/create] Error:", error.message);
       return res.status(500).json({ error: "Failed to create comment", code: "INTERNAL_ERROR", status: 500 });
     }
   },
 );
 
-// ─── PATCH /api/v1/qr/:qrId/comments/:commentId ──────────────────────────────
-
+/**
+ * PATCH /api/v1/qr/:qrId/comments/:commentId
+ * Edits an existing comment text (author only).
+ */
 commentsRouter.patch(
   "/:commentId",
   authenticate,
   standardLimit,
   validateBody(updateCommentSchema),
   async (req: Request, res: Response) => {
-    const { qrId, commentId } = req.params;
+    const { commentId } = req.params;
     const { text } = req.body;
     const client = getAdminClient();
-    if (!client) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    const uid = req.user!.uid;
+    if (!client) {
+      return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    }
 
     try {
-      const { data: comment, error: commentError } = await client
+      const user = req.user!;
+      const { data: existing, error: fetchErr } = await client
         .from("qr_comments")
-        .select("id,user_id,is_deleted")
+        .select("user_id")
         .eq("id", commentId)
-        .eq("qr_code_id", qrId)
         .maybeSingle();
 
-      if (commentError) throw commentError;
-      if (!comment || comment.is_deleted) return res.status(404).json({ error: "Comment not found", code: "COMMENT_NOT_FOUND", status: 404 });
-      if (comment.user_id !== uid) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
+      if (fetchErr) throw fetchErr;
+      if (!existing) {
+        return res.status(404).json({ error: "Comment not found", code: "COMMENT_NOT_FOUND", status: 404 });
+      }
+      if (existing.user_id !== user.uid) {
+        return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
+      }
 
-      const { data: updated, error: updateError } = await client
+      const { data: updated, error: updateErr } = await client
         .from("qr_comments")
-        .update({ text, is_edited: true, updated_at: new Date().toISOString() })
+        .update({
+          text: text.trim(),
+          is_edited: true,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", commentId)
-        .select("*")
+        .select()
         .single();
 
-      if (updateError) throw updateError;
-      return res.json({ data: mapCommentDoc(updated.id, updated) });
-    } catch (e: any) {
-      console.error("[comments PATCH /:commentId]", e.message);
+      if (updateErr) throw updateErr;
+
+      return res.json({ data: mapCommentRow(updated) });
+    } catch (error: any) {
+      console.error("[comments/update] Error:", error.message);
       return res.status(500).json({ error: "Failed to update comment", code: "INTERNAL_ERROR", status: 500 });
     }
   },
 );
 
-// ─── DELETE /api/v1/qr/:qrId/comments/:commentId ─────────────────────────────
-
+/**
+ * DELETE /api/v1/qr/:qrId/comments/:commentId
+ * Soft-deletes a comment (author only).
+ */
 commentsRouter.delete(
   "/:commentId",
   authenticate,
@@ -201,40 +230,47 @@ commentsRouter.delete(
   async (req: Request, res: Response) => {
     const { qrId, commentId } = req.params;
     const client = getAdminClient();
-    if (!client) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    const uid = req.user!.uid;
+    if (!client) {
+      return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    }
 
     try {
-      const { data: comment, error: commentError } = await client
+      const user = req.user!;
+      const { data: existing, error: fetchErr } = await client
         .from("qr_comments")
-        .select("id,user_id")
+        .select("user_id, is_deleted")
         .eq("id", commentId)
-        .eq("qr_code_id", qrId)
         .maybeSingle();
 
-      if (commentError) throw commentError;
-      if (!comment) return res.status(404).json({ error: "Comment not found", code: "COMMENT_NOT_FOUND", status: 404 });
-      if (comment.user_id !== uid) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
+      if (fetchErr) throw fetchErr;
+      if (!existing) {
+        return res.status(404).json({ error: "Comment not found", code: "COMMENT_NOT_FOUND", status: 404 });
+      }
+      if (existing.user_id !== user.uid) {
+        return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
+      }
 
-      const { error: deleteError } = await client
-        .from("qr_comments")
-        .update({ is_deleted: true, updated_at: new Date().toISOString() })
-        .eq("id", commentId);
+      if (!existing.is_deleted) {
+        await client
+          .from("qr_comments")
+          .update({ is_deleted: true, updated_at: new Date().toISOString() })
+          .eq("id", commentId);
 
-      if (deleteError) throw deleteError;
-      await adjustQrCommentCount(client, qrId, -1);
+        await adjustQrCommentCount(client, qrId, -1);
+      }
 
-      return res.json({ data: { success: true } });
-    } catch (e: any) {
-      console.error("[comments DELETE /:commentId]", e.message);
+      return res.json({ ok: true });
+    } catch (error: any) {
+      console.error("[comments/delete] Error:", error.message);
       return res.status(500).json({ error: "Failed to delete comment", code: "INTERNAL_ERROR", status: 500 });
     }
   },
 );
 
-// ─── POST /api/v1/qr/:qrId/comments/:commentId/like ──────────────────────────
-
+/**
+ * POST /api/v1/qr/:qrId/comments/:commentId/like
+ * Toggles a user's upvote/like on a specific comment.
+ */
 commentsRouter.post(
   "/:commentId/like",
   authenticate,
@@ -242,35 +278,57 @@ commentsRouter.post(
   async (req: Request, res: Response) => {
     const { commentId } = req.params;
     const client = getAdminClient();
-    if (!client) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
-
-    const uid = req.user!.uid;
+    if (!client) {
+      return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    }
 
     try {
-      const { data: existing, error: existingError } = await client
+      const userId = req.user!.uid;
+
+      // Check if user already liked this comment
+      const { data: existingLike, error: likeCheckErr } = await client
         .from("comment_likes")
         .select("comment_id")
         .eq("comment_id", commentId)
-        .eq("user_id", uid)
+        .eq("user_id", userId)
         .maybeSingle();
 
-      if (existingError) throw existingError;
+      if (likeCheckErr) throw likeCheckErr;
 
-      if (existing) {
-        await client.from("comment_likes").delete().eq("comment_id", commentId).eq("user_id", uid);
-        const { data: comment } = await client.from("qr_comments").select("likes").eq("id", commentId).single();
-        const newLikes = Math.max(0, (comment?.likes ?? 1) - 1);
-        await client.from("qr_comments").update({ likes: newLikes }).eq("id", commentId);
-        return res.json({ data: { liked: false, likes: newLikes } });
+      let liked = false;
+      if (existingLike) {
+        // Unlike
+        await client.from("comment_likes").delete().eq("comment_id", commentId).eq("user_id", userId);
+        liked = false;
+      } else {
+        // Like
+        await client.from("comment_likes").insert({ comment_id: commentId, user_id: userId });
+        liked = true;
       }
 
-      await client.from("comment_likes").insert({ comment_id: commentId, user_id: uid });
-      const { data: comment } = await client.from("qr_comments").select("likes").eq("id", commentId).single();
-      const newLikes = (comment?.likes ?? 0) + 1;
-      await client.from("qr_comments").update({ likes: newLikes }).eq("id", commentId);
-      return res.json({ data: { liked: true, likes: newLikes } });
-    } catch (e: any) {
-      console.error("[comments POST /:commentId/like]", e.message);
+      // Recompute total likes count for this comment
+      const { count, error: countErr } = await client
+        .from("comment_likes")
+        .select("*", { count: "exact", head: true })
+        .eq("comment_id", commentId);
+
+      if (countErr) throw countErr;
+      const totalLikes = count ?? 0;
+
+      await client
+        .from("qr_comments")
+        .update({ likes: totalLikes, updated_at: new Date().toISOString() })
+        .eq("id", commentId);
+
+      return res.json({
+        data: {
+          commentId,
+          liked,
+          likes: totalLikes,
+        },
+      });
+    } catch (error: any) {
+      console.error("[comments/like] Error:", error.message);
       return res.status(500).json({ error: "Failed to toggle like", code: "INTERNAL_ERROR", status: 500 });
     }
   },

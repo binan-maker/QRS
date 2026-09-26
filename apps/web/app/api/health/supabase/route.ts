@@ -45,22 +45,27 @@ export async function GET() {
     });
 
     // Test a basic lightweight ping against the database
-    const { error } = await supabase.from("users").select("id").limit(1);
+    const { error: userError } = await supabase.from("users").select("id").limit(1);
+    const { error: qrError } = await supabase.from("qr_codes").select("id").limit(1);
 
-    if (error) {
+    if (userError && qrError) {
       return NextResponse.json({
         configured: true,
         connected: false,
-        message: `Connected to Supabase endpoint, but query failed: ${error.message}`,
-        code: error.code,
+        message: `Connected to Supabase endpoint, but tables could not be queried: ${userError.message}`,
+        code: userError.code,
       });
     }
 
     return NextResponse.json({
       configured: true,
       connected: true,
-      message: "Successfully connected to Supabase database.",
+      message: "Successfully connected to Supabase database. Tables are accessible.",
       endpoint: url,
+      tables: {
+        users: !userError,
+        qr_codes: !qrError,
+      },
     });
   } catch (err) {
     return NextResponse.json({
