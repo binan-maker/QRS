@@ -79,7 +79,7 @@ export default function QrVerificationView({ record }: { record: PublicQrRecord;
         <section className={styles.appSheet} role="dialog" aria-modal="true" aria-labelledby="app-sheet-title">
           <button type="button" className={styles.sheetClose} onClick={() => setAppSheetOpen(false)} aria-label="Close">×</button>
           <p>BINRO MOBILE</p><h2 id="app-sheet-title">Download the BinRo app for more features.</h2><span>Sign in, vote on QR codes, report concerns, and leave comments from the mobile app.</span>
-          <a href="https://play.google.com/store/apps/details?id=com.qrguard.app" target="_blank" rel="noreferrer">Download for Android <Icon name="external" size={17} /></a>
+           <a href="https://play.google.com/store/apps/details?id=com.qrguard.app" target="_blank" rel="noreferrer">Download for Android <Icon name="external" size={17} /></a>
         </section>
       </div> : null}
     </main>

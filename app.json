@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.binro.app",
-      "associatedDomains": ["applinks:binro.xyz"],
+      "associatedDomains": ["applinks:binro.in"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "BinRo uses your camera to scan QR codes.",
@@ -38,7 +38,7 @@
           "data": [
             {
               "scheme": "https",
-              "host": "binro.xyz",
+              "host": "binro.in",
               "pathPrefix": "/qr"
             }
           ]

@@ -23,16 +23,34 @@ export const COLLECTIONS = {
   USERNAMES: "usernames",
    /** Standard redirect links */
    STANDARD_LINKS: "standardLinks",
+  /** Legacy QR registry */
+  QR_CODES: "qrCodes",
+  /** New unified QR registry */
+  QRS: "qrs",
+  /** QR community comments */
+  COMMENTS: "comments",
+  /** Comment likes/dislikes */
+  LIKES: "likes",
+  /** QR scan history and scan events */
+  SCANS: "scans",
+  EVENTS: "events",
+  SCAN_VELOCITY: "scanVelocity",
+  /** User-generated QR records */
+  GENERATED_QRS: "generatedQrs",
+  /** Saved QR records */
+  FAVORITES: "favorites",
+  /** User notifications */
+  NOTIFICATIONS: "notifications",
   /** QR/user abuse reports */
   REPORTS: "reports",
+  /** Reports submitted against comments */
+  COMMENT_REPORTS: "commentReports",
   /** Moderation report log */
   REPORT_LOG: "reportLog",
   /** Per-user personal scan count */
   PERSONAL_SCAN_COUNT: "personalScanCount",
   /** Feature flag votes */
   FEATURE_VOTES: "featureVotes",
-  /** Analytics event log */
-  EVENTS: "events",
   /** User feedback submissions */
   FEEDBACK: "feedback",
   /** DPDP/RBI compliance audit log (keyed by year-month) */

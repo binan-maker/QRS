@@ -86,11 +86,23 @@ const COLLECTION_TABLE: Record<string, string> = {
   // Use for reads about OTHER users; use "users" only for own-row reads.
   publicProfiles: "public_profiles",
   standardLinks: "standard_links",
+  qrCodes: "qr_codes",
+  qrs: "unified_qrs",
+  comments: "qr_comments",
+  likes: "comment_likes",
+  commentReports: "comment_reports",
+  scans: "qr_scans",
+  events: "qr_scans",
+  scanVelocity: "rtdb_store",
+  generatedQrs: "user_generated_qrs",
+  favorites: "user_favorites",
+  notifications: "notifications",
   featureVotes: "feature_votes",
   reportLog: "report_log",
   personalScanCount: "users",
   auditLogs: "audit_logs",
   reports: "qr_reports",
+  feedback: "feedback",
 };
 
 function collectionToTable(name: string): string {
@@ -102,6 +114,16 @@ function collectionToTable(name: string): string {
 
 const SUB_FK: Record<string, { table: string; fk: string }> = {
   "qrCodes.reports": { table: "qr_reports", fk: "qr_code_id" },
+  "qrs.reports": { table: "qr_reports", fk: "unified_qr_id" },
+  "qrCodes.comments": { table: "qr_comments", fk: "qr_code_id" },
+  "qrs.comments": { table: "qr_comments", fk: "unified_qr_id" },
+  "qrCodes.events": { table: "qr_scans", fk: "qr_code_id" },
+  "qrs.events": { table: "qr_scans", fk: "unified_qr_id" },
+  "users.scans": { table: "qr_scans", fk: "user_id" },
+  "users.comments": { table: "qr_comments", fk: "user_id" },
+  "users.generatedQrs": { table: "user_generated_qrs", fk: "user_id" },
+  "users.favorites": { table: "user_favorites", fk: "user_id" },
+  "users.notifications": { table: "notifications", fk: "user_id" },
 };
 
 interface ParsedPath {
@@ -132,6 +154,24 @@ function parsePath(path: string[]): ParsedPath {
       extraFilters: { [`${parentSingular}_id`]: path[1] },
     };
   }
+  // Comment likes use a composite primary key (comment_id, user_id), so the
+  // final path segment is not a standalone `id` column.
+  if (path.length === 6 && path[2] === "comments" && path[4] === "likes") {
+    return {
+      table: "comment_likes",
+      id: path[5],
+      extraFilters: { comment_id: path[3], user_id: path[5] },
+    };
+  }
+  // Comment reports use a generated id in SQL, while the client path is keyed
+  // by the reporting user. Keep the user id as a filter for idempotent writes.
+  if (path.length === 6 && path[2] === "comments" && path[4] === "reports") {
+    return {
+      table: "comment_reports",
+      id: path[5],
+      extraFilters: { comment_id: path[3], user_id: path[5] },
+    };
+  }
   throw new Error(`[db] Invalid document path length ${path.length}: [${path.join(", ")}]`);
 }
 
@@ -151,9 +191,34 @@ function parseCollectionPath(path: string[]): ParsedCollection {
       extraFilters: { [`${parentSingular}_id`]: path[1] },
     };
   }
+  if (path.length === 5 && path[2] === "comments" && path[4] === "reports") {
+    return {
+      table: "comment_reports",
+      extraFilters: { comment_id: path[3] },
+    };
+  }
   throw new Error(
     `[db] Invalid collection path length ${path.length}: [${path.join(", ")}]`,
   );
+}
+
+function applyDocumentIdentity(q: any, parsed: ParsedPath): any {
+  if (parsed.table === "comment_likes" || parsed.table === "comment_reports") {
+    return applyExtraFilters(q, parsed.extraFilters);
+  }
+  const idField = parsed.table === "user_favorites" ? "qr_id" : "id";
+  let next = q.eq(idField, parsed.id);
+  return applyExtraFilters(next, parsed.extraFilters);
+}
+
+function rowForDocument(parsed: ParsedPath, data: Record<string, any>) {
+  if (parsed.table === "comment_likes" || parsed.table === "comment_reports") {
+    return keysToSnake({ ...parsed.extraFilters, ...data });
+  }
+  const identity = parsed.table === "user_favorites"
+    ? { qr_id: parsed.id }
+    : { id: parsed.id };
+  return keysToSnake({ ...identity, ...parsed.extraFilters, ...data });
 }
 
 // ─── Apply WHERE clauses ──────────────────────────────────────────────────────
@@ -185,17 +250,20 @@ function applyExtraFilters(q: any, filters: Record<string, string>): any {
 export const supabaseDb: DbAdapter = {
   async get(path) {
     const { table, id, extraFilters } = parsePath(path);
-    let q = supabase.from(table).select("*").eq("id", id);
-    q = applyExtraFilters(q, extraFilters);
+    let q = supabase.from(table).select("*");
+    q = applyDocumentIdentity(q, { table, id, extraFilters });
     const { data, error } = await q.maybeSingle();
     if (error) throw error;
     return data ? keysToCamel(data as Record<string, any>) : null;
   },
 
   async set(path, data) {
-    const { table, id, extraFilters } = parsePath(path);
-    const row = keysToSnake({ id, ...extraFilters, ...data });
-    const { error } = await supabase.from(table).upsert(row, { onConflict: "id" });
+    const parsed = parsePath(path);
+    const row = rowForDocument(parsed, data);
+    const onConflict =
+      parsed.table === "comment_likes" ? "comment_id,user_id" :
+      parsed.table === "comment_reports" ? "comment_id,user_id" : "id";
+    const { error } = await supabase.from(parsed.table).upsert(row, { onConflict });
     if (error) throw error;
   },
 
@@ -212,17 +280,17 @@ export const supabaseDb: DbAdapter = {
   },
 
   async update(path, data) {
-    const { table, id, extraFilters } = parsePath(path);
-    let q = supabase.from(table).update(keysToSnake(data)).eq("id", id);
-    q = applyExtraFilters(q, extraFilters);
+    const parsed = parsePath(path);
+    let q = supabase.from(parsed.table).update(keysToSnake(data));
+    q = applyDocumentIdentity(q, parsed);
     const { error } = await q;
     if (error) throw error;
   },
 
   async delete(path) {
-    const { table, id, extraFilters } = parsePath(path);
-    let q = supabase.from(table).delete().eq("id", id);
-    q = applyExtraFilters(q, extraFilters);
+    const parsed = parsePath(path);
+    let q = supabase.from(parsed.table).delete();
+    q = applyDocumentIdentity(q, parsed);
     const { error } = await q;
     if (error) throw error;
   },

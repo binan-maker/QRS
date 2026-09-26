@@ -10,7 +10,7 @@
 
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { admin, getAdminDb } from "../lib/supabase-admin";
+import { getAdminClient } from "../lib/supabase-admin";
 import { authenticate, optionalAuth } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { relaxedLimit, standardLimit, strictLimit } from "../middleware/rate-limit-presets";
@@ -45,9 +45,39 @@ function mapCommentDoc(id: string, data: any) {
     likes: data.likes ?? 0,
     isPinned: data.isPinned ?? false,
     isEdited: data.isEdited ?? false,
-    createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
-    updatedAt: data.updatedAt?.toDate?.()?.toISOString() ?? null,
+    createdAt: data.created_at ?? data.createdAt ?? null,
+    updatedAt: data.updated_at ?? data.updatedAt ?? null,
   };
+}
+
+async function resolveQrForeignKey(client: any, qrId: string) {
+  const [legacy, unified] = await Promise.all([
+    client.from("qr_codes").select("id").eq("id", qrId).maybeSingle(),
+    client.from("unified_qrs").select("id").eq("id", qrId).maybeSingle(),
+  ]);
+  if (legacy.error) throw legacy.error;
+  if (unified.error) throw unified.error;
+  if (legacy.data) return { qr_code_id: qrId };
+  if (unified.data) return { unified_qr_id: qrId };
+  return null;
+}
+
+async function adjustQrCounter(client: any, qrId: string, field: string, delta: number) {
+  const foreignKey = await resolveQrForeignKey(client, qrId);
+  if (!foreignKey) return false;
+  const table = "qr_code_id" in foreignKey ? "qr_codes" : "unified_qrs";
+  const { error: rpcError } = await client.rpc("increment_field", {
+    p_table: table,
+    p_id: qrId,
+    p_field: field,
+    p_delta: delta,
+  });
+  if (!rpcError) return true;
+  const { data, error } = await client.from(table).select(field).eq("id", qrId).single();
+  if (error) throw error;
+  const { error: updateError } = await client.from(table).update({ [field]: Number(data?.[field] ?? 0) + delta }).eq("id", qrId);
+  if (updateError) throw updateError;
+  return true;
 }
 
 // ─── GET /api/v1/qr/:qrId/comments — list comments (paginated) ───────────────
@@ -62,35 +92,27 @@ commentsRouter.get(
     if (!parsed.success) return res.status(400).json({ error: "Invalid query params", code: "VALIDATION_ERROR", status: 400 });
     const { limit, cursor } = parsed.data;
 
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    const client = getAdminClient();
+    if (!client) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      // TODO:
-      // SELECT * FROM qr_comments
-      // WHERE qr_code_id = $qrId AND is_deleted = FALSE AND parent_id IS NULL
-      // ORDER BY is_pinned DESC, created_at DESC
-      // LIMIT $limit OFFSET cursor
-      let query = db
-        .collection("qrCodes")
-        .doc(qrId)
-        .collection("comments")
-        .orderBy("isPinned", "desc")
-        .orderBy("createdAt", "desc")
-        .limit(limit + 1);
-
+      const foreignKey = await resolveQrForeignKey(client, qrId);
+      if (!foreignKey) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
+      let query = client.from("qr_comments").select("*").match(foreignKey)
+        .eq("is_deleted", false).order("is_pinned", { ascending: false }).order("created_at", { ascending: false }).limit(limit + 1);
       if (cursor) {
-        const cursorDoc = await db
-          .collection("qrCodes").doc(qrId).collection("comments").doc(cursor).get();
-        if (cursorDoc.exists) query = query.startAfter(cursorDoc);
+        const cursorRow = await client.from("qr_comments").select("created_at").eq("id", cursor).maybeSingle();
+        if (cursorRow.error) throw cursorRow.error;
+        if (cursorRow.data?.created_at) query = query.lt("created_at", cursorRow.data.created_at);
       }
-
-      const snap = await query.get();
-      const hasMore = snap.docs.length > limit;
-      const docs = snap.docs.slice(0, limit);
+      const { data, error } = await query;
+      if (error) throw error;
+      const rows = (data ?? []) as any[];
+      const hasMore = rows.length > limit;
+      const docs = rows.slice(0, limit);
 
       return res.json({
-        data: docs.map((d) => mapCommentDoc(d.id, d.data())),
+        data: docs.map((row) => mapCommentDoc(row.id, row)),
         pagination: { hasMore, nextCursor: hasMore ? docs[docs.length - 1].id : null, limit },
       });
     } catch (e: any) {
@@ -110,52 +132,45 @@ commentsRouter.post(
   async (req: Request, res: Response) => {
     const { qrId } = req.params;
     const { text, parentId } = req.body;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    const client = getAdminClient();
+    if (!client) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     const uid = req.user!.uid;
 
     try {
-      // Resolve user display name
-      // Read the display name from the PostgreSQL users row.
-      const userSnap = await db.collection("users").doc(uid).get();
-      const userName: string = userSnap.data()?.displayName ?? userSnap.data()?.username ?? "Anonymous";
-
-      const qrSnap = await db.collection("qrCodes").doc(qrId).get();
-      if (!qrSnap.exists) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
+      const [{ data: user, error: userError }, foreignKey] = await Promise.all([
+        client.from("users").select("display_name,username").eq("id", uid).maybeSingle(),
+        resolveQrForeignKey(client, qrId),
+      ]);
+      if (userError) throw userError;
+      if (!foreignKey) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
 
       // Validate parent comment exists if provided
       if (parentId) {
-        const parentSnap = await db.collection("qrCodes").doc(qrId).collection("comments").doc(parentId).get();
-        if (!parentSnap.exists) return res.status(404).json({ error: "Parent comment not found", code: "PARENT_NOT_FOUND", status: 404 });
+        const { data: parent, error: parentError } = await client.from("qr_comments").select("id").eq("id", parentId).match(foreignKey).maybeSingle();
+        if (parentError) throw parentError;
+        if (!parent) return res.status(404).json({ error: "Parent comment not found", code: "PARENT_NOT_FOUND", status: 404 });
       }
 
       const commentData = {
         userId: uid,
-        userName,
+        userName: user?.display_name ?? user?.username ?? "Anonymous",
         text,
         parentId: parentId ?? null,
-        likes: 0,
-        isPinned: false,
-        isEdited: false,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        ...foreignKey,
       };
-
-      const ref = await db.collection("qrCodes").doc(qrId).collection("comments").add(commentData);
-
-      // Bump comment count via Admin SDK (bypasses Firestore security rules)
-      await db.collection("qrCodes").doc(qrId).update({
-        commentCount: admin.firestore.FieldValue.increment(1),
-      }).catch(() => {});
+      const { data: inserted, error: insertError } = await client.from("qr_comments").insert({
+        ...foreignKey,
+        user_id: uid,
+        user_name: commentData.userName,
+        text,
+        parent_id: parentId ?? null,
+      }).select("*").single();
+      if (insertError) throw insertError;
+      await adjustQrCounter(client, qrId, "comment_count", 1);
 
       return res.status(201).json({
-        data: {
-          id: ref.id,
-          ...commentData,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
+        data: mapCommentDoc(inserted.id, inserted),
       });
     } catch (e: any) {
       console.error("[comments POST /]", e.message);
@@ -174,21 +189,18 @@ commentsRouter.patch(
   async (req: Request, res: Response) => {
     const { qrId, commentId } = req.params;
     const { text } = req.body;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    const client = getAdminClient();
+    if (!client) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      // TODO: SELECT user_id, is_deleted FROM qr_comments WHERE id = $commentId AND qr_code_id = $qrId
-      const snap = await db.collection("qrCodes").doc(qrId).collection("comments").doc(commentId).get();
-      if (!snap.exists) return res.status(404).json({ error: "Comment not found", code: "COMMENT_NOT_FOUND", status: 404 });
-      if (snap.data()!.userId !== req.user!.uid) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
-
-      // TODO: UPDATE qr_comments SET text = $text, is_edited = TRUE, updated_at = NOW() WHERE id = $commentId AND user_id = $uid
-      await snap.ref.update({
-        text,
-        isEdited: true,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      const foreignKey = await resolveQrForeignKey(client, qrId);
+      if (!foreignKey) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
+      const { data: comment, error: fetchError } = await client.from("qr_comments").select("id,user_id,is_deleted").eq("id", commentId).match(foreignKey).maybeSingle();
+      if (fetchError) throw fetchError;
+      if (!comment) return res.status(404).json({ error: "Comment not found", code: "COMMENT_NOT_FOUND", status: 404 });
+      if (comment.user_id !== req.user!.uid) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
+      const { error } = await client.from("qr_comments").update({ text, is_edited: true, updated_at: new Date().toISOString() }).eq("id", commentId);
+      if (error) throw error;
       return res.json({ data: { updated: true } });
     } catch (e: any) {
       console.error("[comments PATCH /:commentId]", e.message);
@@ -205,28 +217,21 @@ commentsRouter.delete(
   strictLimit,
   async (req: Request, res: Response) => {
     const { qrId, commentId } = req.params;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    const client = getAdminClient();
+    if (!client) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      // TODO: SELECT user_id FROM qr_comments WHERE id = $commentId AND qr_code_id = $qrId
-      const snap = await db.collection("qrCodes").doc(qrId).collection("comments").doc(commentId).get();
-      if (!snap.exists) return res.status(404).json({ error: "Comment not found", code: "COMMENT_NOT_FOUND", status: 404 });
-
-      const isCommentOwner = snap.data()!.userId === req.user!.uid;
-      if (!isCommentOwner) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
-
-      // Soft delete and anonymise text
-      // TODO: UPDATE qr_comments SET is_deleted = TRUE, text = '[deleted]', updated_at = NOW() WHERE id = $commentId
-      await snap.ref.update({
-        isDeleted: true,
-        text: "[deleted]",
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      await db.collection("qrCodes").doc(qrId).update({
-        commentCount: admin.firestore.FieldValue.increment(-1),
-      }).catch(() => {});
+      const foreignKey = await resolveQrForeignKey(client, qrId);
+      if (!foreignKey) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
+      const { data: comment, error: fetchError } = await client.from("qr_comments").select("id,user_id,is_deleted").eq("id", commentId).match(foreignKey).maybeSingle();
+      if (fetchError) throw fetchError;
+      if (!comment) return res.status(404).json({ error: "Comment not found", code: "COMMENT_NOT_FOUND", status: 404 });
+      if (comment.user_id !== req.user!.uid) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
+      if (!comment.is_deleted) {
+        const { error } = await client.from("qr_comments").update({ is_deleted: true, text: "[deleted]", updated_at: new Date().toISOString() }).eq("id", commentId);
+        if (error) throw error;
+        await adjustQrCounter(client, qrId, "comment_count", -1);
+      }
 
       return res.json({ data: { deleted: true } });
     } catch (e: any) {
@@ -245,35 +250,27 @@ commentsRouter.post(
   async (req: Request, res: Response) => {
     const { qrId, commentId } = req.params;
     const uid = req.user!.uid;
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    const client = getAdminClient();
+    if (!client) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      // TODO:
-      // SELECT EXISTS(SELECT 1 FROM comment_likes WHERE comment_id = $commentId AND user_id = $uid)
-      // If exists: DELETE FROM comment_likes ...; UPDATE qr_comments SET likes = likes - 1 ...
-      // Else:      INSERT INTO comment_likes ...; UPDATE qr_comments SET likes = likes + 1 ...
-      const likeRef = db
-        .collection("qrCodes").doc(qrId)
-        .collection("comments").doc(commentId)
-        .collection("likes").doc(uid);
-
-      const commentRef = db.collection("qrCodes").doc(qrId).collection("comments").doc(commentId);
-
-      const likeSnap = await likeRef.get();
+      const { data: existing, error: existingError } = await client.from("comment_likes").select("comment_id").eq("comment_id", commentId).eq("user_id", uid).maybeSingle();
+      if (existingError) throw existingError;
       let liked: boolean;
-
-      if (likeSnap.exists) {
-        await likeRef.delete();
-        await commentRef.update({ likes: admin.firestore.FieldValue.increment(-1) });
+      if (existing) {
+        const { error } = await client.from("comment_likes").delete().eq("comment_id", commentId).eq("user_id", uid);
+        if (error) throw error;
+        await client.rpc("increment_field", { p_table: "qr_comments", p_id: commentId, p_field: "likes", p_delta: -1 });
         liked = false;
       } else {
-        await likeRef.set({ likedAt: admin.firestore.FieldValue.serverTimestamp() });
-        await commentRef.update({ likes: admin.firestore.FieldValue.increment(1) });
+        const { error } = await client.from("comment_likes").insert({ comment_id: commentId, user_id: uid });
+        if (error) throw error;
+        await client.rpc("increment_field", { p_table: "qr_comments", p_id: commentId, p_field: "likes", p_delta: 1 });
         liked = true;
       }
-
-      return res.json({ data: { liked } });
+      const { data: updated, error: updatedError } = await client.from("qr_comments").select("likes").eq("id", commentId).single();
+      if (updatedError) throw updatedError;
+      return res.json({ data: { liked, likes: Number(updated.likes ?? 0), dislikes: 0 } });
     } catch (e: any) {
       console.error("[comments POST /:commentId/like]", e.message);
       return res.status(500).json({ error: "Failed to toggle like", code: "INTERNAL_ERROR", status: 500 });

@@ -42,7 +42,7 @@ export default async function QrVerificationPage({
     record = fallbackRecord;
   }
   if (!record) {
-    const destination = content || "https://qrguard.app";
+    const destination = content || "https://binro.in";
     record = {
       id: qrId,
       content: destination,

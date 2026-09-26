@@ -42,7 +42,7 @@ export function guardShell(title: string, body: string): string {
 </style>
 </head><body>
 <div class="card">${body}</div>
-<p class="app-link">Protected by <a href="https://qrguard.app">BinRo</a></p>
+<p class="app-link">Protected by <a href="https://binro.in">BinRo</a></p>
 </body></html>`;
 }
 

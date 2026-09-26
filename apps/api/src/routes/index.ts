@@ -34,6 +34,8 @@ import type { Express } from "express";
 import { securityRouter } from "./security";
 import { usersRouter } from "./users";
 import { feedbackRouter } from "./feedback";
+import { qrRouter } from "./qr";
+import { commentsRouter } from "./comments";
 
 export function registerV1Routes(app: Express): void {
   // ── Utilities & security (existing) ────────────────────────────────────────
@@ -46,5 +48,7 @@ export function registerV1Routes(app: Express): void {
 
   // ── Feedback & bug reports ─────────────────────────────────────────────────
   app.use("/api/v1/feedback", feedbackRouter);
+  app.use("/api/v1/qr", qrRouter);
+  app.use("/api/v1/qr/:qrId/comments", commentsRouter);
 
 }

@@ -7,7 +7,7 @@
 
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { getAdminDb } from "../lib/supabase-admin";
+import { getAdminClient } from "../lib/supabase-admin";
 import { publicLimit } from "../middleware/rate-limit-presets";
 import { validateBody } from "../middleware/validate";
 
@@ -27,21 +27,21 @@ feedbackRouter.post(
   publicLimit,
   validateBody(bugReportSchema),
   async (req: Request, res: Response) => {
-    const db = getAdminDb();
-    if (!db) {
+    const client = getAdminClient();
+    if (!client) {
       return res.status(503).json({ error: "Service unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
     }
 
     try {
       const { errorMessage, errorStack, userMessage, deviceInfo, appVersion } = req.body;
-      await db.collection("bugReports").add({
-        errorMessage,
-        errorStack,
-        userMessage,
-        deviceInfo,
-        appVersion,
-        reportedAt: new Date(),
+      const { error } = await client.from("feedback").insert({
+        error_message: errorMessage,
+        error_stack: errorStack,
+        user_message: userMessage,
+        device_info: deviceInfo,
+        app_version: appVersion,
       });
+      if (error) throw error;
       return res.status(201).json({ ok: true });
     } catch (e: any) {
       console.error("[feedback/bug-report]", e.message);

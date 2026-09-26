@@ -26,7 +26,7 @@ export async function recordScanEvent(qrId: string, event: ScanEvent): Promise<v
   try {
     await db.add([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.EVENTS], {
       ...event,
-      timestamp: db.timestamp(),
+      scannedAt: db.timestamp(),
     });
   } catch {
     // Intentionally silent — analytics loss is preferable to scan UX breakage.

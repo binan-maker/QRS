@@ -1,7 +1,7 @@
 const BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const BASE62_INDEX = new Map([...BASE62].map((character, index) => [character, index]));
 const QR_ID_HEX_LENGTH = 20;
-export const BINRO_SITE_URL = "https://binro.xyz";
+export const BINRO_SITE_URL = "https://binro.in";
 
 /**
  * Converts the QR's 80-bit hexadecimal ID into a compact Base62 path segment.

@@ -7,7 +7,7 @@
 
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { admin, getAdminDb } from "../lib/supabase-admin";
+import { getAdminClient } from "../lib/supabase-admin";
 import { reportQrCode } from "../services/report-service";
 import { authenticate } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
@@ -81,13 +81,23 @@ qrRouter.post(
     const { qrId } = req.params;
     const { delta } = req.body;
 
-    const db = getAdminDb();
-    if (!db) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
+    const client = getAdminClient();
+    if (!client) return res.status(503).json({ error: "Database unavailable", code: "SERVICE_UNAVAILABLE", status: 503 });
 
     try {
-      await db.collection("qrCodes").doc(qrId).update({
-        commentCount: admin.firestore.FieldValue.increment(delta),
+      const [legacy, unified] = await Promise.all([
+        client.from("qr_codes").select("id").eq("id", qrId).maybeSingle(),
+        client.from("unified_qrs").select("id").eq("id", qrId).maybeSingle(),
+      ]);
+      const table = legacy.data ? "qr_codes" : unified.data ? "unified_qrs" : null;
+      if (!table) return res.status(404).json({ error: "QR code not found", code: "QR_NOT_FOUND", status: 404 });
+      const { error } = await client.rpc("increment_field", {
+        p_table: table,
+        p_id: qrId,
+        p_field: "comment_count",
+        p_delta: delta,
       });
+      if (error) throw error;
       return res.json({ data: { success: true } });
     } catch (e: any) {
       console.error("[v1/qr/comment-count]", e.message);

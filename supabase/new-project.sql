@@ -3,13 +3,14 @@
 -- This file is for a brand-new BinRo Supabase project. It does not import
 -- Firebase data and it does not contain seed users or sample QR records.
 --
--- Run from the repository root after the schema has been created:
+-- Run from the repository root:
+--   npx drizzle-kit generate --config=packages/db/drizzle.config.ts
 --   psql "$SUPABASE_DATABASE_URL" -v ON_ERROR_STOP=1 \
---     -f packages/db/migrations/0000_graceful_cobalt_man.sql
+--     -f packages/db/migrations/<generated-migration>.sql
 --   psql "$SUPABASE_DATABASE_URL" -v ON_ERROR_STOP=1 \
 --     -f supabase/new-project.sql
 --
--- The first command creates the application tables from the current schema.
+-- The Drizzle migration creates the application tables from the current schema.
 -- The statements below add Supabase-specific security, auth synchronization,
 -- realtime compatibility, and the atomic counter helper.
 
@@ -178,6 +179,74 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_auth_user();
 
--- Enable RLS and apply the repository's least-privilege policies/grants.
-\ir ../packages/db/migrations/rls_policies.sql
-\ir ../packages/db/migrations/grants_fix.sql
+-- Apply RLS and grants for every table that exists in this schema. These
+-- statements are deliberately idempotent so this file can be rerun after a
+-- schema migration or on an already initialized project.
+DO $$
+DECLARE
+  table_name text;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY[
+    'users', 'usernames', 'qr_codes', 'unified_qrs', 'standard_links',
+    'qr_scans', 'qr_comments', 'comment_likes', 'comment_reports',
+    'qr_reports', 'audit_logs', 'categories', 'feature_votes',
+    'notifications', 'rtdb_store'
+  ] LOOP
+    IF to_regclass('public.' || table_name) IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', table_name);
+    END IF;
+  END LOOP;
+END $$;
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT SELECT ON public.public_profiles TO anon, authenticated;
+
+DROP POLICY IF EXISTS "public_profiles: public read" ON public.public_profiles;
+CREATE POLICY "public_profiles: public read"
+  ON public.public_profiles FOR SELECT TO anon, authenticated
+  USING (is_deleted = false);
+
+-- Public QR details are readable; writes remain authenticated/service-role only.
+DO $$
+BEGIN
+  IF to_regclass('public.qr_codes') IS NOT NULL THEN
+    GRANT SELECT ON public.qr_codes TO anon, authenticated;
+    DROP POLICY IF EXISTS "qr_codes: public read active" ON public.qr_codes;
+    CREATE POLICY "qr_codes: public read active" ON public.qr_codes
+      FOR SELECT TO anon, authenticated USING (is_active = true);
+  END IF;
+  IF to_regclass('public.unified_qrs') IS NOT NULL THEN
+    GRANT SELECT ON public.unified_qrs TO anon, authenticated;
+    DROP POLICY IF EXISTS "unified_qrs: public read active" ON public.unified_qrs;
+    CREATE POLICY "unified_qrs: public read active" ON public.unified_qrs
+      FOR SELECT TO anon, authenticated USING (status = 'active');
+  END IF;
+END $$;
+
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+
+-- Storage buckets used by the app. Storage object policies are kept narrow:
+-- authenticated users may manage only files under their own user-id prefix.
+INSERT INTO storage.buckets (id, name, public)
+VALUES
+  ('avatars', 'avatars', true),
+  ('qr-assets', 'qr-assets', true),
+  ('feedback', 'feedback', false)
+ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
+
+DROP POLICY IF EXISTS "avatars: own files" ON storage.objects;
+CREATE POLICY "avatars: own files" ON storage.objects
+  FOR ALL TO authenticated
+  USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text)
+  WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+DROP POLICY IF EXISTS "qr-assets: own files" ON storage.objects;
+CREATE POLICY "qr-assets: own files" ON storage.objects
+  FOR ALL TO authenticated
+  USING (bucket_id = 'qr-assets' AND (storage.foldername(name))[1] = auth.uid()::text)
+  WITH CHECK (bucket_id = 'qr-assets' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+DROP POLICY IF EXISTS "feedback: own files" ON storage.objects;
+CREATE POLICY "feedback: own files" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'feedback' AND (storage.foldername(name))[1] = auth.uid()::text);
