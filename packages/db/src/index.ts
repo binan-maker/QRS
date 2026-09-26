@@ -7,7 +7,6 @@
 
 export interface User {
   id: string;
-  firebaseUid?: string | null;
   email: string;
   emailVerified: boolean;
   displayName: string;
@@ -19,9 +18,6 @@ export interface User {
   scanCount: number;
   commentCount: number;
   totalLikesReceived: number;
-  isOnline: boolean;
-  lastSeen?: Date | null;
-  pushToken?: string | null;
   consent?: Record<string, unknown> | null;
   createdAt: Date;
   updatedAt: Date;
@@ -31,7 +27,6 @@ export type NewUser = Omit<User, "createdAt" | "updatedAt">;
 
 export interface QrCode {
   id: string;
-  firebaseId?: string | null;
   content: string;
   contentType: string;
   ownerId?: string | null;
@@ -91,7 +86,6 @@ export interface QrScan {
   id: string;
   qrCodeId?: string | null;
   unifiedQrId?: string | null;
-  guardLinkId?: string | null;
   standardLinkId?: string | null;
   userId?: string | null;
   isAnonymous: boolean;

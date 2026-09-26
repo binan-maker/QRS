@@ -55,7 +55,6 @@ export interface CommentData {
   createdAt: string;
   likes: number;
   likedBy: string[];
-  isVerifiedOwner?: boolean;
 }
 
 export interface ReportData {
@@ -232,32 +231,10 @@ export interface CommentItem {
   parentId?: string | null;
   isEdited?: boolean;
   isPinned?: boolean;
-  isVerifiedOwner?: boolean;
   reports?: number;
   user?: { displayName: string; [key: string]: any };
   userUsername?: string;
   [key: string]: any;
-}
-
-// Guard Service types
-export interface DestinationChangeEntry {
-  changedAt: string;
-  from: string;
-  to: string;
-  changedBy: string;
-}
-
-export interface GuardLink {
-  uuid: string;
-  currentDestination: string;
-  previousDestination: string | null;
-  businessName: string | null;
-  isActive: boolean;
-  destinationChangedAt: string | null;
-  createdAt: string;
-  changeLog?: DestinationChangeEntry[];
-  contentType?: string;
-  templateKey?: string;
 }
 
 // Message Service types

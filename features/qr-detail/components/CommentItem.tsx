@@ -138,21 +138,6 @@ const CommentItem = memo(function CommentItem({
   const surfaceBg   = isDark ? colors.surfaceLight : colors.background;
   const threadColor = isDark ? "rgba(148,163,184,0.25)" : "rgba(148,163,184,0.35)";
 
-  // ── Sensitive placeholder ─────────────────────────────────────────────────
-  if (comment.isHidden && !isRevealed) {
-    return (
-      <View>
-        <Pressable onPress={() => onReveal(comment.id)} style={styles.sensitiveRow}>
-          <Ionicons name="eye-off-outline" size={14} color={colors.textMuted} />
-          <Text style={{ flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", color: colors.textMuted, fontStyle: "italic" }}>
-            Sensitive content — tap to reveal
-          </Text>
-          <Ionicons name="chevron-forward" size={12} color={colors.textMuted} />
-        </Pressable>
-      </View>
-    );
-  }
-
   // ── Comment body (shared between top-level and reply) ─────────────────────
   function renderBody() {
     const isLong = comment.text.length > READ_MORE_THRESHOLD;
@@ -176,13 +161,6 @@ const CommentItem = memo(function CommentItem({
           <Text style={[styles.commentTime, { color: colors.textMuted }]} numberOfLines={1}>
             {formatRelativeTime(comment.createdAt)}
           </Text>
-          {comment.isHidden && isRevealed && (
-            <View style={[styles.sensitiveTag, { backgroundColor: colors.warningDim }]}>
-              <Text style={{ fontSize: 10, fontFamily: "Inter_600SemiBold", color: colors.warning }}>
-                Sensitive
-              </Text>
-            </View>
-          )}
           <Pressable
             onPress={() => isMenuOpen ? onMenuClose() : onMenuOpen(comment.id, isCommentOwner)}
             style={[styles.menuBtn, { marginLeft: "auto" as any }]}

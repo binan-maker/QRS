@@ -75,7 +75,7 @@ export function useCommentActions({
       userUsername: clientUsername, userPhotoURL: clientPhotoURL,
       createdAt: new Date().toISOString(),
       likeCount: 0, dislikeCount: 0, userLike: null,
-      parentId, isDeleted: false, isHidden: false, reportCount: 0,
+      parentId, isDeleted: false, reportCount: 0,
     };
 
     pendingCommentsRef.current = [optimisticComment, ...pendingCommentsRef.current];
@@ -102,7 +102,6 @@ export function useCommentActions({
         dislikeCount: (saved as any).dislikeCount ?? 0,
         userLike: null,
         isDeleted: false,
-        isHidden: false,
         reportCount: 0,
       };
       // Update the optimistic comment with server-resolved data but KEEP the tempId

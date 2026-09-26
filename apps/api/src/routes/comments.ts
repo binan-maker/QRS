@@ -43,10 +43,8 @@ function mapCommentDoc(id: string, data: any) {
     text: data.text ?? null,
     parentId: data.parentId ?? null,
     likes: data.likes ?? 0,
-    isVerifiedOwner: data.isVerifiedOwner ?? false,
     isPinned: data.isPinned ?? false,
     isEdited: data.isEdited ?? false,
-    isHidden: data.isHidden ?? false,
     createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
     updatedAt: data.updatedAt?.toDate?.()?.toISOString() ?? null,
   };
@@ -77,7 +75,6 @@ commentsRouter.get(
         .collection("qrCodes")
         .doc(qrId)
         .collection("comments")
-        .where("isHidden", "==", false)
         .orderBy("isPinned", "desc")
         .orderBy("createdAt", "desc")
         .limit(limit + 1);
@@ -140,15 +137,11 @@ commentsRouter.post(
         parentId: parentId ?? null,
         likes: 0,
         isPinned: false,
-        isHidden: false,
         isEdited: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
-      // TODO:
-      // INSERT INTO qr_comments (qr_code_id, user_id, user_name, text, parent_id, is_verified_owner, ...)
-      // VALUES ($qrId, $uid, $userName, $text, $parentId, $isVerifiedOwner, ...)
       const ref = await db.collection("qrCodes").doc(qrId).collection("comments").add(commentData);
 
       // Bump comment count via Admin SDK (bypasses Firestore security rules)
@@ -223,10 +216,10 @@ commentsRouter.delete(
       const isCommentOwner = snap.data()!.userId === req.user!.uid;
       if (!isCommentOwner) return res.status(403).json({ error: "Forbidden", code: "FORBIDDEN", status: 403 });
 
-      // Soft delete — mark hidden and anonymise text
+      // Soft delete and anonymise text
       // TODO: UPDATE qr_comments SET is_deleted = TRUE, text = '[deleted]', updated_at = NOW() WHERE id = $commentId
       await snap.ref.update({
-        isHidden: true,
+        isDeleted: true,
         text: "[deleted]",
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });

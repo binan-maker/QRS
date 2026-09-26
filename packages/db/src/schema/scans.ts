@@ -14,10 +14,10 @@ import {
 } from "drizzle-orm/pg-core";
 import { scanSourceEnum, platformEnum, scanVerdictEnum } from "./enums";
 import { users } from "./users";
-import { qrCodes, unifiedQrs, guardLinks, standardLinks } from "./qr-codes";
+import { qrCodes, unifiedQrs, standardLinks } from "./qr-codes";
 
 // ─── QR Scans ─────────────────────────────────────────────────────────────────
-// Exactly one of qr_code_id / unified_qr_id / guard_link_id / standard_link_id is set.
+// Exactly one of qr_code_id / unified_qr_id / standard_link_id is set.
 
 export const qrScans = pgTable(
   "qr_scans",
@@ -26,7 +26,6 @@ export const qrScans = pgTable(
     // QR references (only one should be set per scan)
     qrCodeId: text("qr_code_id").references(() => qrCodes.id, { onDelete: "set null" }),
     unifiedQrId: text("unified_qr_id").references(() => unifiedQrs.id, { onDelete: "set null" }),
-    guardLinkId: text("guard_link_id").references(() => guardLinks.id, { onDelete: "set null" }),
     standardLinkId: text("standard_link_id").references(() => standardLinks.id, { onDelete: "set null" }),
     // Scanner identity
     userId: text("user_id").references(() => users.id, { onDelete: "set null" }),

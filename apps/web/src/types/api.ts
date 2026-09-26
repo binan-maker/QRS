@@ -44,8 +44,6 @@ export interface UserProfile {
   scanCount: number;
   commentCount: number;
   totalLikesReceived: number;
-  isOnline: boolean;
-  lastSeen: string | null;
   createdAt: string | null;
 }
 
@@ -62,7 +60,6 @@ export interface PublicUserProfile {
 export interface UpdateProfileInput {
   displayName?: string;
   photoUrl?: string | null;
-  pushToken?: string | null;
   username?: string;
 }
 
@@ -137,7 +134,6 @@ export interface QrComment {
   text: string;
   parentId: string | null;
   likes: number;
-  isVerifiedOwner: boolean;
   isPinned: boolean;
   isEdited: boolean;
   createdAt: string | null;

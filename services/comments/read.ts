@@ -14,7 +14,6 @@ function docToComment(d: { id: string; data: any }, qrId: string): CommentItem {
     text: d.data.text,
     parentId: d.data.parentId || null,
     isDeleted: false,
-    isHidden: d.data.isHidden || false,
     reportCount: d.data.reportCount || 0,
     likeCount: d.data.likeCount || 0,
     dislikeCount: d.data.dislikeCount || 0,

@@ -26,7 +26,6 @@ export const qrComments = pgTable(
   "qr_comments",
   {
     id: text("id").primaryKey().default(sql`gen_random_uuid()`),
-    firebaseId: text("firebase_id").unique(),
     qrCodeId: text("qr_code_id").references(() => qrCodes.id, { onDelete: "cascade" }),
     unifiedQrId: text("unified_qr_id").references(() => unifiedQrs.id, { onDelete: "cascade" }),
     userId: text("user_id")
@@ -37,10 +36,8 @@ export const qrComments = pgTable(
     text: text("text").notNull(),
     likes: integer("likes").notNull().default(0),
     reportCount: integer("report_count").notNull().default(0),
-    isHidden: boolean("is_hidden").notNull().default(false),
     isDeleted: boolean("is_deleted").notNull().default(false),
     isPinned: boolean("is_pinned").notNull().default(false),
-    isVerifiedOwner: boolean("is_verified_owner").notNull().default(false),
     isEdited: boolean("is_edited").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

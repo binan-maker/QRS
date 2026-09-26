@@ -9,7 +9,6 @@ export interface CommentItem {
   parentId?: string | null;
   userId?: string;
   isDeleted?: boolean;
-  isHidden?: boolean;
   reportCount?: number;
   userUsername?: string;
   userPhotoURL?: string;

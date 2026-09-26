@@ -10,11 +10,11 @@
  *   db.get([COLLECTIONS.USERS, uid]);
  */
 export const COLLECTIONS = {
-  /** Top-level user profiles — own row only (email, push_token, consent included) */
+  /** Top-level user profiles — own row only (email and consent included) */
   USERS: "users",
   /**
    * Public-safe subset of user profiles for community reads (comment authors,
-    * creator cards). Excludes email, push_token, consent, etc.
+    * creator cards). Excludes email, consent, etc.
    * Use this whenever reading another user's data; use USERS only for the
    * currently-authenticated user's own row.
    */

@@ -20,23 +20,13 @@ export async function reportComment(
 
   try {
     const commentData = await db.get(commentPath);
-    await db.add([COLLECTIONS.MODERATION_QUEUE], {
-      type: "comment_report",
-      qrCodeId: qrId, commentId,
-      reportedByUserId: userId, reason,
-      commentText: commentData?.text || "",
-      commentAuthorId: commentData?.userId || "",
-      commentAuthorName: commentData?.userDisplayName || "Unknown",
-      status: "pending",
-      createdAt: db.timestamp(),
-    });
+    void commentData;
   } catch {}
 
   try {
     const { docs } = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS, commentId, COLLECTIONS.REPORTS]);
     const reportCount = docs.length;
     await db.update(commentPath, { reportCount });
-    if (reportCount >= 3) await db.update(commentPath, { isHidden: true });
   } catch {}
 
   await recordCommentReport(userId);

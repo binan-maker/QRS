@@ -93,9 +93,8 @@ async function fetchStats(qrId: string): Promise<{ scanCount: number; commentCou
 async function fetchComments(qrId: string): Promise<WebQrComment[]> {
   const { data, error } = await getWebSupabase()
     .from("qr_comments")
-    .select("id,user_id,user_name,text,parent_id,likes,is_edited,created_at,is_hidden,is_deleted")
+    .select("id,user_id,user_name,text,parent_id,likes,is_edited,created_at,is_deleted")
     .or(`qr_code_id.eq.${qrId},unified_qr_id.eq.${qrId}`)
-    .eq("is_hidden", false)
     .eq("is_deleted", false)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -226,7 +225,7 @@ export async function deleteQrComment(qrId: string, commentId: string): Promise<
   const session = await currentSession();
   const { error } = await getWebSupabase()
     .from("qr_comments")
-    .update({ text: "[deleted]", is_deleted: true, is_hidden: true, updated_at: new Date().toISOString() })
+    .update({ text: "[deleted]", is_deleted: true, updated_at: new Date().toISOString() })
     .eq("id", commentId)
     .eq("user_id", session.user.id);
   if (error) throw error;

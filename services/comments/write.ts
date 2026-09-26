@@ -85,7 +85,6 @@ export async function addComment(
     text: sanitizedText,
     parentId,
     isDeleted: false,
-    isHidden: false,
     reportCount: 0,
     likeCount: 0,
     dislikeCount: 0,

@@ -18,22 +18,6 @@ export const unifiedQrStatusEnum = pgEnum("unified_qr_status", [
   "limit_reached",
 ]);
 
-
-export const verificationStatusEnum = pgEnum("verification_status", [
-  "none",
-  "pending",
-  "approved",
-  "rejected",
-]);
-
-export const verificationMethodEnum = pgEnum("verification_method", [
-  "email",
-  "phone",
-  "document",
-  "manual",
-  "none",
-]);
-
 export const scanSourceEnum = pgEnum("scan_source", [
   "camera",
   "gallery",
@@ -53,15 +37,3 @@ export const scanVerdictEnum = pgEnum("scan_verdict", [
   "unknown",
 ]);
 
-export const moderationStatusEnum = pgEnum("moderation_status", [
-  "pending",
-  "reviewed",
-  "dismissed",
-  "actioned",
-]);
-
-export const moderationContentTypeEnum = pgEnum("moderation_content_type", [
-  "qr",
-  "comment",
-  "user",
-]);
