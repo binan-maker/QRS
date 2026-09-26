@@ -89,6 +89,9 @@ const STUBBED_PACKAGES = {
   bcryptjs:                 EMPTY_STUB,   // server-side hashing
   openai:                   EMPTY_STUB,   // called server-side via Express
   esbuild:                  EMPTY_STUB,   // build tool
+  pg:                       EMPTY_STUB,   // node postgres driver
+  "pg-native":              EMPTY_STUB,
+  "pg-hstore":              EMPTY_STUB,
   // ── Server utility packages (only imported in server/ batch utils) ─────────
   semver:                   EMPTY_STUB,
   "p-limit":                EMPTY_STUB,
