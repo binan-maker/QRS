@@ -146,7 +146,7 @@ export default function PrivacyPolicyScreen() {
           <Bullet text="In-app navigation patterns, feature usage frequency, and session duration" colors={colors} />
           <Bullet text="Scan velocity data (how often a particular QR code is scanned across all users)" colors={colors} />
           <Bullet text="Search queries entered within the app" colors={colors} />
-          <Bullet text="Follows and social interactions" colors={colors} />
+          <Bullet text="Community interactions and comments" colors={colors} />
 
           <SubHead text="Device & Network Data" colors={colors} />
           <Bullet text="Device type, OS version, screen resolution, and app version" colors={colors} />

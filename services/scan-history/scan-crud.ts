@@ -16,8 +16,7 @@ export async function recordScan(
   content: string,
   contentType: string,
   userId: string | null,
-  isAnonymous: boolean,
-  scanSource: "camera" | "gallery" | "viewed" = "camera"
+  isAnonymous: boolean
 ): Promise<void> {
   if (userId && isAnonymous) return;
 
@@ -46,7 +45,6 @@ export async function recordScan(
         contentType,
         isAnonymous: false,
         scannedAt: db.timestamp(),
-        scanSource,
         counted: true,
       });
       batch.increment([COLLECTIONS.USERS, userId], "personalScanCount", 1);

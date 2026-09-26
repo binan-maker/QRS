@@ -17,10 +17,10 @@ apps/api/
     │   ├── user/
     │   └── trust/
     ├── infrastructure/  # DB, cache, queue, auth, push adapters
-    │   ├── persistence/ # Drizzle repositories
+    │   ├── persistence/ # Database repositories
     │   ├── cache/       # Redis adapter
     │   ├── queue/       # BullMQ jobs
-    │   └── auth/        # Firebase Admin token verification
+    │   └── auth/        # Supabase Auth token verification
     └── interface/       # HTTP layer (Express routes, middleware, DTOs)
         ├── routes/
         ├── middleware/

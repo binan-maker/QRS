@@ -12,18 +12,6 @@ import type { HistoryItem as HistoryItemType } from "@/features/history/types";
 import { parseAnyPaymentQr } from "@/services/analysis";
 import { useQrMeta } from "@/shared/utils/qr-content";
 
-// Pure helpers — defined outside component to avoid re-creation per render.
-function getRiskConfig(risk: string, colors: any) {
-  if (risk === "dangerous" || risk === "caution") return {
-    icon: "alert-circle" as const,
-    label: "Caution",
-    color: colors.warning,
-    bg: colors.warningDim ?? colors.warning + "18",
-    borderColor: colors.warning + "50",
-  };
-  return null;
-}
-
 function getPaymentData(content: string) {
   try {
     const parsed = parseAnyPaymentQr(content);
@@ -50,7 +38,6 @@ const ENTERING_ANIMS = Array.from({ length: 9 }, (_, i) =>
 
 interface HistoryItemProps {
   item: HistoryItemType;
-  risk: "safe" | "caution" | "dangerous";
   onDelete: (item: HistoryItemType) => void;
   index?: number;
   animate?: boolean;
@@ -59,7 +46,6 @@ interface HistoryItemProps {
 
 const HistoryItem = memo(function HistoryItem({
   item,
-  risk,
   onDelete,
   index = 0,
   animate = true,
@@ -69,8 +55,6 @@ const HistoryItem = memo(function HistoryItem({
   const { typeMeta, displayLabel, subtitle } = useQrMeta(item.content, item.contentType);
 
   const isSynced   = item.source === "cloud";
-
-  const riskCfg = useMemo(() => getRiskConfig(risk, colors), [risk, colors]);
 
   const paymentData = useMemo(
     () => item.contentType === "payment" ? getPaymentData(item.content) : null,
@@ -82,21 +66,10 @@ const HistoryItem = memo(function HistoryItem({
     [paymentData]
   );
 
-  const timeAgo  = useMemo(() => formatRelativeTime(item.scannedAt), [item.scannedAt]);
-  const showRisk = (item.contentType === "url" || item.contentType === "payment") && risk !== "safe";
+  const timeAgo = useMemo(() => formatRelativeTime(item.scannedAt), [item.scannedAt]);
 
-  // Memoize derived style values that involve tuple/string allocation.
-  const gradient = useMemo<[string, string]>(() => {
-    if (risk === "dangerous" || risk === "caution")
-      return [colors.warning, colors.warningShade ?? colors.warning];
-    return typeMeta.gradient as [string, string];
-  }, [risk, colors, typeMeta.gradient]);
-
-  const accentBorder = useMemo(() => {
-    if (showRisk && riskCfg) return riskCfg.borderColor;
-    return colors.surfaceBorder;
-  }, [showRisk, riskCfg, colors]);
-
+  const gradient = typeMeta.gradient as [string, string];
+  const accentBorder = colors.surfaceBorder;
   const cardBg = isDark ? colors.surface : "#ffffff";
 
   // Stable entering animation from the pre-built cache.
@@ -164,14 +137,6 @@ const HistoryItem = memo(function HistoryItem({
             )}
 
             <View style={styles.metaRow}>
-              {showRisk && riskCfg && (
-                <View style={[styles.riskBadge, { backgroundColor: riskCfg.bg, borderColor: riskCfg.color + "45" }]}>
-                  <Ionicons name={riskCfg.icon} size={9} color={riskCfg.color} />
-                  <Text style={[styles.riskText, { color: riskCfg.color }]} maxFontSizeMultiplier={1}>
-                    {riskCfg.label}
-                  </Text>
-                </View>
-              )}
               {isSynced && (
                 <Ionicons name="cloud-done-outline" size={12} color={colors.safe} />
               )}
@@ -246,21 +211,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 5,
     marginTop: 1,
-  },
-  riskBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 2.5,
-    borderRadius: 100,
-    borderWidth: 1,
-    flexShrink: 0,
-  },
-  riskText: {
-    fontSize: 10,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 0.2,
   },
   right: {
     alignItems: "flex-end",

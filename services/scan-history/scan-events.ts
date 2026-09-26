@@ -5,7 +5,6 @@ export interface ScanEvent {
   platform: "android" | "ios" | "web" | "unknown";
   contentType: string;
   verdict: "safe" | "flagged" | "unknown";
-  scanSource: "camera" | "gallery" | "unknown";
   /** ISO 3166-1 alpha-2 country code derived from device locale — non-PII */
   country: string;
 }

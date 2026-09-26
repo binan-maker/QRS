@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { InteractionManager } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
@@ -17,11 +16,9 @@ import {
   getCachedScanStats,
   setCachedScanStats,
 } from "@/services/cache/qr-cache";
-import type { HistoryItem, RiskLevel, ActiveFilters } from "@/features/history/types";
+import type { HistoryItem, ActiveFilters } from "@/features/history/types";
 import { itemMatchesFilters } from "@/features/history/utils/filter-utils";
 import { PAGE_SIZE, STALE_MS } from "@/features/history/utils/constants";
-
-const analyzeItemRisk = (_item: HistoryItem): RiskLevel => "safe";
 
 function mapScanItem(s: any): HistoryItem {
   return {
@@ -31,14 +28,8 @@ function mapScanItem(s: any): HistoryItem {
     scannedAt:   s.scannedAt,
     qrCodeId:    s.qrCodeId,
     source:      "cloud" as const,
-    scanSource:  (s.scanSource as "camera" | "gallery" | "viewed") || "camera",
   };
 }
-
-// Only these two content types can ever produce a non-safe risk level.
-// Skipping all other types in the safety analysis loop cuts analysis time
-// proportionally to how many non-URL/payment items the user has.
-const RISK_ANALYSIS_TYPES = new Set(["url", "payment"]);
 
 export function useHistoryData(activeFilters: ActiveFilters) {
   const { user }      = useAuth();
@@ -172,87 +163,6 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     [localHistory, cloudHistory],
   );
 
-  // ── Safety analysis — batched to avoid blocking the JS thread ───────────────
-  // Items are processed in chunks with a yield between each batch so the list
-  // stays responsive. The runId guard discards stale batches when history changes.
-  //
-  // Optimizations for large histories (500–10 000+ items):
-  //  • Only URL and payment items can ever be non-safe — all other types are
-  //    skipped so the loop is proportionally faster when most items are
-  //    contacts, wifi, text, etc.
-  //  • Batch size raised from 25 → 150: fewer event-loop ticks for the same
-  //    item count (400 ticks → 67 for 10 000 items).
-  //  • First batch deferred with InteractionManager so active scroll
-  //    animations complete before any JS-heavy analysis begins.
-  //  • hasRisk is tracked inline so we never spread the full map at the end.
-  const [safetyRiskMap, setSafetyRiskMap] = useState<Map<string, RiskLevel>>(new Map());
-  const safetyRunIdRef     = useRef(0);
-  const safetyTimeoutRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Reset risk map immediately when user changes — prevents the brief window
-  // where a signed-out user's risk badges appear against the new user's items.
-  useEffect(() => {
-    setSafetyRiskMap(new Map());
-  }, [user?.id]);
-
-  useEffect(() => {
-    const runId = ++safetyRunIdRef.current;
-
-    // Collect only items that can be non-safe to minimise analysis work.
-    const analysisItems: HistoryItem[] = [];
-    for (let i = 0; i < history.length; i++) {
-      if (RISK_ANALYSIS_TYPES.has(history[i].contentType)) analysisItems.push(history[i]);
-    }
-    if (analysisItems.length === 0) {
-      setSafetyRiskMap(new Map());
-      return;
-    }
-
-    const BATCH = 150; // raised from 25 — 67 ticks for 10 000 analysable items
-    const map = new Map<string, RiskLevel>();
-    let idx     = 0;
-    let hasRisk = false; // tracked inline — avoids spreading full map at end
-
-    function processNextBatch() {
-      if (safetyRunIdRef.current !== runId) return;
-      const end = Math.min(idx + BATCH, analysisItems.length);
-      for (; idx < end; idx++) {
-        const risk = analyzeItemRisk(analysisItems[idx]);
-        if (risk !== "safe") {
-          map.set(analysisItems[idx].id, risk);
-          hasRisk = true;
-        }
-      }
-      if (idx >= analysisItems.length) {
-        if (safetyRunIdRef.current !== runId) return;
-        // Only trigger a re-render if at least one item is non-safe.
-        // Safe-only histories (majority of users) get zero extra renders.
-        if (hasRisk) setSafetyRiskMap(new Map(map));
-      } else {
-        // Yield to the renderer before the next batch.
-        safetyTimeoutRef.current = setTimeout(processNextBatch, 0);
-      }
-    }
-
-    // Defer the first batch until after active scroll animations complete
-    // so safety analysis never competes with the list's initial paint.
-    const handle = InteractionManager.runAfterInteractions(() => {
-      if (safetyRunIdRef.current !== runId) return;
-      processNextBatch();
-    });
-
-    return () => {
-      // Cancel both the InteractionManager handle (first-batch gate) and any
-      // in-progress setTimeout chain so no JS work runs after unmount or
-      // after history changes invalidate this run.
-      handle.cancel();
-      if (safetyTimeoutRef.current !== null) {
-        clearTimeout(safetyTimeoutRef.current);
-        safetyTimeoutRef.current = null;
-      }
-    };
-  }, [history]);
-
   const displayItems = useMemo<HistoryItem[]>(() => {
     const contentFilters = activeFilters.filter((k) => k !== "all");
     if (contentFilters.length === 0) return history;
@@ -273,7 +183,7 @@ export function useHistoryData(activeFilters: ActiveFilters) {
       const stored = await AsyncStorage.getItem(`local_scan_history_${userId}`);
       if (stored) {
         const local: any[] = JSON.parse(stored);
-        setLocalHistory(local.map((s) => ({ ...s, source: "local" as const, scanSource: s.scanSource || "camera" })));
+        setLocalHistory(local.map((s) => ({ ...s, source: "local" as const })));
       } else {
         setLocalHistory([]);
       }
@@ -319,7 +229,6 @@ export function useHistoryData(activeFilters: ActiveFilters) {
     statsLoading,
     refetchStats,
     history,
-    safetyRiskMap,
     displayItems,
     refreshing,
     setRefreshing,

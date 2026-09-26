@@ -1,12 +1,3 @@
-export interface AppUser {
-  id: string;
-  displayName: string;
-  email: string;
-  photoURL?: string | null;
-  username?: string | null;
-  createdAt?: number;
-}
-
 export interface UserStats {
   scanCount: number;
   commentCount: number;
@@ -19,5 +10,4 @@ export interface PublicProfile {
   username?: string;
   photoURL?: string | null;
   scanCount?: number;
-  followersCount?: number;
 }

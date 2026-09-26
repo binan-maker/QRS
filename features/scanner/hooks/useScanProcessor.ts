@@ -109,7 +109,7 @@ export function useScanProcessor({
   }
 
   // ─── Offline path ─────────────────────────────────────────────────────────────
-  async function processOfflineScan(content: string, scanSource: "camera" | "gallery" = "camera") {
+  async function processOfflineScan(content: string) {
     const validation = validateQrInput(content);
     if (!validation.valid) {
       setProcessing(false);
@@ -133,13 +133,13 @@ export function useScanProcessor({
     if (user?.id) {
       appendToLocalScanHistory(
         user.id,
-        makeScanEntry(content, contentType, qrId, scanSource, true)
+        makeScanEntry(content, contentType, qrId, true)
       ).catch(() => {});
     }
 
     setProcessing(false);
 
-    emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "unknown", scanSource });
+    emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "unknown" });
     navigateToQrDetail(qrId, content, contentType);
   }
 
@@ -177,7 +177,7 @@ export function useScanProcessor({
         setConversionBannerMsg(ANON_CONVERSION_MESSAGES[slot.totalCount] ?? null);
       }
 
-      emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "unknown", scanSource: "camera" });
+      emitScanEvent(qrId, { platform: PLATFORM, contentType, verdict: "unknown" });
       navigateToQrDetail(qrId, content, contentType);
     } catch (e: any) {
       setProcessing(false);
@@ -192,7 +192,6 @@ export function useScanProcessor({
     content:     string,
     localQrId:   string,
     contentType: string,
-    scanSource:  "camera" | "gallery",
     verdict:     "safe" | "flagged" | "unknown" = "safe"
   ) {
     (async () => {
@@ -203,24 +202,23 @@ export function useScanProcessor({
           JSON.stringify({ content: qr.content, contentType: qr.contentType })
         ).catch(() => {});
         if (user?.id) {
-          recordScan(qr.id, content, qr.contentType, user.id, false, scanSource).catch(() => {});
+          recordScan(qr.id, content, qr.contentType, user.id, false).catch(() => {});
           await appendToLocalScanHistory(
             user.id,
-            makeScanEntry(content, qr.contentType, qr.id, scanSource)
+            makeScanEntry(content, qr.contentType, qr.id)
           );
         }
         emitScanEvent(qr.id, {
           platform: PLATFORM,
           contentType: qr.contentType,
           verdict,
-          scanSource,
         });
       } catch {}
     })();
   }
 
   // ─── Main scan path ───────────────────────────────────────────────────────────
-  async function processScan(content: string, scanSource: "camera" | "gallery" = "camera") {
+  async function processScan(content: string) {
     if (user && anonymousMode) {
       await processScanAnonymous(content);
       return;
@@ -250,9 +248,9 @@ export function useScanProcessor({
       setProcessing(false);
 
       navigateToQrDetail(qrId, content, contentType);
-      _backgroundSync(content, qrId, contentType, scanSource, "unknown");
+      _backgroundSync(content, qrId, contentType, "unknown");
     } catch {
-      await processOfflineScan(content, scanSource);
+      await processOfflineScan(content);
     }
   }
 
@@ -267,7 +265,7 @@ export function useScanProcessor({
       canScanRef.current  = false;
       setScanned(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      await processScan(data, "camera");
+      await processScan(data);
     },
     [anonymousMode, user, token]
   );
@@ -364,7 +362,7 @@ export function useScanProcessor({
 
       // processScan manages its own setScanned/setProcessing state — do not
       // call releaseLock() here; the modal dismiss / resetScan flow handles it.
-      await processScan(content, "gallery");
+      await processScan(content);
     } catch (e: any) {
       setProcessing(false);
       showGalleryError(e.message || "Something went wrong. Please try again.");

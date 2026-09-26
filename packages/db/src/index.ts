@@ -1,5 +1,5 @@
 /**
- * Shared types for BinRo
+ * Shared database entity types for BinRo
  */
 
 export interface User {
@@ -27,7 +27,6 @@ export interface QrCode {
   content: string;
   contentType: string;
   qrType: string;
-  displayDestination?: string | null;
   scanCount: number;
   commentCount: number;
   scanLimit?: number | null;

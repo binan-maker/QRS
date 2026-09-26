@@ -6,6 +6,5 @@
 
 export * from "./auth.validator";
 export * from "./user.validator";
-export * from "./qr.validator";
 export * from "./settings.validator";
 export * from "./scan.validator";

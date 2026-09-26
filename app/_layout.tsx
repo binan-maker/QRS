@@ -203,7 +203,7 @@ function ConsentGatedApp({ onReady }: { onReady: () => void }) {
       setConsentChecked(true);
       onReady();
     });
-  }, []);
+  }, [onReady]);
 
   const handleAccept = () => {
     setConsentGiven(true);

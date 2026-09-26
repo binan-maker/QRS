@@ -7,8 +7,6 @@ export interface ScanStatsResult {
   byText: number;
   byPayment: number;
   byOther: number;
-  byCamera: number;
-  byGallery: number;
 }
 
 export async function getUserScanStats(userId: string): Promise<ScanStatsResult> {
@@ -26,15 +24,13 @@ export async function getUserScanStats(userId: string): Promise<ScanStatsResult>
                  ((userData.scanCountByUrl || 0) +
                   (userData.scanCountByText || 0) +
                   (userData.scanCountByPayment || 0)),
-        byCamera: userData.scanCountByCamera || 0,
-        byGallery: userData.scanCountByGallery || 0,
       };
     }
   } catch (e) {
     console.warn("Failed to fetch user stats, falling back to query:", e);
   }
 
-  let total = 0, byUrl = 0, byText = 0, byPayment = 0, byOther = 0, byCamera = 0, byGallery = 0;
+  let total = 0, byUrl = 0, byText = 0, byPayment = 0, byOther = 0;
   let cursor: any = undefined;
 
   do {
@@ -52,13 +48,10 @@ export async function getUserScanStats(userId: string): Promise<ScanStatsResult>
       else if (data.contentType === "text") byText++;
       else if (data.contentType === "payment") byPayment++;
       else byOther++;
-
-      if (data.scanSource === "camera") byCamera++;
-      else if (data.scanSource === "gallery") byGallery++;
     }
   } while (cursor);
 
-  return { total, byUrl, byText, byPayment, byOther, byCamera, byGallery };
+  return { total, byUrl, byText, byPayment, byOther };
 }
 
 export async function getUserAllScansForStats(

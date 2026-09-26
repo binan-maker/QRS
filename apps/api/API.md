@@ -394,7 +394,7 @@ Send an Expo push notification. Internal (no rate limit enforcement — call onl
 |---|---|---|
 | `AUTH_REQUIRED` | 401 | Missing Authorization header |
 | `TOKEN_INVALID` | 401 | Expired, revoked, or malformed token |
-| `AUTH_FAILED` | 401 | General Firebase Auth failure |
+| `AUTH_FAILED` | 401 | General Supabase Auth failure |
 | `FORBIDDEN` | 403 | Authenticated but not allowed |
 | `USER_NOT_FOUND` | 404 | User does not exist |
 | `QR_NOT_FOUND` | 404 | QR code does not exist |
@@ -407,14 +407,14 @@ Send an Expo push notification. Internal (no rate limit enforcement — call onl
 | `USERNAME_TAKEN` | 409 | Username already claimed |
 | `VALIDATION_ERROR` | 400 | Zod schema validation failed |
 | `RATE_LIMITED` | 429 | Rate limit exceeded |
-| `SERVICE_UNAVAILABLE` | 503 | Firebase Admin or DB not configured |
+| `SERVICE_UNAVAILABLE` | 503 | Supabase Admin or DB not configured |
 | `INTERNAL_ERROR` | 500 | Unexpected server error |
 
 ---
 
 ## Architecture Notes
 
-### Firebase Authentication (retained)
+### Supabase Authentication
 Supabase Auth is the sole identity provider. The server verifies `Authorization: Bearer <ACCESS_TOKEN>` on every protected endpoint using Supabase Auth's `getUser()` endpoint. No custom JWT issuance.
 
 ### Shared auth middleware

@@ -2,7 +2,7 @@ import { Tabs } from "expo-router";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useCallback, useMemo, memo, useState } from "react";
+import React, { useEffect, useCallback, useMemo, memo } from "react";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { TabBarProvider, useTabBarScroll } from "@/shared/contexts/TabBarContext";
 

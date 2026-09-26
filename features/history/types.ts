@@ -5,7 +5,6 @@ export interface HistoryItem {
   scannedAt:   string;
   qrCodeId?:   string;
   source:      "local" | "cloud";
-  scanSource?: "camera" | "gallery" | "viewed";
 }
 
 export type FilterKey =
@@ -18,8 +17,6 @@ export type FilterKey =
 
 /** The active filter state is always an array of FilterKey values. */
 export type ActiveFilters = FilterKey[];
-
-export type RiskLevel = "safe" | "caution" | "dangerous";
 
 export type ListRow =
   | { kind: "header"; label: string; count: number; id: string }

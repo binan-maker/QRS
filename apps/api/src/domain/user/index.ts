@@ -33,7 +33,7 @@ export function canChangeUsername(lastChangedAt: Date | null): boolean {
 
 export interface IUserRepository {
   findById(id: string): Promise<User | null>;
-  findByFirebaseUid(uid: string): Promise<User | null>;
+  findByAuthId(uid: string): Promise<User | null>;
   findByEmail(email: string): Promise<User | null>;
   findByUsername(username: string): Promise<User | null>;
   create(data: Omit<User, "createdAt" | "updatedAt">): Promise<User>;

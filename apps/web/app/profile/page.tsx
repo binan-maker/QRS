@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { getWebSupabase } from "../../lib/supabase";
+import { getWebSupabase, isWebSupabaseConfigured } from "../../lib/supabase";
 import styles from "./profile.module.css";
 
 function Icon({ name, size = 24 }: { name: "home" | "scan" | "user"; size?: number }) {
@@ -27,6 +27,11 @@ export default function ProfilePage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!isWebSupabaseConfigured()) {
+      setLoading(false);
+      return;
+    }
+
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
     try {
       const supabase = getWebSupabase();
@@ -44,18 +49,19 @@ export default function ProfilePage() {
       fallbackTimer = setTimeout(() => setLoading(false), 1200);
       return () => {
         if (fallbackTimer) clearTimeout(fallbackTimer);
-        listener.subscription.unsubscribe();
+        listener?.subscription?.unsubscribe();
       };
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Web Supabase is not configured.");
+    } catch {
       setLoading(false);
     }
   }, []);
 
   async function handleSignOut() {
     try {
-      const { error: signOutError } = await getWebSupabase().auth.signOut();
-      if (signOutError) throw signOutError;
+      if (isWebSupabaseConfigured()) {
+        const { error: signOutError } = await getWebSupabase().auth.signOut();
+        if (signOutError) throw signOutError;
+      }
       setUser(null);
     }
     catch (caught) { setError(caught instanceof Error ? caught.message : "Unable to sign out."); }

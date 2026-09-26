@@ -6,7 +6,6 @@ export interface LocalScanEntry {
   contentType: string;
   scannedAt:   string;
   qrCodeId:    string;
-  scanSource:  "camera" | "gallery";
   offline?:    boolean;
 }
 
@@ -32,7 +31,6 @@ export function makeScanEntry(
   content:     string,
   contentType: string,
   qrCodeId:    string,
-  scanSource:  "camera" | "gallery",
   offline?:    boolean
 ): LocalScanEntry {
   return {
@@ -41,7 +39,6 @@ export function makeScanEntry(
     contentType,
     scannedAt:   new Date().toISOString(),
     qrCodeId,
-    scanSource,
     ...(offline ? { offline: true } : {}),
   };
 }

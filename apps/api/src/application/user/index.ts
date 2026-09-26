@@ -12,25 +12,24 @@ import {
 } from "@binro/core";
 
 // ─── RegisterUserUseCase ──────────────────────────────────────────────────────
-// Syncs a Firebase user into the PostgreSQL users table on first sign-in.
+// Syncs an authenticated Supabase user into the users table on first sign-in.
 
 export class RegisterUserUseCase {
   constructor(private readonly repo: IUserRepository) {}
 
   async execute(input: {
-    firebaseUid: string;
+    authId: string;
     email: string;
     displayName: string;
     emailVerified: boolean;
     photoUrl?: string;
   }): Promise<User> {
     // Idempotent — return existing user if already registered
-    const existing = await this.repo.findByFirebaseUid(input.firebaseUid);
+    const existing = await this.repo.findByAuthId(input.authId);
     if (existing) return existing;
 
     return this.repo.create({
-      id: crypto.randomUUID(),
-      firebaseUid: input.firebaseUid,
+      id: input.authId,
       email: input.email,
       displayName: input.displayName,
       emailVerified: input.emailVerified,

@@ -47,7 +47,6 @@ function HistoryScreen() {
     user,
     history,
     displayItems,
-    safetyRiskMap,
     activeFilters,
     onFilterChange,
     refreshing,
@@ -118,17 +117,15 @@ function HistoryScreen() {
       if (row.kind === "header") {
         return <SectionHeader label={row.label} count={row.count} />;
       }
-      const risk = safetyRiskMap.get(row.item.id) ?? "safe";
       return (
         <HistoryItemComponent
           item={row.item}
-          risk={risk as "safe" | "caution" | "dangerous"}
           onDelete={deleteItem}
           index={index}
         />
       );
     },
-    [safetyRiskMap, deleteItem]
+    [deleteItem]
   );
 
   const renderFooter = useCallback(() => {

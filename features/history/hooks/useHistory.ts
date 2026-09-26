@@ -8,7 +8,6 @@ import { toggleFilter } from "@/features/history/utils/filter-utils";
 import type { HistoryItem, FilterKey, ActiveFilters } from "@/features/history/types";
 
 export type { HistoryItem, FilterKey, ActiveFilters };
-export type { RiskLevel } from "@/features/history/types";
 
 export function useHistory() {
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>(["all"]);

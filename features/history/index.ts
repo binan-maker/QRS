@@ -18,7 +18,7 @@ export { default as OfflineBanner }      from "./components/OfflineBanner";
 export { default as SearchResultsRow }   from "./components/SearchResultsRow";
 
 // Types
-export type { HistoryItem as HistoryItemType, RiskLevel, ListRow } from "./types";
+export type { HistoryItem as HistoryItemType, ListRow } from "./types";
 
 // Utils
 export { groupByDate }                                    from "./utils/date-utils";

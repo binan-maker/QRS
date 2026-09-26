@@ -7,7 +7,7 @@
  * Import from here — not from individual type files.
  *
  * @example
- *   import type { AppUser, Scan, Notification, UserSettings } from "@binro/core";
+ *   import type { UserStats, Scan, Notification, UserSettings } from "@binro/core";
  */
 
 // ── Primitive value types ──────────────────────────────────────────────────────
