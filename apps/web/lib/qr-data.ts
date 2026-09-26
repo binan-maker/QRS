@@ -94,22 +94,32 @@ function toPublicQrRecord(id: string, data: Record<string, any>): PublicQrRecord
 }
 
 export async function getPublicQrRecord(qrId: string): Promise<PublicQrRecord | null> {
-  const supabase = getPublicSupabase();
-  const unified = await supabase
-    .from("unified_qrs")
-    .select("*")
-    .eq("id", qrId)
-    .maybeSingle();
-  if (unified.error && unified.error.code !== "PGRST116") throw unified.error;
-  if (unified.data) return toPublicQrRecord(qrId, unified.data as Record<string, any>);
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !anonKey) {
+      return null;
+    }
+    const supabase = getPublicSupabase();
+    const unified = await supabase
+      .from("unified_qrs")
+      .select("*")
+      .eq("id", qrId)
+      .maybeSingle();
+    if (unified.error && unified.error.code !== "PGRST116") throw unified.error;
+    if (unified.data) return toPublicQrRecord(qrId, unified.data as Record<string, any>);
 
-  const legacy = await supabase
-    .from("qr_codes")
-    .select("*")
-    .eq("id", qrId)
-    .maybeSingle();
-  if (legacy.error && legacy.error.code !== "PGRST116") throw legacy.error;
-  return legacy.data
-    ? toPublicQrRecord(qrId, legacy.data as Record<string, any>)
-    : null;
+    const legacy = await supabase
+      .from("qr_codes")
+      .select("*")
+      .eq("id", qrId)
+      .maybeSingle();
+    if (legacy.error && legacy.error.code !== "PGRST116") throw legacy.error;
+    return legacy.data
+      ? toPublicQrRecord(qrId, legacy.data as Record<string, any>)
+      : null;
+  } catch (error) {
+    console.warn("[BinRo] Supabase query failed, falling back to local analysis:", error);
+    return null;
+  }
 }

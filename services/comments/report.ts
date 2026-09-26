@@ -32,15 +32,6 @@ export async function reportComment(
   await recordCommentReport(userId);
 }
 
-export async function ownerHideComment(qrId: string, commentId: string): Promise<void> {
-  try {
-    await db.update([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.COMMENTS, commentId], { isHidden: true });
-  } catch (e) {
-    console.warn("[db] ownerHideComment failed:", e);
-    throw e;
-  }
-}
-
 // NOTE: Comments live at qrCodes/{qrId}/comments/{commentId} — there is no
 // root-level "comments" collection to query. This function performs per-QR
 // cleanup scoped to a specific QR code instead of a cross-collection scan.

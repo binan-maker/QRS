@@ -1,6 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/scanner/page": "app/scanner/page.js",
-  "/download/page": "app/download/page.js",
-  "/qr/[code]/page": "app/qr/[code]/page.js"
-}

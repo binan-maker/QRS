@@ -18,12 +18,6 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- The public profile view exposes only fields intended for community reads.
--- friends_count is retained for compatibility with the app's profile model.
-ALTER TABLE public.users
-  ADD COLUMN IF NOT EXISTS following_count integer NOT NULL DEFAULT 0;
-ALTER TABLE public.users
-  ADD COLUMN IF NOT EXISTS friends_count integer NOT NULL DEFAULT 0;
-
 CREATE OR REPLACE VIEW public.public_profiles AS
 SELECT
   id,
@@ -33,9 +27,6 @@ SELECT
   scan_count,
   comment_count,
   total_likes_received,
-  friends_count,
-  is_online,
-  last_seen,
   is_deleted,
   created_at
 FROM public.users;
@@ -68,15 +59,14 @@ SET search_path = public
 AS $$
 BEGIN
   IF p_table NOT IN (
-    'users', 'qr_codes', 'unified_qrs', 'standard_links', 'guard_links',
+    'users', 'qr_codes', 'unified_qrs', 'standard_links',
     'qr_comments', 'qr_reports'
   ) THEN
     RAISE EXCEPTION 'Unsupported counter table';
   END IF;
   IF p_field NOT IN (
     'scan_count', 'comment_count', 'owner_scan_count', 'total_likes_received',
-    'friends_count', 'following_count', 'downloads', 'shares', 'likes',
-    'report_count'
+    'downloads', 'shares', 'likes', 'report_count'
   ) THEN
     RAISE EXCEPTION 'Unsupported counter field';
   END IF;

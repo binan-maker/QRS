@@ -82,7 +82,7 @@ function keysToSnake(obj: Record<string, any>): Record<string, any> {
 // ─── Collection → table name mapping ─────────────────────────────────────────
 
 const COLLECTION_TABLE: Record<string, string> = {
-  // Community-safe subset of users (no email / push_token / consent).
+  // Community-safe subset of users (no email / consent).
   // Use for reads about OTHER users; use "users" only for own-row reads.
   publicProfiles: "public_profiles",
   standardLinks: "standard_links",
