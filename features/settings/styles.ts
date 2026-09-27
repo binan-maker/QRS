@@ -1,0 +1,271 @@
+import { StyleSheet } from "react-native";
+import { type AppColors } from "@/shared/constants/colors";
+
+export function makeSettingsStyles(c: AppColors, width = 390) {
+  const s = Math.min(Math.max(width / 390, 0.82), 1.0);
+  const rf = (size: number) => Math.round(size * s);
+  const sp = (v: number) => Math.round(v * s);
+
+  return StyleSheet.create({
+    // ── Layout ──────────────────────────────────────────────────────────────
+    container: { flex: 1, backgroundColor: c.background },
+    navBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: sp(20),
+      paddingVertical: sp(14),
+      backgroundColor: c.background,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.surfaceBorder,
+    },
+    navBackBtn: {
+      width: sp(40), height: sp(40), borderRadius: sp(20),
+      backgroundColor: c.surface, alignItems: "center", justifyContent: "center",
+      borderWidth: 1, borderColor: c.surfaceBorder,
+    },
+    navTitle: { fontSize: rf(17), fontFamily: "Inter_700Bold", color: c.text },
+    scrollContent: { padding: sp(20), paddingBottom: sp(40) },
+    section: { marginBottom: sp(24) },
+    sectionLabel: {
+      fontSize: rf(11), fontFamily: "Inter_700Bold", color: c.textMuted,
+      letterSpacing: 1.4, marginBottom: sp(10), paddingLeft: 4, textTransform: "uppercase",
+    },
+
+    // ── Menu group ───────────────────────────────────────────────────────────
+    menuGroup: {
+      borderRadius: sp(20), borderWidth: 1, borderColor: c.surfaceBorder,
+      backgroundColor: c.surface, overflow: "hidden",
+    },
+    menuItem: {
+      flexDirection: "row", alignItems: "center", gap: sp(14), padding: sp(16),
+    },
+    menuIconWrap: {
+      width: sp(38), height: sp(38), borderRadius: sp(12),
+      alignItems: "center", justifyContent: "center",
+    },
+    menuLabel: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", color: c.text },
+    menuSublabel: { fontSize: rf(11), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 1 },
+    divider: { height: StyleSheet.hairlineWidth, backgroundColor: c.surfaceBorder, marginLeft: sp(66) },
+
+    // ── Account card ─────────────────────────────────────────────────────────
+    accountCard: {
+      flexDirection: "row", alignItems: "center", gap: sp(14), padding: sp(16),
+    },
+    accountAvatar: {
+      width: sp(48), height: sp(48), borderRadius: sp(24),
+      backgroundColor: c.primaryDim, borderWidth: 2, borderColor: c.primary + "40",
+      alignItems: "center", justifyContent: "center",
+    },
+    accountAvatarText: { fontSize: rf(18), fontFamily: "Inter_700Bold", color: c.primary },
+    accountName: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: c.text },
+    accountEmail: { fontSize: rf(11), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
+
+    // ── Verified pill (account card badge) ───────────────────────────────────
+    verifiedPill: {
+      flexDirection: "row", alignItems: "center", gap: 4,
+      paddingHorizontal: sp(7), paddingVertical: sp(3),
+      borderRadius: sp(10), borderWidth: 1,
+    },
+    verifiedPillText: { fontSize: rf(10), fontFamily: "Inter_600SemiBold" },
+
+    // ── Sign-in card ──────────────────────────────────────────────────────────
+    signInCard: {
+      flexDirection: "row", alignItems: "center", gap: sp(14),
+      borderRadius: sp(20), borderWidth: 1, borderColor: c.surfaceBorder,
+      backgroundColor: c.surface, padding: sp(18),
+    },
+    signInIcon: {
+      width: sp(48), height: sp(48), borderRadius: sp(16),
+      backgroundColor: c.primaryDim, alignItems: "center", justifyContent: "center",
+    },
+    signInTitle: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: c.text },
+    signInSub: { fontSize: rf(11), fontFamily: "Inter_400Regular", color: c.textSecondary, marginTop: 2 },
+
+    // ── Appearance — theme selector ───────────────────────────────────────────
+    appearanceLabel: { fontSize: rf(12), fontFamily: "Inter_600SemiBold", marginBottom: sp(12) },
+    themeRow: { flexDirection: "row", gap: sp(10) },
+    themeBtn: {
+      flex: 1, alignItems: "center", justifyContent: "center",
+      gap: sp(6), paddingVertical: sp(14), borderRadius: sp(14), borderWidth: 1.5,
+      position: "relative",
+    },
+    themeBtnText: { fontSize: rf(11), fontFamily: "Inter_600SemiBold" },
+    activeIndicator: { position: "absolute", bottom: 6, width: sp(18), height: 3, borderRadius: 2 },
+
+    // ── Sign out ─────────────────────────────────────────────────────────────
+    signOutBtn: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(10),
+      paddingVertical: sp(16), borderRadius: sp(20),
+      borderWidth: 1, borderColor: c.danger + "40",
+      backgroundColor: c.dangerDim,
+    },
+    signOutText: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", color: c.danger },
+
+    // ── Footer ───────────────────────────────────────────────────────────────
+    footer: {
+      alignItems: "center", gap: sp(8),
+      paddingTop: sp(8), paddingBottom: sp(12), paddingHorizontal: sp(24),
+    },
+    footerBadge: { borderRadius: sp(12), paddingHorizontal: sp(14), paddingVertical: sp(6) },
+    footerBadgeText: { fontSize: rf(11), fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.5 },
+    footerTagline: { fontSize: rf(11), fontFamily: "Inter_500Medium" },
+    footerDisclaimer: {
+      fontSize: rf(11), fontFamily: "Inter_400Regular",
+      textAlign: "center", lineHeight: Math.round(15 * s),
+    },
+
+    // ── Danger / account section ──────────────────────────────────────────────
+    warningBanner: {
+      flexDirection: "row", gap: sp(12), alignItems: "flex-start",
+      backgroundColor: c.dangerDim, padding: sp(16), borderRadius: sp(16),
+      borderWidth: 1, borderColor: c.danger + "30",
+    },
+    warningTitle: { fontSize: rf(14), fontFamily: "Inter_600SemiBold", color: c.danger, marginBottom: 4 },
+    warningDesc: { fontSize: rf(12), fontFamily: "Inter_400Regular", color: c.textSecondary, lineHeight: Math.round(18 * s) },
+    confirmLabel: { fontSize: rf(13), fontFamily: "Inter_500Medium", color: c.textSecondary },
+    confirmInput: {
+      backgroundColor: c.inputBackground, borderRadius: sp(14),
+      borderWidth: 1, borderColor: c.surfaceBorder,
+      paddingHorizontal: sp(16), paddingVertical: sp(13),
+      fontSize: rf(14), fontFamily: "Inter_500Medium", color: c.text,
+    },
+    deleteBtn: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(8),
+      backgroundColor: c.danger, paddingVertical: sp(15), borderRadius: sp(16),
+    },
+    deleteBtnText: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" },
+
+    // ── Guide section ─────────────────────────────────────────────────────────
+    guideStep: {
+      flexDirection: "row", gap: sp(14), alignItems: "flex-start", marginBottom: sp(14),
+      backgroundColor: c.surface, padding: sp(16), borderRadius: sp(18),
+      borderWidth: 1, borderColor: c.surfaceBorder,
+    },
+    guideStepNum: {
+      width: sp(28), height: sp(28), borderRadius: sp(14), backgroundColor: c.primaryDim,
+      alignItems: "center", justifyContent: "center", marginTop: 2,
+    },
+    guideStepNumText: { fontSize: rf(12), fontFamily: "Inter_700Bold", color: c.primary },
+    guideStepIcon: {
+      width: sp(42), height: sp(42), borderRadius: sp(14), backgroundColor: c.primaryDim,
+      alignItems: "center", justifyContent: "center",
+    },
+    guideStepTitle: { fontSize: rf(13), fontFamily: "Inter_700Bold", color: c.text, marginBottom: 3 },
+    guideStepDesc: {
+      fontSize: rf(11), fontFamily: "Inter_400Regular",
+      color: c.textSecondary, lineHeight: Math.round(17 * s),
+    },
+
+    // ── Feedback section ──────────────────────────────────────────────────────
+    feedbackIntro: {
+      fontSize: rf(13), fontFamily: "Inter_400Regular",
+      color: c.textSecondary, marginBottom: sp(24), lineHeight: Math.round(20 * s),
+    },
+    inputGroup: { marginBottom: sp(18) },
+    inputLabel: {
+      fontSize: rf(13), fontFamily: "Inter_700Bold",
+      color: c.textSecondary, marginBottom: sp(8), letterSpacing: 0.3,
+    },
+    textInput: {
+      backgroundColor: c.inputBackground, borderRadius: sp(14), borderWidth: 1,
+      borderColor: c.surfaceBorder, paddingHorizontal: sp(16), paddingVertical: sp(13),
+      fontSize: rf(14), fontFamily: "Inter_400Regular", color: c.text,
+    },
+    textArea: { height: 140, textAlignVertical: "top" as const },
+    charCount: {
+      fontSize: rf(11), fontFamily: "Inter_400Regular",
+      color: c.textMuted, textAlign: "right", marginTop: 4,
+    },
+    submitBtn: {
+      flexDirection: "row", alignItems: "center", justifyContent: "center", gap: sp(8),
+      borderRadius: sp(18), paddingVertical: sp(16), overflow: "hidden",
+      backgroundColor: c.primary,
+    },
+    submitBtnText: { fontSize: rf(14), fontFamily: "Inter_700Bold", color: "#fff" },
+
+    // ── Comments section ──────────────────────────────────────────────────────
+    myCommentItem: {
+      backgroundColor: c.surface, padding: sp(16), borderRadius: sp(18),
+      marginBottom: sp(10), borderWidth: 1, borderColor: c.surfaceBorder,
+    },
+    myCommentText: {
+      fontSize: rf(13), fontFamily: "Inter_400Regular",
+      color: c.text, lineHeight: Math.round(18 * s), marginBottom: sp(10),
+    },
+    myCommentMeta: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    myCommentDate: { fontSize: rf(11), fontFamily: "Inter_400Regular", color: c.textMuted },
+    deleteCommentBtn: { padding: 4 },
+  });
+}
+
+export const privacySettingsStyles = StyleSheet.create({
+  container: { flex: 1 },
+  navBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    paddingTop: 8,
+  },
+  navBackBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  navTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
+  navRight: { width: 40, alignItems: "center", justifyContent: "center" },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
+  emptyTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  signInBtn: { paddingHorizontal: 28, paddingVertical: 13, borderRadius: 16 },
+  signInBtnText: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 4 },
+  statusBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    marginBottom: 22,
+  },
+  statusIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statusTitle: { fontSize: 16, fontFamily: "Inter_700Bold", marginBottom: 2 },
+  statusSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  sectionLabel: {
+    fontSize: 11,
+    fontFamily: "Inter_700Bold",
+    textTransform: "uppercase",
+    letterSpacing: 1.4,
+    marginBottom: 10,
+    marginLeft: 4,
+  },
+  card: { borderRadius: 20, borderWidth: 1, marginBottom: 22, overflow: "hidden" },
+  divider: { height: 1, marginHorizontal: 16 },
+  menuRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  menuIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  menuLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  menuSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+});

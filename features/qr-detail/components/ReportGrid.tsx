@@ -1,0 +1,104 @@
+import { View, Text, StyleSheet, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "@/shared/contexts/ThemeContext";
+import { RATE_TYPES } from "@/features/qr-detail/data/reportTypes";
+
+interface ReportGridProps {
+  reportCounts: Record<string, number>;
+  userReport: string | null;
+  isLoggedIn: boolean;
+  isPayment?: boolean;
+  /** Visual-only hint that a server flush is in progress. Does NOT block taps —
+   *  the debounce in useQrReports handles sequencing. */
+  loading?: boolean;
+  onReport: (type: string) => void;
+}
+
+export default function ReportGrid({ reportCounts: _reportCounts, userReport, isLoggedIn, isPayment, loading, onReport }: ReportGridProps) {
+  const { colors, isDark } = useTheme();
+  const activeType = RATE_TYPES.find((rt) => rt.key === userReport);
+  const badgeColor = activeType ? activeType.color(colors) : colors.safe;
+  const badgeLabel = activeType ? `Voted ${activeType.label}` : "Voted";
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.text }]}>Rate this QR</Text>
+        {userReport ? (
+          <View style={[styles.votedBadge, { backgroundColor: badgeColor + (isDark ? "22" : "14"), borderColor: badgeColor + "50" }]}>
+            <Ionicons name={(activeType?.icon as any) ?? "checkmark-circle"} size={11} color={badgeColor} />
+            <Text style={[styles.votedText, { color: badgeColor }]}>{badgeLabel}</Text>
+          </View>
+        ) : (
+          <Text style={[styles.hint, { color: colors.textMuted }]}>
+            Tap to vote
+          </Text>
+        )}
+      </View>
+
+      <View style={styles.row}>
+        {RATE_TYPES.map((rt) => {
+          const isSelected = userReport === rt.key;
+          const rtColor = rt.color(colors);
+          return (
+            <Pressable
+              key={rt.key}
+              onPress={() => onReport(rt.key)}
+              style={({ pressed }) => [
+                styles.rateBtn,
+                isSelected
+                  ? { backgroundColor: rtColor + (isDark ? "22" : "14"), borderColor: rtColor, borderWidth: 1.5 }
+                  : { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder, borderWidth: 1 },
+                // loading = visual-only dim while flush is in-flight; taps still register
+                { opacity: loading ? 0.65 : pressed ? 0.75 : 1, transform: [{ scale: pressed ? 0.96 : 1 }] },
+              ]}
+            >
+              <Ionicons
+                name={rt.icon as any}
+                size={17}
+                color={isSelected ? rtColor : colors.textMuted}
+              />
+              <Text style={[styles.rateBtnLabel, { color: isSelected ? rtColor : colors.textSecondary }]}>
+                {rt.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { marginBottom: 12 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  title: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  votedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+  votedText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  hint: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  row: { flexDirection: "row", gap: 8 },
+  rateBtn: {
+    flex: 1,
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 13,
+    paddingHorizontal: 4,
+    borderRadius: 14,
+  },
+  rateBtnLabel: { fontSize: 12, fontFamily: "Inter_700Bold" },
+});

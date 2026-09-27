@@ -1,0 +1,74 @@
+.appFrame { min-height: 100dvh; background: var(--background); }
+.page { width: min(calc(100% - 48px), 1060px); min-height: 100dvh; margin: 0 auto; padding: 28px 0 48px; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.header h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); letter-spacing: -.055em; }
+.signIn {
+  display: inline-flex; gap: 8px; align-items: center; min-height: 42px; padding: 0 18px;
+  color: var(--primary); border: 1px solid #abc5e8; border-radius: 24px; background: #edf4ff;
+  font-size: 14px; font-weight: 600; text-decoration: none;
+}
+.signIn span { font-size: 21px; line-height: 1; transform: rotate(180deg); }
+.scanHero {
+  position: relative; display: flex; min-height: 174px; align-items: center; gap: 18px; overflow: hidden;
+  padding: 24px 28px; border: 1px solid #c3d4ee; border-radius: 28px; background: linear-gradient(112deg, #e7f0ff, #d6e7ff);
+  text-decoration: none; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.scanHero:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(7, 93, 204, 0.12);
+}
+.scanHero::after { position: absolute; inset: 0; background: linear-gradient(90deg, transparent 35%, rgba(255,255,255,.2)); content: ""; pointer-events: none; }
+.heroIcon { z-index: 1; display: grid; width: 94px; height: 94px; flex: 0 0 auto; place-items: center; color: var(--primary); border: 1px solid #a5c5f2; border-radius: 24px; background: rgba(220, 234, 255, .9); }
+.heroCopy { z-index: 1; display: grid; gap: 5px; }
+.heroCopy strong { color: var(--primary); font-size: 24px; letter-spacing: -.05em; }
+.heroCopy span { color: var(--text); font-size: 14px; font-weight: 600; }
+.heroCopy small { margin-top: 23px; color: #566a83; font-size: 11px; }
+.heroArrow {
+  z-index: 1; display: grid; width: 54px; height: 54px; margin-left: auto; place-items: center;
+  color: #fff; border-radius: 50%; background: var(--primary); text-decoration: none;
+}
+.heroOrbOne, .heroOrbTwo { position: absolute; border: 1px solid rgba(255,255,255,.4); border-radius: 50%; background: rgba(181, 211, 255, .24); }
+.heroOrbOne { right: -12px; top: -25px; width: 120px; height: 120px; }
+.heroOrbTwo { right: 78px; bottom: -32px; width: 98px; height: 98px; }
+.recentSection { margin-top: 30px; }
+.recentSection > h2 { display: flex; gap: 11px; align-items: center; margin: 0 0 18px; font-size: 17px; letter-spacing: -.025em; }
+.recentSection > h2 span { width: 13px; height: 13px; border-radius: 50%; background: var(--primary); }
+.emptyCard {
+  display: flex; min-height: 330px; flex-direction: column; align-items: center; justify-content: center;
+  padding: 30px; border: 1px solid var(--line); border-radius: 25px; background: var(--surface);
+  box-shadow: 0 5px 15px rgba(59, 96, 145, .04);
+}
+.emptyIcon { display: grid; width: 105px; height: 105px; margin-bottom: 22px; place-items: center; color: var(--primary); border: 2px solid #d2e0f0; border-radius: 50%; background: #f0f5fc; }
+.emptyIcon::after { position: absolute; width: 76px; height: 76px; border: 1px solid #c8d8ed; border-radius: 22px; content: ""; }
+.emptyCard h3 { margin: 0; font-size: 18px; letter-spacing: -.04em; }
+.emptyCard p { margin: 11px 0 21px; color: #94a3b4; font-size: 14px; }
+.scanButton {
+  display: inline-flex; gap: 9px; align-items: center; min-height: 51px; padding: 0 27px; color: #fff;
+  border-radius: 17px; background: var(--primary); box-shadow: 0 8px 18px rgba(7, 93, 204, .18);
+  font-size: 14px; font-weight: 700; text-decoration: none;
+}
+@media (min-width: 900px) {
+  .page { padding-top: 50px; }
+  .scanHero { min-height: 235px; padding-inline: 58px; }
+  .heroIcon { width: 122px; height: 122px; }
+  .heroCopy strong { font-size: 31px; }
+  .heroCopy span { font-size: 17px; }
+  .heroCopy small { font-size: 13px; }
+  .heroArrow { width: 64px; height: 64px; margin-right: 16px; }
+  .emptyCard { min-height: 420px; }
+}
+@media (max-width: 600px) {
+  .page { width: calc(100% - 44px); padding-top: 54px; }
+  .header { margin-bottom: 29px; }
+  .header h1 { font-size: 22px; }
+  .signIn { min-height: 38px; padding: 0 14px; font-size: 13px; }
+  .scanHero { min-height: 171px; gap: 14px; padding: 21px; border-radius: 26px; }
+  .heroIcon { width: 93px; height: 93px; }
+  .heroCopy strong { font-size: 22px; }
+  .heroCopy span { font-size: 13px; }
+  .heroCopy small { margin-top: 18px; font-size: 10px; }
+  .heroArrow { width: 51px; height: 51px; }
+  .recentSection { margin-top: 28px; }
+  .recentSection > h2 { font-size: 16px; }
+  .emptyCard { min-height: 335px; margin-bottom: 10px; }
+}

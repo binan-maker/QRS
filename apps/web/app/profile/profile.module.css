@@ -1,0 +1,16 @@
+.appFrame { min-height: 100dvh; background: var(--background); }
+.page { display: flex; width: min(calc(100% - 48px), 1060px); min-height: 100dvh; margin: 0 auto; flex-direction: column; align-items: center; justify-content: center; padding: 30px 0 126px; }
+.guestCard { display: flex; width: min(100%, 510px); flex-direction: column; align-items: center; padding: 42px 24px 36px; text-align: center; }
+.guestIconRing { display: grid; width: 98px; height: 98px; margin-bottom: 24px; place-items: center; color: var(--primary); border-radius: 50%; background: #e6efff; }
+.guestCard h1 { margin: 0; font-size: 22px; letter-spacing: -.045em; }
+.guestCard p { margin: 13px 0 27px; color: #536375; font-size: 14px; }
+.loading { color: var(--muted) !important; }
+.memberBadge { margin: -9px 0 22px; padding: 6px 10px; color: var(--green); border-radius: 99px; background: #e1f7f0; font-size: 11px; font-weight: 600; }
+.signInButton { display: inline-flex; width: min(100%, 394px); min-height: 54px; align-items: center; justify-content: center; color: #fff; border: 0; border-radius: 16px; background: var(--primary); cursor: pointer; font: inherit; font-size: 15px; font-weight: 700; text-decoration: none; }
+.createLink { min-height: 43px; margin-top: 8px; padding: 12px 20px; color: #155294; font-size: 14px; font-weight: 600; text-decoration: none; }
+.error { width: min(100%, 510px); margin: 16px 0 0; padding: 11px 12px; color: var(--danger); border-radius: 12px; background: #fff0f1; font-size: 12px; }
+.bottomNav { position: fixed; right: 50%; bottom: 0; z-index: 2; display: flex; width: min(100%, 1060px); min-height: 86px; transform: translateX(50%); align-items: center; justify-content: space-around; padding: 8px 20px; border: 1px solid var(--line); border-bottom: 0; border-radius: 25px 25px 0 0; background: rgba(255,255,255,.96); box-shadow: 0 -7px 25px rgba(77,106,144,.07); backdrop-filter: blur(15px); }
+.navItem { display: grid; min-width: 75px; gap: 5px; justify-items: center; padding: 9px 17px; color: #708196; border-radius: 12px; font-size: 12px; text-decoration: none; }
+.navItemActive { color: var(--primary); background: var(--primary-soft); }
+@media (min-width: 900px) { .bottomNav { bottom: 18px; width: min(calc(100% - 48px), 510px); border-bottom: 1px solid var(--line); border-radius: 25px; } }
+@media (max-width: 600px) { .page { width: calc(100% - 44px); padding-top: 54px; } .guestCard { padding-inline: 0; } .bottomNav { min-height: 88px; } }

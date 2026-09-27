@@ -1,0 +1,1 @@
+export { useHeaderHide } from "./useScrollHide";

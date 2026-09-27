@@ -1,0 +1,277 @@
+export type QrType = "individual" | "business" | "government";
+
+export interface QrCodeData {
+  id: string;
+  content: string;
+  contentType: string;
+  createdAt: string;
+  scanCount: number;
+  commentCount: number;
+  qrType?: QrType;
+  uuid?: string;
+  businessName?: string;
+  customLogoUri?: string;
+  logoPosition?: string;
+  templateKey?: string;
+  formValues?: { value: string; extra: Record<string, string> } | null;
+  displayDestination?: string | null;
+  isActive?: boolean;
+  deactivationMessage?: string | null;
+  // Fraud-guard fields
+  scanCountFrozen?: boolean;
+  scanCountFreezeReason?: string;
+}
+
+export interface UserData {
+  id: string;
+  displayName: string;
+  email: string;
+  emailVerified: boolean;
+  photoURL: string | null;
+  createdAt: string;
+  scanCount: number;
+  commentCount: number;
+  totalLikesReceived: number;
+  username?: string;
+  usernameLastChangedAt?: string;
+}
+
+export interface ScanRecord {
+  id: string;
+  qrCodeId: string;
+  content: string;
+  contentType: string;
+  scannedAt: string;
+  isAnonymous: boolean;
+  scanSource?: "camera" | "gallery" | "viewed";
+}
+
+export interface CommentData {
+  id: string;
+  qrCodeId: string;
+  userId: string;
+  userName: string;
+  text: string;
+  createdAt: string;
+  likes: number;
+  likedBy: string[];
+}
+
+export interface ReportData {
+  id: string;
+  qrCodeId: string;
+  userId: string;
+  reportType: string;
+  description: string;
+  createdAt: string;
+  weight: number;
+}
+
+export type NotificationType =
+  | "new_comment"
+  | "owner_comment"
+  | "comment_reply"
+  | "mention"
+  | string;
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  message: string;
+  qrCodeId?: string;
+  fromUsername?: string;
+  read: boolean;
+  createdAt: number;
+}
+
+export interface NotificationData {
+  id: string;
+  userId: string;
+  type: string;
+  message: string;
+  qrCodeId?: string;
+  fromUsername?: string;
+  read: boolean;
+  createdAt: string;
+}
+
+// Trust Score types
+export interface TrustScore {
+  score: number;
+  level?: 'low' | 'medium' | 'high' | 'verified';
+  label?: string;
+  factors?: TrustFactor[];
+  lastUpdated?: string;
+  isVerified?: boolean;
+  verificationMethod?: string;
+  manipulationWarning?: boolean;
+  totalReports?: number;
+}
+
+export interface TrustFactor {
+  name: string;
+  weight: number;
+  score: number;
+  description?: string;
+}
+
+// User Stats types
+export interface UserStats {
+  totalScans?: number;
+  totalComments?: number;
+  totalLikes?: number;
+  totalQrsCreated?: number;
+  accountAge?: number;
+  reputationScore?: number;
+  scanCount?: number;
+  commentCount?: number;
+  totalLikesReceived?: number;
+}
+
+export interface UsernameData {
+  username: string | null;
+  userId: string;
+  claimedAt: string;
+  lastChangedAt?: string;
+  usernameLastChangedAt?: Date | string | null;
+  isVerified?: boolean;
+}
+
+// ── Unified QR model (new architecture) ──────────────────────────────────────
+// Every QR generated from here on is backed by one document in qrs/{id}.
+// Legacy QRs (guardLinks / standardLinks) remain on their old collections.
+export type UnifiedQrStatus = "active" | "inactive" | "expired" | "limit_reached";
+
+export interface UnifiedQrDesign {
+  fgColor: string;
+  bgColor: string;
+  logoPosition: string;
+  logoUri: string | null;
+  label: string | null;
+}
+
+export interface UnifiedQr {
+  id: string;
+  qrType: QrType;
+  template: string | null;
+  title: string | null;
+  isDynamic: boolean;
+  destination: string;
+  rawDestination: string;
+  contentType: string;
+  businessName: string | null;
+  status: UnifiedQrStatus;
+  scanCount: number;
+  downloads: number;
+  shares: number;
+  scanLimit: number | null;
+  expiryDate: string | null;
+  expiryPreset: string | null;
+  design: UnifiedQrDesign;
+  formValues: { value: string; extra: Record<string, string> } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Generator Service types
+export interface GeneratedQrItem {
+  id: string;
+  content: string;
+  format: 'png' | 'svg' | 'webp';
+  size: number;
+  createdAt: string;
+  expiresAt?: string;
+  downloadUrl?: string;
+  docId?: string;
+  qrCodeId?: string;
+  uuid?: string;
+  scanCount?: number;
+  commentCount?: number;
+  isActive?: boolean;
+  qrType?: string;
+  label?: string | null;
+  scanLimit?: number | null;
+  expiryDate?: string | null;
+  expiryPreset?: string | null;
+  guardUuid?: string;
+  deactivationMessage?: string | null;
+  fgColor?: string;
+  bgColor?: string;
+  logoPosition?: string;
+  logoUri?: string | null;
+  businessName?: string;
+  username?: string;
+  templateKey?: string;
+  formValues?: { value: string; extra: Record<string, string> };
+  displayDestination?: string | null;
+}
+
+export interface ScanVelocityBucket {
+  bucket?: string;
+  count: number;
+  windowStart?: string;
+  windowEnd?: string;
+  label?: string;
+  hour?: number;
+}
+
+// Comment Service types
+export interface CommentItem {
+  id: string;
+  qrCodeId?: string;
+  userId?: string;
+  userName?: string;
+  userAvatar?: string;
+  text?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  likes?: number;
+  likedBy?: string[];
+  replies?: CommentItem[];
+  parentId?: string | null;
+  isEdited?: boolean;
+  isPinned?: boolean;
+  reports?: number;
+  user?: { displayName: string; [key: string]: any };
+  userUsername?: string;
+  [key: string]: any;
+}
+
+// Message Service types
+export interface QrMessage {
+  id: string;
+  qrCodeId?: string;
+  senderId?: string;
+  senderName?: string;
+  content?: string;
+  messageType?: 'text' | 'warning' | 'info' | 'alert';
+  createdAt: string;
+  read?: boolean;
+  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  fromDisplayName?: string;
+  fromUserId?: string;
+  toUserId?: string;
+  message?: string;
+  [key: string]: any;
+}
+
+// Additional utility types
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  hasMore: boolean;
+  nextCursor?: string;
+}
+
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: Record<string, any>;
+}
+
+export interface CacheEntry<T> {
+  data: T;
+  cachedAt: string;
+  expiresAt: string;
+  hitCount: number;
+}

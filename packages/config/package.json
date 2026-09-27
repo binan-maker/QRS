@@ -1,0 +1,14 @@
+{
+  "name": "@binro/config",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Zod-validated environment schemas for mobile, API, and web.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "peerDependencies": {
+    "zod": ">=3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.2"
+  }
+}

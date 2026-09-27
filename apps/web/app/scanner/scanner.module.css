@@ -1,0 +1,1161 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   WEB SCANNER STYLES — Exact Mirror of features/scanner/ (Android / Mobile)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.page {
+  min-height: 100dvh;
+  height: 100dvh;
+  color: #ffffff;
+  background: #000000;
+  overflow: hidden;
+}
+
+.header,
+.footer {
+  display: none;
+}
+
+.scannerLayout {
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* ── Root Containers (ScannerScreen.tsx lines 292, 297, 313) ── */
+.scannerRootBlack,
+.permissionRoot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.scannerRootBlack {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.permissionRoot {
+  background-color: var(--background, #F8FAFC);
+  color: var(--text, #0F172A);
+}
+
+.hiddenVideo,
+.decoderCanvas {
+  display: none;
+}
+
+/* ── Black Placeholder & Camera Preview Shield (ScannerScreen.tsx lines 317, 365) ── */
+.blackPlaceholder {
+  position: absolute;
+  inset: 0;
+  background-color: #000000;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cameraStage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+  background-color: #000000;
+}
+
+.cameraVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center center;
+  transition: transform 0.28s ease, filter 0.25s ease;
+}
+
+.cameraVideoTorch {
+  filter: brightness(1.38) contrast(1.08);
+}
+
+.blackShield {
+  position: absolute;
+  inset: 0;
+  background-color: #000000;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ── Tap-to-Focus Area & Ring (ScannerScreen.tsx lines 375-401, 463-471) ── */
+.tapFocusArea {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  cursor: crosshair;
+}
+
+.focusRing {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.80);
+  z-index: 5;
+  pointer-events: none;
+  animation: focus-ring-anim 1.14s ease forwards;
+}
+
+@keyframes focus-ring-anim {
+  0% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+  14% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* ── PermissionScreen.tsx (features/scanner/components/system/PermissionScreen.tsx) ── */
+.permissionScreenContainer {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 28px 28px;
+  box-sizing: border-box;
+  background-color: var(--background, #F8FAFC);
+}
+
+.permissionCenterContent {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  animation: fade-in 0.18s ease-out;
+}
+
+.permissionIconSection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in-down 0.16s ease-out;
+}
+
+.permissionIconOuterRing {
+  width: 110px;
+  height: 110px;
+  border-radius: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(37, 99, 235, 0.133);
+  border: 1px solid rgba(37, 99, 235, 0.251);
+  box-sizing: border-box;
+}
+
+.permissionIconInnerRing {
+  width: 78px;
+  height: 78px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(37, 99, 235, 0.133);
+  border: 1.5px solid rgba(37, 99, 235, 0.251);
+  box-sizing: border-box;
+}
+
+.permissionTextGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: fade-in-down 0.16s ease-out;
+}
+
+.permissionTitle {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  text-align: center;
+  color: var(--text, #0F172A);
+}
+
+.permissionSubtitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  text-align: center;
+  line-height: 21px;
+  max-width: 270px;
+  color: #64748B;
+}
+
+.permissionBtns {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fade-in-down 0.16s ease-out;
+}
+
+/* Matches shared/components/ui/GradientButton.tsx (size="lg") */
+.gradientBtnPrimary {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 17px 20px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(90deg, #2563EB 0%, #1D4ED8 100%);
+  color: #ffffff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: opacity 0.15s ease;
+}
+
+.gradientBtnPrimary:active,
+.gradientBtnPrimary:disabled {
+  opacity: 0.72;
+}
+
+.gradientBtnLabel {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.buttonActivityIndicator {
+  width: 20px;
+  height: 20px;
+  border: 2.2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin-linear 0.75s linear infinite;
+}
+
+.permissionSecondaryBtn {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: 1px solid #E2E8F0;
+  background-color: #FFFFFF;
+  cursor: pointer;
+  font: inherit;
+  box-sizing: border-box;
+  transition: opacity 0.15s ease;
+}
+
+.permissionSecondaryBtn:active {
+  opacity: 0.75;
+}
+
+.permissionSecondaryText {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+}
+
+/* ── ScannerOverlay.tsx (features/scanner/components/overlay/ScannerOverlay.tsx) ── */
+.scannerOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+/* ── OverlayTopBar.tsx (features/scanner/components/overlay/OverlayTopBar.tsx) ── */
+.overlayTopBar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 16px 20px 14px;
+  pointer-events: auto;
+  animation: fade-in 0.22s ease-out;
+}
+
+.topGlassBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease;
+}
+
+.topGlassBtn:active {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.topGlassBtnActive {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 166, 35, 0.35);
+}
+
+.topBrand {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topBrandText {
+  font-size: 17px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.3px;
+}
+
+.topSpacer {
+  width: 44px;
+}
+
+/* ── Non-Interactive Center Layer: Title + FinderFrame + Status ── */
+.overlayCenterNonInteractive {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 3.2dvh, 36px);
+  pointer-events: none;
+  padding: 4px 20px;
+  box-sizing: border-box;
+}
+
+.titleArea {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.22s ease-out;
+}
+
+.titleText {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+  letter-spacing: -0.2px;
+}
+
+/* ── FinderFrame.tsx (features/scanner/components/overlay/FinderFrame.tsx) ── */
+.finderFrame {
+  position: relative;
+  width: clamp(110px, min(68vw, 36dvh, 270px), 270px);
+  height: clamp(110px, min(68vw, 36dvh, 270px), 270px);
+  overflow: visible;
+  flex-shrink: 1;
+  animation: fade-in 0.22s ease-out;
+}
+
+.cornerBar {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.88);
+  animation: corner-breath 4.8s ease-in-out infinite;
+}
+
+@keyframes corner-breath {
+  0%, 100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Top-left */
+.ctlH {
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 3px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.ctlV {
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 28px;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Top-right */
+.ctrH {
+  top: 0;
+  right: 0;
+  width: 28px;
+  height: 3px;
+  border-top-right-radius: 12px;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.ctrV {
+  top: 0;
+  right: 0;
+  width: 3px;
+  height: 28px;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+/* Bottom-left */
+.cblH {
+  bottom: 0;
+  left: 0;
+  width: 28px;
+  height: 3px;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+.cblV {
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  height: 28px;
+  border-bottom-left-radius: 12px;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+/* Bottom-right */
+.cbrH {
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 3px;
+  border-bottom-right-radius: 12px;
+  border-bottom-left-radius: 4px;
+  border-top-left-radius: 4px;
+}
+
+.cbrV {
+  bottom: 0;
+  right: 0;
+  width: 3px;
+  height: 28px;
+  border-bottom-right-radius: 12px;
+  border-top-right-radius: 4px;
+  border-top-left-radius: 4px;
+}
+
+.hintArea {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.18s ease-out;
+}
+
+.hintText {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.60);
+  text-align: center;
+  letter-spacing: 0.1px;
+}
+
+/* ── OverlayBottomBar.tsx (features/scanner/components/overlay/OverlayBottomBar.tsx) ── */
+.overlayBottomBar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: clamp(24px, 7dvh, 72px);
+  pointer-events: auto;
+  animation: fade-in-up 0.22s ease-out;
+}
+
+.pillRow {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+}
+
+.zoomPill {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  background-color: rgba(0, 0, 0, 0.55);
+  border-radius: 20px;
+  padding: 6px 12px;
+  border: 1px solid rgba(59, 130, 246, 0.27);
+  cursor: pointer;
+  font: inherit;
+}
+
+.zoomText {
+  font-size: 12px;
+  font-weight: 700;
+  color: #3B82F6;
+  letter-spacing: 0.4px;
+}
+
+.anonPill {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.28);
+}
+
+.anonPillText {
+  font-size: 11px;
+  font-weight: 600;
+  color: #F5A623;
+}
+
+.lowLightPill {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  background-color: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.30);
+  animation: fade-in 0.28s ease-out;
+}
+
+.lowLightText {
+  font-size: 12px;
+  font-weight: 500;
+  color: #FDE68A;
+  letter-spacing: 0.1px;
+}
+
+.controlRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+}
+
+.btnGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.torchBtnWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottomGlassBtn {
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+  background-color: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.bottomGlassBtn:active {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.bottomGlassBtnFlash {
+  background-color: rgba(255, 214, 10, 0.1);
+  border-color: rgba(255, 214, 10, 0.38);
+}
+
+.bottomGlassBtnLowLight {
+  border-color: rgba(251, 191, 36, 0.30);
+  border-width: 1.5px;
+}
+
+.bottomGlassBtnDisabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.torchGlowRing {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 37px;
+  border: 1.5px solid #FBBF24;
+  pointer-events: none;
+  animation: torch-glow-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes torch-glow-pulse {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.btnLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.48);
+  letter-spacing: 0.2px;
+}
+
+.btnLabelDim {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ── ProcessingOverlay.tsx (features/scanner/components/system/ProcessingOverlay.tsx) ── */
+.processingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background-color: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.2s ease-out;
+}
+
+.processingBox {
+  background-color: rgba(10, 14, 24, 0.97);
+  border-radius: 28px;
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid rgba(0, 212, 255, 0.18);
+  max-width: 300px;
+  width: 82%;
+  box-sizing: border-box;
+}
+
+.processingIconContainer {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.processingAmbientRing {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 45px;
+  background-color: rgba(0, 212, 255, 0.07);
+  animation: ambient-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes ambient-pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.processingSpinRing {
+  position: absolute;
+  width: 82px;
+  height: 82px;
+  border-radius: 41px;
+  border: 2px dashed #00D4FF;
+  opacity: 0.55;
+  box-sizing: border-box;
+  animation: spin-linear 1.8s linear infinite;
+}
+
+.processingInnerRing {
+  width: 66px;
+  height: 66px;
+  border-radius: 33px;
+  background-color: rgba(0, 212, 255, 0.08);
+  border: 1px solid rgba(0, 212, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.processingTextGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.processingTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+}
+
+.processingSubtitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+.processingBrandRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+}
+
+.processingBrandText {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(0, 212, 255, 0.35);
+  letter-spacing: 0.3px;
+}
+
+/* ── CameraUnavailableBanner.tsx (features/scanner/components/system/CameraUnavailableBanner.tsx) ── */
+.unavailableOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background-color: #080c14;
+  display: flex;
+  flex-direction: column;
+}
+
+.unavailableTopBar {
+  padding: 16px 16px 10px;
+}
+
+.unavailableBackBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.unavailableCenter {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unavailableContainer {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 32px;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.unavailableIconWrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+  background-color: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.unavailableIconWrapBlue {
+  background-color: rgba(0, 212, 255, 0.12);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+.unavailableTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f59e0b;
+  text-align: center;
+}
+
+.unavailableTitleBlue {
+  color: #00d4ff;
+}
+
+.unavailableSubtitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  line-height: 21px;
+}
+
+.unavailableBtn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-radius: 14px;
+  margin-top: 4px;
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  box-sizing: border-box;
+  border: none;
+  transition: opacity 0.15s ease;
+}
+
+.unavailableBtn:active {
+  opacity: 0.8;
+}
+
+.unavailableBtnPrimary {
+  background-color: #00d4ff;
+  color: #000000;
+}
+
+.unavailableBtnSecondary {
+  background-color: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  color: #00d4ff;
+}
+
+/* ── ScannerToast.tsx & ConversionBanner.tsx ── */
+.toastContainer {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  z-index: 30;
+}
+
+.toastWrapper {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  animation: fade-in 0.22s ease-out;
+}
+
+.toastBody {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 13px 14px;
+  gap: 12px;
+}
+
+.toastIconWrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.toastIcon {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.toastMsg {
+  margin: 0;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.toastTrackBg {
+  height: 3px;
+  width: 100%;
+}
+
+.toastTrackFill {
+  height: 3px;
+  border-radius: 2px;
+  animation: toast-progress 2.8s linear forwards;
+}
+
+@keyframes toast-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.conversionBanner {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 40px;
+  z-index: 25;
+  background-color: rgba(10, 20, 40, 0.96);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fade-in-down 0.26s ease-out;
+}
+
+.conversionBody {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.conversionText {
+  margin: 0;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: #a5f3ff;
+  line-height: 18px;
+}
+
+.conversionActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.conversionSignInBtn {
+  background-color: #00d4ff;
+  color: #000000;
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.conversionDismissBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ── Shared Keyframes ── */
+@keyframes spin-linear {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Desktop & Tablet Card Presentation ── */
+@media (min-width: 601px) {
+  .page {
+    background: radial-gradient(circle at 50% 25%, #163769 0%, #091832 75%);
+  }
+
+  .scannerLayout {
+    padding: clamp(12px, 2.5dvh, 28px) 20px;
+  }
+
+  .scannerRootBlack,
+  .permissionRoot {
+    width: min(100%, 440px);
+    height: min(86dvh, 720px);
+    max-height: calc(100dvh - 24px);
+    border-radius: 32px;
+    box-shadow: 0 28px 72px rgba(3, 12, 28, 0.48);
+  }
+
+  .scannerRootBlack {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+  }
+
+  .permissionRoot {
+    border: 1px solid #d5e2f2;
+    background-color: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 28px 72px rgba(4, 16, 38, 0.32);
+    backdrop-filter: blur(16px);
+  }
+
+  .permissionScreenContainer {
+    background-color: transparent;
+  }
+}
+
+/* ── Short Screen / Landscape Responsive Scaling ── */
+@media (max-height: 580px) {
+  .overlayTopBar {
+    padding: 8px 16px 6px;
+  }
+
+  .overlayCenterNonInteractive {
+    gap: 10px;
+  }
+
+  .titleText {
+    font-size: 17px;
+  }
+
+  .overlayBottomBar {
+    gap: 8px;
+    padding-bottom: 12px;
+  }
+
+  .bottomGlassBtn {
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+  }
+
+  .permissionScreenContainer {
+    padding: 12px 20px;
+  }
+
+  .permissionCenterContent {
+    gap: 14px;
+  }
+
+  .permissionIconOuterRing {
+    width: 82px;
+    height: 82px;
+    border-radius: 24px;
+  }
+
+  .permissionIconInnerRing {
+    width: 58px;
+    height: 58px;
+    border-radius: 17px;
+  }
+
+  .permissionTitle {
+    font-size: 20px;
+  }
+
+  .gradientBtnPrimary {
+    padding: 13px 16px;
+  }
+}
+
