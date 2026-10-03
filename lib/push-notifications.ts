@@ -47,15 +47,15 @@ export async function registerForPushNotifications(
 
   try {
     // Request permission — iOS will prompt, Android 13+ requires it too
-    const { status: existing } = await Notifications.getPermissionsAsync();
-    let finalStatus = existing;
+    const existingPerm = (await Notifications.getPermissionsAsync()) as any;
+    let granted = Boolean(existingPerm?.granted || existingPerm?.status === "granted");
 
-    if (existing !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+    if (!granted) {
+      const requestedPerm = (await Notifications.requestPermissionsAsync()) as any;
+      granted = Boolean(requestedPerm?.granted || requestedPerm?.status === "granted");
     }
 
-    if (finalStatus !== "granted") return; // User declined — respect it
+    if (!granted) return; // User declined — respect it
 
     // Get the Expo push token (works in physical builds; no-op in Expo Go dev)
     const projectId =

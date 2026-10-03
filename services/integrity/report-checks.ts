@@ -1,8 +1,8 @@
-import { db } from "@/lib/db/client";
+import { db } from "../../lib/db/client";
 import type { AccountTier } from "./types";
 import { tsToMs, formatTimeRemaining, timeUntilWindowReset, isWithin24h, isWithinMs } from "./time-utils";
 import { getAccountTier } from "./tiers";
-import { COLLECTIONS } from "@/shared/constants/collections";
+import { COLLECTIONS } from "../../shared/constants/collections";
 
 const HOURLY_REPORT_WINDOW_MS = 3_600_000;
 const HOURLY_REPORT_LIMIT_PER_USER = 100; // raised so per-QR limit is hit first

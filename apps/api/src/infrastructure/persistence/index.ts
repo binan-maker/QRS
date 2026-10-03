@@ -1,7 +1,7 @@
 import type {
-  User, type NewUser,
-  QrCode, type NewQrCode,
-  QrScan, type NewQrScan,
+  User, NewUser,
+  QrCode, NewQrCode,
+  QrScan, NewQrScan,
 } from "@binro/db";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────

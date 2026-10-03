@@ -1,9 +1,22 @@
 import type { AppColors } from "@/shared/constants/colors";
 
-export type QrDetailContentType = "url" | "text";
+export type QrDetailContentType = "url" | "text" | "payment";
 
 export function normalizeQrDetailContentType(contentType?: string | null): QrDetailContentType {
-  if (contentType?.toLowerCase() === "url") return "url";
+  const lower = contentType?.toLowerCase()?.trim();
+  if (lower === "url") return "url";
+  if (
+    lower === "payment" ||
+    lower === "upi" ||
+    lower === "paypal" ||
+    lower === "gpay" ||
+    lower === "phonepe" ||
+    lower === "paytm" ||
+    lower === "crypto" ||
+    lower === "paymentlink"
+  ) {
+    return "payment";
+  }
   return "text";
 }
 

@@ -103,10 +103,14 @@ export function useAuthSession({
               const userData = await db.get([COLLECTIONS.USERS, resolvedUser.uid]);
               if (userData) {
                 const dbPhotoURL = userData.photoURL as string | undefined;
+                const dbDisplayName =
+                  (userData.displayName as string) ||
+                  (userData.display_name as string);
                 setUser((prev) => {
                   if (!prev || prev.id !== resolvedUser.uid) return prev;
                   return {
                     ...prev,
+                    displayName: dbDisplayName || prev.displayName,
                     username: (userData.username as string) || prev.username,
                     // Prefer DB photo; fall back to existing photo.
                     photoURL: dbPhotoURL || prev.photoURL,

@@ -22,6 +22,8 @@ import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
 import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
 import { normalizeQrDetailContentType } from "@/features/qr-detail/content-types";
 import { getQrShareUrl } from "@/shared/utils/qr-share";
+import { isPaymentQr } from "@/services/analysis";
+import { detectContentType } from "@/shared/utils/qr-content";
 
 import LoadingSkeleton from "@/features/qr-detail/components/LoadingSkeleton";
 import { QrContentCard } from "@/features/qr-detail/components/QrContentCard";
@@ -93,8 +95,13 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
 
   const trust = q.trustInfo;
   const content = q.qrCode?.content || q.offlineContent || "";
-  const contentType = normalizeQrDetailContentType(q.qrCode?.contentType || q.offlineContentType);
-  const isPayment = (q.qrCode?.contentType || q.offlineContentType)?.toLowerCase() === "payment";
+  const isPayment =
+    (q.qrCode?.contentType || q.offlineContentType)?.toLowerCase() === "payment" ||
+    (content.length > 0 && isPaymentQr(content));
+  const rawContentType = q.qrCode?.contentType || q.offlineContentType;
+  const contentType = isPayment
+    ? "payment"
+    : normalizeQrDetailContentType(rawContentType || (content ? detectContentType(content) : "text"));
   const hasContent = content.length > 0;
 
   const handleReportPress = useCallback(() => {
@@ -118,8 +125,7 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
     try {
       await Share.share({
         title: "Share QR Details",
-        message: `View this QR code's safety details: ${shareUrl}`,
-        url: shareUrl,
+        message: `View this QR code's TrustScore! ${shareUrl}`,
       });
     } catch {
       showToast("Unable to open sharing", "alert-circle-outline");

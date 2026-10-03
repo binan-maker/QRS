@@ -1,0 +1,294 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   HISTORY ITEM CARD (1:1 with features/history/components/HistoryItem.tsx)
+   Zoom-in entrance & interactive zoom effects matching mobile Reanimated
+   NO blue outline on hover/focus - exactly like mobile device code
+   Overflow Context Menu ("···" More Actions)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes cardZoomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-radius: 20px;
+  margin-bottom: 10px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  overflow: visible;
+  padding: 13px 14px;
+  gap: 13px;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  width: 100%;
+  transform-origin: center center;
+  will-change: transform, box-shadow;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s ease,
+    opacity 0.15s ease;
+}
+
+.cardAnimate {
+  animation: cardZoomIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cardMenuOpen {
+  z-index: 60;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Hover Zoom-in Effect (Desktop & pointer devices) - NO blue outline or border color change */
+.card:hover {
+  outline: none;
+  border-color: var(--surface-border);
+  transform: translateY(-2px) scale(1.015);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Active Press / Zoom-out feedback (matching mobile transform: [{ scale: 0.984 }]) */
+.card:active {
+  transform: scale(0.984);
+  opacity: 0.9;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition-duration: 0.08s;
+}
+
+.cardLink {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 13px;
+  text-decoration: none;
+  color: inherit;
+  outline: none;
+}
+
+.cardLink:hover,
+.cardLink:focus {
+  outline: none;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.titleRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  color: var(--text);
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.amountPill {
+  padding: 2px 8px;
+  border-radius: 100px;
+  background-color: var(--warning-dim);
+  flex-shrink: 0;
+}
+
+.amountText {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--warning);
+}
+
+.subtitle {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metaRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  margin-top: 1px;
+}
+
+.right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.time {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  color: var(--text-muted);
+}
+
+.chevronWrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background-color: var(--primary-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover .chevronWrap {
+  transform: translateX(2px) scale(1.08);
+}
+
+/* ── Context Menu / Overflow Menu ("···" More Actions) ─────────────────────── */
+.menuContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.menuBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menuBtn:hover {
+  color: var(--text);
+  background-color: var(--surface-light);
+}
+
+.menuBtn:active {
+  transform: scale(0.92);
+}
+
+.menuBtnActive {
+  color: var(--primary);
+  background-color: var(--primary-dim);
+}
+
+/* Dropdown Context Menu */
+.menuDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 168px;
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14), 0 3px 10px rgba(0, 0, 0, 0.05);
+  padding: 6px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: menuDropdownIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: top right;
+}
+
+@keyframes menuDropdownIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.menuItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  box-sizing: border-box;
+  text-align: left;
+  outline: none;
+  user-select: none;
+}
+
+.menuItem:hover {
+  background-color: var(--surface-light);
+  color: var(--text);
+}
+
+.menuItemDanger {
+  color: var(--danger);
+}
+
+.menuItemDanger:hover {
+  background-color: var(--danger-dim);
+  color: var(--danger);
+}
+
+.menuDivider {
+  height: 1px;
+  background-color: var(--surface-border);
+  margin: 4px 2px;
+}

@@ -20,6 +20,41 @@ import {
 
 const STATS_STALE_MS  = 3 * 60 * 1000;
 
+export function isUserUploadedPhoto(url?: string | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim().toLowerCase();
+  if (!trimmed) return false;
+  if (
+    trimmed.includes("googleusercontent.com") ||
+    trimmed.includes("google.com") ||
+    trimmed.includes("gstatic.com")
+  ) {
+    return false;
+  }
+  if (
+    trimmed.includes("placeholder") ||
+    trimmed.includes("default-avatar") ||
+    trimmed.includes("ui-avatars.com")
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function decodeBase64ToArrayBuffer(base64: string): ArrayBuffer {
+  if (typeof Buffer !== "undefined") {
+    const buf = Buffer.from(base64, "base64");
+    return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+  }
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
 
 export function useProfile() {
   const { user, signOut } = useAuth();
@@ -112,16 +147,46 @@ export function useProfile() {
     setAvatar(uri);
     setUploadingPhoto(true);
     try {
-      const response = await fetch(uri);
-      const blob = await response.blob();
+      // 1. Process image locally via expo-image-manipulator to obtain clean, compressed base64
+      // This eliminates calling fetch(localUri) which triggers "Network request failed" in React Native.
+      const { manipulateAsync, SaveFormat } = await import("expo-image-manipulator");
+      const manipulated = await manipulateAsync(
+        uri,
+        [{ resize: { width: 512, height: 512 } }],
+        { compress: 0.85, format: SaveFormat.JPEG, base64: true }
+      );
+
+      if (!manipulated.base64) {
+        throw new Error("Could not process selected image");
+      }
 
       const { uploadProfilePhoto } = await import("@/services/storage/storage-service");
-      const newPhotoUrl = await uploadProfilePhoto(blob, user.id, prevPhotoUrl ?? undefined);
+      let newPhotoUrl: string;
+
+      try {
+        const arrayBuffer = decodeBase64ToArrayBuffer(manipulated.base64);
+        newPhotoUrl = await uploadProfilePhoto(
+          arrayBuffer,
+          user.id,
+          prevPhotoUrl ?? undefined,
+          { contentType: "image/jpeg" }
+        );
+      } catch (storageErr: any) {
+        console.warn("[profile] Supabase Storage upload failed, applying compressed base64 fallback:", storageErr?.message);
+        newPhotoUrl = `data:image/jpeg;base64,${manipulated.base64}`;
+      }
 
       await updateUserPhotoURL(user.id, newPhotoUrl);
 
+      // Attempt to sync auth metadata
+      try {
+        const { supabase } = await import("@/lib/supabase");
+        await supabase.auth.updateUser({ data: { avatar_url: newPhotoUrl } });
+      } catch {}
+
       setPhotoURL(newPhotoUrl);
       setAvatar(newPhotoUrl);
+      invalidateUserCache(user.id);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error: any) {
       if (prevPhotoUrl) setAvatar(prevPhotoUrl); else clearAvatar();
@@ -274,10 +339,20 @@ export function useProfile() {
     [user?.displayName]
   );
 
+  const canRemovePhoto = useMemo(() => isUserUploadedPhoto(photoURL), [photoURL]);
+  const hasGooglePhoto = useMemo(() => {
+    if (!photoURL) return false;
+    const l = photoURL.toLowerCase();
+    return l.includes("googleusercontent.com") || l.includes("google.com") || l.includes("gstatic.com");
+  }, [photoURL]);
+
   return {
     user,
     stats,
     statsLoading,
+    photoURL,
+    canRemovePhoto,
+    hasGooglePhoto,
     photoModalOpen,
     setPhotoModalOpen,
     uploadingPhoto,

@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
 import { deleteUserScan } from "@/lib/data-service";
 import { invalidateHistoryCache, invalidateHomeScansCache } from "@/services/cache/qr-cache";
+import { normalizeScanContent } from "@/services/scan-history/dedup";
 import { useHistoryData } from "@/features/history/hooks/useHistoryData";
 import { toggleFilter } from "@/features/history/utils/filter-utils";
 import type { HistoryItem, FilterKey, ActiveFilters } from "@/features/history/types";
@@ -38,13 +39,23 @@ export function useHistory() {
 
   // ── Delete a scan item ─────────────────────────────────────────────────────
   const deleteItem = useCallback(async (item: HistoryItem) => {
+    const targetQrId = item.qrCodeId;
+    const targetNormContent = item.content ? normalizeScanContent(item.content) : null;
+
+    const isMatch = (s: any) => {
+      if (s.id === item.id) return true;
+      if (targetQrId && s.qrCodeId === targetQrId) return true;
+      if (targetNormContent && s.content && normalizeScanContent(s.content) === targetNormContent) return true;
+      return false;
+    };
+
     if (item.source === "local") {
-      setLocalHistory((prev) => prev.filter((i) => i.id !== item.id));
+      setLocalHistory((prev) => prev.filter((i) => !isMatch(i)));
       try {
         if (user?.id) {
           const stored = await AsyncStorage.getItem(`local_scan_history_${user.id}`);
           if (stored) {
-            const arr = JSON.parse(stored).filter((s: any) => s.id !== item.id);
+            const arr = JSON.parse(stored).filter((s: any) => !isMatch(s));
             await AsyncStorage.setItem(`local_scan_history_${user.id}`, JSON.stringify(arr));
           }
         }
@@ -66,13 +77,13 @@ export function useHistory() {
               ...old,
               pages: old.pages.map((page: any) => ({
                 ...page,
-                items: page.items.filter((i: any) => i.id !== item.id),
+                items: page.items.filter((i: any) => !isMatch(i)),
               })),
             }
           : old
       );
       try {
-        if (user?.id) await deleteUserScan(user.id, item.id);
+        if (user?.id) await deleteUserScan(user.id, item.id, targetQrId);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         // Invalidate stats so badge counts update
         queryClient.invalidateQueries({ queryKey: ["scan-stats", user?.id] });

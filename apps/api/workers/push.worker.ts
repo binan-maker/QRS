@@ -12,7 +12,6 @@
  */
 
 import { Worker, Queue } from "bullmq";
-import { createClient } from "ioredis";
 import { getAdminDb } from "../src/lib/supabase-admin";
 import { sendExpoPush, isValidExpoPushToken } from "../src/lib/expo-push";
 import type { PushNotificationJobData } from "../src/infrastructure/queue";
@@ -140,11 +139,11 @@ const worker = new Worker<PushNotificationJobData>(
   },
 );
 
-worker.on("completed", (job) => {
+worker.on("completed", (job: any) => {
   console.log(`[push.worker] Job ${job.id} completed (user: ${job.data.userId})`);
 });
 
-worker.on("failed", (job, err) => {
+worker.on("failed", (job: any, err: Error) => {
   console.error(`[push.worker] Job ${job?.id} failed:`, err.message);
 });
 
@@ -162,7 +161,7 @@ const cronWorker = new Worker("push-cron", async () => {
   await runReengagementScan();
 }, { connection, concurrency: 1 });
 
-cronWorker.on("failed", (_, err) => console.error("[push-cron] failed:", err.message));
+cronWorker.on("failed", (_: any, err: Error) => console.error("[push-cron] failed:", err.message));
 
 console.log("[push.worker] Worker started — listening for jobs");
 

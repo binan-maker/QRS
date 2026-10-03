@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useCallback } from "react";
+import { Linking } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/shared/utils/haptics";
 import { smartOpenContent } from "@/shared/utils/smart-open";
@@ -10,6 +11,7 @@ import { useQrComments, type CommentItem } from "./useQrComments";
 import type { AppColors } from "@/shared/constants/colors";
 import { parseAnyPaymentQr } from "@/services/analysis";
 import { normalizeQrDetailContentType } from "../content-types";
+import { detectContentType } from "@/shared/utils/qr-content";
 
 export type { QrDetail, CommentItem };
 
@@ -43,16 +45,19 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
 
   const data = useQrData(id, userId, hint);
   const content = data.qrCode?.content || data.offlineContent;
-  const contentType = normalizeQrDetailContentType(data.qrCode?.contentType || data.offlineContentType);
 
   const parsedPayment = useMemo(
-    () =>
-      content &&
-      contentType === "payment"
-        ? parseAnyPaymentQr(content)
-        : null,
-    [content, contentType],
+    () => (content ? parseAnyPaymentQr(content) : null),
+    [content],
   );
+  const isPayment =
+    !!parsedPayment ||
+    (data.qrCode?.contentType || data.offlineContentType)?.toLowerCase() === "payment";
+  const rawContentType = data.qrCode?.contentType || data.offlineContentType;
+  const contentType = isPayment
+    ? "payment"
+    : normalizeQrDetailContentType(rawContentType || (content ? detectContentType(content) : "text"));
+
   const qrMeta = useMemo(
     () => (content ? { content, contentType } : undefined),
     [content, contentType]
@@ -97,9 +102,14 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
 
   const handleOpenContent = useCallback(async () => {
     if (!content) return;
-    if (contentType === "payment") {
-      // Copy UPI ID / payment link to clipboard instead of deep-linking into payment apps,
-      // which causes broken redirects across GPay, PhonePe, Paytm, BHIM etc.
+    if (contentType === "payment" || parsedPayment) {
+      try {
+        const canOpen = await Linking.canOpenURL(content).catch(() => false);
+        if (canOpen) {
+          await Linking.openURL(content);
+          return;
+        }
+      } catch {}
       const copyValue =
         parsedPayment?.vpa ||
         (parsedPayment?.recipientId?.includes("@") ? parsedPayment.recipientId : null) ||

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/client";
+import { supabase } from "@/lib/supabase";
 import { tsToString } from "../utils";
 import { tsToMs } from "../integrity/time-utils";
 import { incrementSmartCounter } from "@/lib/db/distributed-counter";
@@ -20,7 +21,7 @@ export async function recordScan(
 ): Promise<void> {
   if (userId && isAnonymous) return;
 
-  // Write velocity event to Firestore (unified — no RTDB dependency).
+  // Write velocity event to Supabase.
   try {
     await db.add([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.SCAN_VELOCITY], { ts: Date.now() });
   } catch {}
@@ -139,16 +140,88 @@ export async function getUserScansPaginated(
   };
 }
 
-export async function deleteUserScan(userId: string, scanId: string): Promise<void> {
+export async function deleteUserScan(
+  userId: string,
+  scanId: string,
+  qrCodeId?: string
+): Promise<void> {
   try {
     const batch = db.batch();
     batch.update([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, scanId], { isDeleted: true, deletedAt: db.timestamp() });
     batch.increment([COLLECTIONS.USERS, userId], "personalScanCount", -1);
     await batch.commit();
+
+    if (qrCodeId) {
+      deleteDuplicateUserScansByQrCode(userId, qrCodeId, scanId).catch(() => {});
+    }
+  } catch {}
+}
+
+export async function deleteDuplicateUserScansByQrCode(
+  userId: string,
+  qrCodeId: string,
+  excludeScanId?: string
+): Promise<void> {
+  try {
+    // 1. Direct Supabase update on qr_scans table
+    let query = supabase
+      .from("qr_scans")
+      .update({ is_deleted: true, deleted_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("qr_code_id", qrCodeId)
+      .eq("is_deleted", false);
+
+    if (excludeScanId) {
+      query = query.neq("id", excludeScanId);
+    }
+
+    const { data: updatedRows, error } = await query.select("id");
+    if (!error && Array.isArray(updatedRows) && updatedRows.length > 0) {
+      try {
+        await db.increment([COLLECTIONS.USERS, userId], "personalScanCount", -updatedRows.length);
+      } catch {}
+      return;
+    }
+  } catch {}
+
+  // 2. Fallback via database adapter
+  try {
+    const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS], {
+      where: [{ field: "qrCodeId", op: "==", value: qrCodeId }],
+      limit: 100,
+    });
+    const duplicates = docs.filter((d) => d.id !== excludeScanId && d.data?.isDeleted !== true);
+    if (duplicates.length > 0) {
+      const batch = db.batch();
+      for (const d of duplicates) {
+        batch.update([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, d.id], {
+          isDeleted: true,
+          deletedAt: db.timestamp(),
+        });
+      }
+      batch.increment([COLLECTIONS.USERS, userId], "personalScanCount", -duplicates.length);
+      await batch.commit();
+    }
   } catch {}
 }
 
 export async function deleteAllUserScans(userId: string): Promise<void> {
+  try {
+    const { data: updatedRows, error } = await supabase
+      .from("qr_scans")
+      .update({ is_deleted: true, deleted_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("is_deleted", false)
+      .select("id");
+
+    if (!error && Array.isArray(updatedRows)) {
+      if (updatedRows.length > 0) {
+        await db.increment([COLLECTIONS.USERS, userId], "personalScanCount", -updatedRows.length).catch(() => {});
+      }
+      return;
+    }
+  } catch {}
+
   try {
     const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS], {
       orderBy: { field: "scannedAt", direction: "desc" },
@@ -163,7 +236,6 @@ export async function deleteAllUserScans(userId: string): Promise<void> {
     if (softDeleteCount > 0) {
       await db.increment([COLLECTIONS.USERS, userId], "personalScanCount", -softDeleteCount);
     }
-    purgeOldSoftDeleteScans(userId).catch(() => {});
   } catch {}
 }
 

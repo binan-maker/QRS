@@ -7,11 +7,11 @@ import {
   getDisplayLabel as _label,
   getSubtitle as _subtitle,
   getQrTypeMeta,
-} from "@/shared/utils/qr-content";
+} from "../qr-content";
 
-export type { QrTypeDefinition as ContentTypeMeta } from "@/shared/utils/qr-content";
+export type { QrTypeDefinition as ContentTypeMeta } from "../qr-content";
 
-export { getQrTypeMeta as getContentTypeMeta } from "@/shared/utils/qr-content";
+export { getQrTypeMeta as getContentTypeMeta } from "../qr-content";
 
 export function detectContentType(content: string): string {
   return _detect(content);

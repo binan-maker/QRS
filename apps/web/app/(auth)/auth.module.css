@@ -1,0 +1,700 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BINRO WEB: AUTHENTICATION MODULE STYLES
+   1:1 with mobile LoginScreen, RegisterScreen, ForgotPasswordScreen,
+   and VerifyEmailScreen. Zero extra texts. Responsive across all devices.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.page {
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 16px 18px 40px;
+  box-sizing: border-box;
+  background-color: var(--background);
+}
+
+.inner {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Top Navigation Bar (matching mobile navigation) ─────────────────────── */
+.navBar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 48px;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.backBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 19px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-decoration: none;
+  cursor: pointer;
+  color: var(--text);
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.backBtn:hover {
+  opacity: 0.85;
+}
+
+.backBtn:active {
+  transform: scale(0.96);
+}
+
+.navTitle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.4px;
+}
+
+.navSpacer {
+  width: 38px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* ── Brand Block (1:1 with AuthBrandBlock.tsx) ───────────────────────────── */
+.brandBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 6px;
+  text-align: center;
+}
+
+.brandName {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--text);
+  margin: 0;
+}
+
+.brandHighlight {
+  color: var(--primary);
+}
+
+.brandDivider {
+  width: 32px;
+  height: 2.5px;
+  border-radius: 2px;
+  background-color: var(--primary);
+  margin: 2px 0 6px;
+}
+
+.pageTitle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin: 0;
+}
+
+.pageSubtitle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  max-width: 280px;
+  line-height: 20px;
+  margin: 2px 0 0;
+}
+
+/* ── Card (1:1 with mobile makeAuthStyles card) ─────────────────────────── */
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* ── Form Inputs (1:1 with AuthFormInput.tsx) ────────────────────────────── */
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inputFieldWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.inputContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: var(--input-background, #f8fafc);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  padding: 0 14px;
+  height: 48px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.inputContainer:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-dim);
+}
+
+.inputContainerError {
+  border-color: var(--danger);
+  background-color: var(--danger-dim);
+}
+
+.inputContainerError:focus-within {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-dim);
+}
+
+.inputIcon {
+  color: var(--text-muted);
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  height: 100%;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.toggleBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggleBtn:hover {
+  color: var(--text);
+}
+
+.fieldError {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 11px;
+  color: var(--danger);
+  font-weight: 500;
+  padding-left: 4px;
+}
+
+/* ── Forgot Password Link ────────────────────────────────────────────────── */
+.forgotRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+
+.forgotLink {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.forgotLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Buttons (1:1 with primaryBtn & googleBtn) ───────────────────────────── */
+.primaryBtn {
+  width: 100%;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  padding: 13px 18px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: opacity 120ms ease, transform 120ms ease;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px var(--card-glow);
+}
+
+.primaryBtn:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.primaryBtn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.googleBtn {
+  width: 100%;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: var(--surface-light);
+  color: var(--text);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 120ms ease, transform 120ms ease, opacity 120ms ease;
+}
+
+.googleBtn:hover:not(:disabled) {
+  background-color: var(--surface-overlay, #f1f5f9);
+}
+
+.googleBtn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.googleBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ── Divider Row (or / or with email) ────────────────────────────────────── */
+.dividerRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background-color: var(--surface-border);
+}
+
+.dividerText {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Status & Error Banners ─────────────────────────────────────────────── */
+.banner {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.bannerRow {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.bannerText {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  flex: 1;
+  margin: 0;
+}
+
+.bannerDanger {
+  background-color: var(--danger-dim);
+  border-color: var(--danger-dim);
+  color: var(--danger);
+}
+
+.bannerWarning {
+  background-color: var(--warning-dim);
+  border-color: var(--warning-dim);
+  color: var(--warning);
+}
+
+.bannerSafe {
+  background-color: var(--safe-dim);
+  border-color: var(--safe-dim);
+  color: var(--safe);
+}
+
+.bannerInfo {
+  background-color: var(--primary-dim);
+  border-color: var(--primary-dim);
+  color: var(--primary);
+}
+
+.bannerActionRow {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  padding-left: 22px;
+}
+
+.bannerActionBtn {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  border: none;
+}
+
+.bannerActionPrimary {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.bannerActionSecondary {
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  color: var(--text-secondary);
+}
+
+/* ── Footer Link Row ─────────────────────────────────────────────────────── */
+.footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.footerText {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.footerLink {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.footerLink:hover {
+  text-decoration: underline;
+}
+
+/* ── Success States / Orbs (1:1 with successOrb) ─────────────────────────── */
+.successContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 16px 8px;
+  gap: 14px;
+}
+
+.successOrb {
+  width: 86px;
+  height: 86px;
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--safe);
+  background-color: var(--safe-dim);
+  margin-bottom: 4px;
+}
+
+.successOrbPrimary {
+  border-color: var(--primary);
+  background-color: var(--primary-dim);
+}
+
+.successTitle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin: 0;
+}
+
+.successBody {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  line-height: 22px;
+  color: var(--text-secondary);
+  max-width: 320px;
+  margin: 0;
+}
+
+.successEmailHighlight {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── Rate-limited Secondary Resend Button ─────────────────────────────────── */
+.secondaryOutlineBtn {
+  width: 100%;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: transparent;
+  color: var(--primary);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 120ms ease, opacity 120ms ease;
+}
+
+.secondaryOutlineBtn:hover:not(:disabled) {
+  background-color: var(--surface-light);
+}
+
+.secondaryOutlineBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.textLinkBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.textLinkBtn:hover {
+  color: var(--text);
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: auth-spin 600ms linear infinite;
+}
+
+.spinnerPrimary {
+  border-color: var(--primary-dim);
+  border-top-color: var(--primary);
+}
+
+@keyframes auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Small Mobile Screens (<= 380px) ─────────────────────────────────────── */
+@media (max-width: 380px) {
+  .page {
+    padding: 12px 12px 30px;
+  }
+
+  .card {
+    padding: 18px 14px;
+    border-radius: 18px;
+  }
+
+  .brandName {
+    font-size: 28px;
+  }
+
+  .pageTitle {
+    font-size: 18px;
+  }
+
+  .inputContainer {
+    height: 46px;
+    padding: 0 12px;
+  }
+
+  .primaryBtn {
+    padding: 12px 14px;
+    font-size: 13.5px;
+  }
+
+  .googleBtn {
+    padding: 11px 14px;
+    font-size: 12.5px;
+  }
+}
+
+/* ── Tablet Presentation (641px - 1023px) ─────────────────────────────────── */
+@media (min-width: 641px) {
+  .page {
+    justify-content: center;
+    padding: 36px 24px 48px;
+    background:
+      radial-gradient(circle at 15% 15%, var(--primary-dim), transparent 45%),
+      radial-gradient(circle at 85% 85%, var(--card-glow), transparent 45%),
+      var(--background);
+  }
+
+  .inner {
+    max-width: 440px;
+  }
+
+  .card {
+    padding: 28px 26px;
+    border-radius: 24px;
+    box-shadow: 0 16px 44px rgba(12, 21, 37, 0.08);
+  }
+
+  .brandName {
+    font-size: 32px;
+  }
+
+  .pageTitle {
+    font-size: 21px;
+  }
+
+  .inputContainer {
+    height: 50px;
+  }
+
+  .input {
+    font-size: 14.5px;
+  }
+
+  .primaryBtn {
+    padding: 13.5px 20px;
+    font-size: 14.5px;
+  }
+
+  .googleBtn {
+    padding: 13px 20px;
+    font-size: 13.5px;
+  }
+}
+
+/* ── Desktop Presentation (>= 1024px) ─────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .page {
+    justify-content: center;
+    padding: 48px 32px 64px;
+    background:
+      radial-gradient(circle at 20% 12%, var(--primary-dim), transparent 40%),
+      radial-gradient(circle at 80% 88%, var(--card-glow), transparent 40%),
+      var(--background);
+  }
+
+  .inner {
+    max-width: 460px;
+  }
+
+  .card {
+    padding: 32px 30px;
+    border-radius: 26px;
+    box-shadow: 0 20px 50px rgba(12, 21, 37, 0.08);
+  }
+
+  .brandName {
+    font-size: 32px;
+  }
+
+  .pageTitle {
+    font-size: 21px;
+  }
+
+  .inputContainer {
+    height: 50px;
+  }
+
+  .input {
+    font-size: 14.5px;
+  }
+
+  .primaryBtn {
+    padding: 14px 22px;
+    font-size: 14.5px;
+  }
+
+  .googleBtn {
+    padding: 13px 22px;
+    font-size: 14px;
+  }
+}

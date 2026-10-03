@@ -21,6 +21,8 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+(globalThis as any).__binroAsyncStorage = AsyncStorage;
+
 // ─── Key registry ─────────────────────────────────────────────────────────────
 // Single source of truth for every key read at startup.
 // Add future startup-time prefs here; remove from the individual components.

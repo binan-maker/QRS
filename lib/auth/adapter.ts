@@ -19,7 +19,7 @@ export interface AuthAdapter {
   onIdTokenChanged(cb: (user: AuthAdapterUser | null) => void): () => void;
   getCurrentUser(): AuthAdapterUser | null;
   signIn(email: string, password: string): Promise<AuthAdapterUser>;
-  signUp(email: string, password: string): Promise<AuthAdapterUser>;
+  signUp(email: string, password: string, displayName?: string): Promise<AuthAdapterUser>;
   signOut(): Promise<void>;
   signInWithGoogleToken(accessToken: string): Promise<AuthAdapterUser>;
   signInWithGoogleIdToken(idToken: string): Promise<AuthAdapterUser>;
@@ -29,6 +29,8 @@ export interface AuthAdapter {
   reauthenticate(user: AuthAdapterUser, email: string, password: string): Promise<void>;
   deleteUser(user: AuthAdapterUser): Promise<void>;
   checkEmailExists(email: string): Promise<boolean>;
+  /** Refreshes current session and returns latest user from auth server if available */
+  refreshCurrentUser?(): Promise<AuthAdapterUser | null>;
   /** Returns the provider IDs for the current user (e.g. "password", "google.com"). */
   getProviderIds(): string[];
 }

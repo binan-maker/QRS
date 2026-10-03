@@ -1,61 +1,112 @@
 /**
- * Scan deduplication utilities.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * SCAN DEDUPLICATION UTILITIES (YouTube Watch-History Semantics)
+ * ───────────────────────────────────────────────────────────────────────────────
+ * Like YouTube watch history:
+ * When a user scans the same QR code / destination multiple times (e.g. binan.com
+ * scanned 2, 10, or more times), the recent scans and history lists show ONLY
+ * the most recent scan data for that QR code.
  *
- * Two scan entries represent the same event iff they share a qrCodeId AND
- * fall in the same 60-second bucket.  This collapses the offline write +
- * background-sync write (same event, ~1–2 s apart) without merging distinct
- * scan events of the same QR code on different minutes.
+ * The scan moves to the top of the list (at its latest scannedAt timestamp),
+ * and older duplicate scan events for that same QR code are suppressed.
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 export interface ScanLike {
+  id?: string;
   qrCodeId?: string | null;
+  content?: string;
   scannedAt: string;
 }
 
 /**
- * Merge two scan arrays (local + cloud), deduplicate by qrCodeId+minuteBucket,
- * sort newest-first, and optionally trim to `maxItems`.
+ * Normalizes content string for comparison (lowercases URL protocols/hostnames,
+ * trims whitespace, removes trailing slashes).
+ */
+export function normalizeScanContent(rawContent?: string | null): string {
+  if (!rawContent) return "";
+  const trimmed = rawContent.trim();
+  if (!trimmed) return "";
+  try {
+    if (/^[a-z]+:\/\//i.test(trimmed)) {
+      const parsed = new URL(trimmed);
+      const pathname = parsed.pathname.replace(/\/+$/, "");
+      return `${parsed.protocol.toLowerCase()}//${parsed.host.toLowerCase()}${pathname}${parsed.search}${parsed.hash}`;
+    }
+  } catch {
+    // If not a standard URL, fallback to lowercased trimmed text without trailing slash
+  }
+  return trimmed.toLowerCase().replace(/\/+$/, "");
+}
+
+/**
+ * Merge two scan arrays (local + cloud), sort newest-first, and deduplicate
+ * by QR code identity (qrCodeId and/or normalized content) like YouTube watch history.
  *
- * Perf: timestamps are pre-computed with Date.parse() (faster than new Date())
- * so the sort comparator never allocates Date objects.  Two input arrays are
- * iterated directly instead of being spread into a combined array.
+ * The most recent scan of each unique QR code is preserved at its latest timestamp.
+ * Older duplicate scans are discarded.
  */
 export function mergeAndDeduplicateScans<T extends ScanLike>(
   localItems: T[],
   cloudItems: T[],
   maxItems?: number,
 ): T[] {
-  const seen    = new Set<string>();
-  // Pre-allocate with an upper-bound size to avoid repeated array growth.
-  const unique: T[]      = [];
-  const timestamps: number[] = [];
+  // Combine all items with pre-computed timestamps
+  const allItems: { item: T; ts: number }[] = [];
 
-  function processItem(scan: T): void {
-    // Date.parse is ~15 % faster than new Date(str).getTime() for ISO strings.
-    const ts = Date.parse(scan.scannedAt);
-    if (!scan.qrCodeId) {
-      unique.push(scan);
-      timestamps.push(ts);
-      return;
+  for (let i = 0; i < localItems.length; i++) {
+    const item = localItems[i];
+    if (item && item.scannedAt) {
+      allItems.push({ item, ts: Date.parse(item.scannedAt) || 0 });
     }
-    // Integer division via bitwise OR is faster than Math.floor for positive values.
-    const minuteBucket = (ts / 60_000) | 0;
-    const key = `${scan.qrCodeId}|${minuteBucket}`;
-    if (!seen.has(key)) {
-      seen.add(key);
-      unique.push(scan);
-      timestamps.push(ts);
+  }
+  for (let i = 0; i < cloudItems.length; i++) {
+    const item = cloudItems[i];
+    if (item && item.scannedAt) {
+      allItems.push({ item, ts: Date.parse(item.scannedAt) || 0 });
     }
   }
 
-  for (let i = 0; i < localItems.length; i++) processItem(localItems[i]);
-  for (let i = 0; i < cloudItems.length; i++) processItem(cloudItems[i]);
+  // Sort newest first — zero Date allocations during sort
+  allItems.sort((a, b) => b.ts - a.ts);
 
-  // Sort using pre-computed timestamps — zero Date allocations in comparator.
-  // Build an index array to sort so we can keep timestamps aligned.
-  const indices = Array.from({ length: unique.length }, (_, i) => i);
-  indices.sort((a, b) => timestamps[b] - timestamps[a]);
+  const seenKeys = new Set<string>();
+  const result: T[] = [];
 
-  const sorted = indices.map((i) => unique[i]);
-  return maxItems !== undefined ? sorted.slice(0, maxItems) : sorted;
+  for (let i = 0; i < allItems.length; i++) {
+    const { item } = allItems[i];
+
+    const qrKey = item.qrCodeId && item.qrCodeId.trim()
+      ? `qr:${item.qrCodeId.trim()}`
+      : null;
+
+    const contentKey = item.content && item.content.trim()
+      ? `content:${normalizeScanContent(item.content)}`
+      : null;
+
+    // If already seen via either qrCodeId or normalized content, skip older duplicate
+    if ((qrKey && seenKeys.has(qrKey)) || (contentKey && seenKeys.has(contentKey))) {
+      continue;
+    }
+
+    // Fallback if neither qrCodeId nor content is present: deduplicate by item id
+    if (!qrKey && !contentKey) {
+      const idKey = item.id ? `id:${item.id}` : null;
+      if (idKey && seenKeys.has(idKey)) {
+        continue;
+      }
+      if (idKey) seenKeys.add(idKey);
+    }
+
+    if (qrKey) seenKeys.add(qrKey);
+    if (contentKey) seenKeys.add(contentKey);
+
+    result.push(item);
+
+    if (maxItems !== undefined && result.length >= maxItems) {
+      break;
+    }
+  }
+
+  return result;
 }

@@ -1,5 +1,36 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * BINRO WEB: CLIENT QR SERVICE BRIDGE
+ * ───────────────────────────────────────────────────────────────────────────────
+ * Directly imports and delegates trust score calculation, community vote fetching,
+ * vote submission, and live report subscriptions from the mobile source:
+ *   - @services/trust/trust-service
+ *   - @services/moderation/report-service
+ *   - @shared/utils/qr-content
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */
+
 import type { Session, User } from "@supabase/supabase-js";
+import {
+  calculateTrustScore as calculateMobileTrustScore,
+  type TrustScore,
+} from "@services/trust/trust-service";
+import {
+  getQrReportData,
+  getUserQrReport,
+  reportQrCode,
+  subscribeToQrReports,
+  seedQrReportCountsInMemory,
+  type QrReportMeta,
+} from "@services/moderation/report-service";
+import { detectContentType } from "@shared/utils/qr-content";
 import { getWebSupabase } from "./supabase";
+
+export {
+  subscribeToQrReports,
+  seedQrReportCountsInMemory,
+  type QrReportMeta,
+};
 
 export type WebQrComment = {
   id: string;
@@ -17,21 +48,9 @@ export type WebQrComment = {
   replies: WebQrComment[];
 };
 
-export type WebTrustScore = {
-  score: number;
-  label: string;
-  totalReports: number;
-};
+export type WebTrustScore = TrustScore;
 
 export type QrForeignKey = { qr_code_id: string };
-
-interface VoteRecord {
-  userId: string;
-  reportType: string | null;
-  weight: number;
-  userRemoved: boolean;
-  timestampMs: number;
-}
 
 function parseTimeMs(val: any): number {
   if (!val) return 0;
@@ -40,88 +59,14 @@ function parseTimeMs(val: any): number {
   return Number.isFinite(ms) ? ms : 0;
 }
 
+/**
+ * Delegates directly to mobile @services/trust/trust-service
+ */
 export function calculateWebTrustScore(
   reportCounts: Record<string, number>,
   weightedCounts?: Record<string, number>,
 ): WebTrustScore {
-  const rawSafe = reportCounts.safe || 0;
-  const rawScam = reportCounts.scam || 0;
-  const rawSpam = reportCounts.spam || 0;
-  const rawFake = reportCounts.fake || 0;
-  const rawTotal = rawSafe + rawScam + rawSpam + rawFake;
-
-  if (rawTotal === 0) return { score: -1, label: "Unrated", totalReports: 0 };
-
-  const useWeighted = Boolean(weightedCounts && Object.keys(weightedCounts).length > 0);
-  const resolveWeight = (rawCount: number, weightedVal?: number): number => {
-    if (rawCount <= 0) return 0;
-    if (!useWeighted) return rawCount;
-    return weightedVal && weightedVal > 0 ? weightedVal : rawCount;
-  };
-
-  let wSafe = resolveWeight(rawSafe, weightedCounts?.safe);
-  let wScam = resolveWeight(rawScam, weightedCounts?.scam);
-  let wSpam =
-    resolveWeight(rawSpam, weightedCounts?.spam) +
-    resolveWeight(rawFake, weightedCounts?.fake);
-
-  const wNeg = wScam + wSpam;
-  const wPos = wSafe;
-  if (useWeighted && rawTotal < 15 && wNeg > wPos * 2) {
-    const skepticism = 0.65;
-    wScam *= skepticism;
-    wSpam *= skepticism;
-  }
-
-  const wTotal = wSafe + wScam + wSpam;
-  if (wTotal === 0) return { score: -1, label: "Unrated", totalReports: rawTotal };
-
-  const safeRatio = wSafe / wTotal;
-  const confidence = Math.min(rawTotal / 20, 1);
-  const score = 50 + (safeRatio * 100 - 50) * confidence;
-
-  let label = "Dangerous";
-  if (score >= 75) label = "Trusted";
-  else if (score >= 55) label = "Likely Safe";
-  else if (score >= 40) label = "Uncertain";
-  else if (score >= 25) label = "Suspicious";
-
-  return {
-    score: Math.round(score),
-    label,
-    totalReports: rawTotal,
-  };
-}
-
-function loadLocalVotesMap(qrId: string): Map<string, VoteRecord> {
-  const result = new Map<string, VoteRecord>();
-  if (typeof window === "undefined") return result;
-  try {
-    const raw = localStorage.getItem(`qr_votes_map_${qrId}`);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Record<string, VoteRecord>;
-      for (const [uid, rec] of Object.entries(parsed)) {
-        if (rec && typeof rec === "object") {
-          result.set(uid, rec);
-        }
-      }
-    }
-  } catch {}
-  return result;
-}
-
-function saveLocalVote(qrId: string, record: VoteRecord): void {
-  if (typeof window === "undefined") return;
-  try {
-    const map = loadLocalVotesMap(qrId);
-    map.set(record.userId, record);
-    const obj: Record<string, VoteRecord> = {};
-    for (const [uid, rec] of map.entries()) {
-      obj[uid] = rec;
-    }
-    localStorage.setItem(`qr_votes_map_${qrId}`, JSON.stringify(obj));
-    localStorage.setItem(`qr_vote_override_${qrId}_${record.userId}`, JSON.stringify(record));
-  } catch {}
+  return calculateMobileTrustScore(reportCounts, weightedCounts);
 }
 
 function loadLocalCommentDislikes(qrId: string): Record<string, number> {
@@ -179,21 +124,31 @@ export async function ensureWebQrAndUserExist(
   const supabase = getWebSupabase();
   const now = new Date().toISOString();
 
-  // 1. Ensure qr_codes row exists
+  // 1. Ensure qr_codes row exists (and self-heal any corrupted "tel:" rows)
   try {
     const { data: existingQr } = await supabase
       .from("qr_codes")
-      .select("id")
+      .select("id, content")
       .eq("id", qrId)
       .maybeSingle();
 
+    const newContent = qrMeta?.content?.trim();
+    const hasValidNewContent = Boolean(
+      newContent &&
+      newContent.length > 4 &&
+      newContent.toLowerCase() !== "tel:" &&
+      !/^(tel|sms|smsto|mailto):?$/i.test(newContent)
+    );
+
+    const isCorrupted =
+      !existingQr?.content ||
+      existingQr.content.trim().toLowerCase() === "tel:" ||
+      /^(tel|sms|smsto|mailto):?$/i.test(existingQr.content.trim());
+
     if (!existingQr) {
-      const content = qrMeta?.content?.trim() || qrId;
-      const isUrl =
-        /^https?:\/\//i.test(content) ||
-        (/^[a-z0-9-]+(\.[a-z0-9-]+)+\/?/i.test(content) && !content.includes(" "));
-      const contentType = qrMeta?.contentType || (isUrl ? "url" : "text");
-      await supabase.from("qr_codes").upsert(
+      const content = newContent || qrId;
+      const contentType = qrMeta?.contentType || detectContentType(content);
+      const { error: upsertErr } = await supabase.from("qr_codes").upsert(
         {
           id: qrId,
           content,
@@ -205,6 +160,28 @@ export async function ensureWebQrAndUserExist(
         },
         { onConflict: "id" },
       );
+      if (upsertErr) {
+        await supabase.from("qr_codes").upsert(
+          {
+            id: qrId,
+            content,
+            content_type: contentType,
+            scan_count: 1,
+            comment_count: 0,
+            created_at: now,
+          },
+          { onConflict: "id" },
+        );
+      }
+    } else if (isCorrupted && hasValidNewContent && newContent) {
+      const contentType = qrMeta?.contentType || detectContentType(newContent);
+      await supabase
+        .from("qr_codes")
+        .update({
+          content: newContent,
+          content_type: contentType,
+        })
+        .eq("id", qrId);
     }
   } catch {}
 
@@ -261,6 +238,10 @@ export async function ensureWebQrAndUserExist(
   return { userName, accountAgeDays, emailVerified };
 }
 
+/**
+ * Fetches community votes & trust score directly using mobile @services/moderation/report-service
+ * and @services/trust/trust-service.
+ */
 export async function fetchWebQrReports(
   qrId: string,
   userId?: string | null,
@@ -270,129 +251,25 @@ export async function fetchWebQrReports(
   userReport: string | null;
   trust: WebTrustScore;
 }> {
-  const supabase = getWebSupabase();
-  const byUser = loadLocalVotesMap(qrId);
-
-  const mergeCandidate = (candidate: VoteRecord) => {
-    if (!candidate.userId) return;
-    const prev = byUser.get(candidate.userId);
-    if (!prev || candidate.timestampMs >= prev.timestampMs) {
-      byUser.set(candidate.userId, candidate);
-    }
-  };
-
-  const [reportsRes, auditRes, rtdbRes, userConsentRes] = await Promise.allSettled([
-    supabase
-      .from("qr_reports")
-      .select("user_id, report_type, weight, user_removed, created_at, updated_at")
-      .eq("qr_code_id", qrId)
-      .limit(500),
-    supabase
-      .from("audit_logs")
-      .select("user_id, action, vote_weight, created_at")
-      .eq("qr_id", qrId)
-      .like("action", "vote:%")
-      .order("created_at", { ascending: true })
-      .limit(500),
-    supabase
-      .from("rtdb_store")
-      .select("path, value, updated_at")
-      .like("path", `qr_vote:${qrId}:%`)
-      .limit(500),
-    userId
-      ? supabase.from("users").select("consent").eq("id", userId).maybeSingle()
-      : Promise.resolve({ data: null }),
+  const [reportData, userReport] = await Promise.all([
+    getQrReportData(qrId),
+    userId ? getUserQrReport(qrId, userId) : Promise.resolve(null),
   ]);
 
-  if (reportsRes.status === "fulfilled" && Array.isArray(reportsRes.value?.data)) {
-    for (const r of reportsRes.value.data as any[]) {
-      const uid = r.user_id || r.userId;
-      if (!uid) continue;
-      const ts = Math.max(parseTimeMs(r.updated_at), parseTimeMs(r.created_at), 1);
-      mergeCandidate({
-        userId: String(uid),
-        reportType: r.user_removed ? null : (r.report_type ?? null),
-        weight: Number(r.weight || 1),
-        userRemoved: Boolean(r.user_removed),
-        timestampMs: ts,
-      });
-    }
-  }
-
-  if (auditRes.status === "fulfilled" && Array.isArray(auditRes.value?.data)) {
-    for (const row of auditRes.value.data as any[]) {
-      const uid = row.user_id;
-      const action: string = row.action || "";
-      if (!uid || !action.startsWith("vote:")) continue;
-      const voteType = action.slice("vote:".length);
-      const isRemoved = voteType === "removed" || !voteType;
-      const ts = parseTimeMs(row.created_at) || 2;
-      mergeCandidate({
-        userId: String(uid),
-        reportType: isRemoved ? null : voteType,
-        weight: Number(row.vote_weight || 1),
-        userRemoved: isRemoved,
-        timestampMs: ts,
-      });
-    }
-  }
-
-  if (rtdbRes.status === "fulfilled" && Array.isArray(rtdbRes.value?.data)) {
-    for (const row of rtdbRes.value.data as any[]) {
-      const val = row?.value;
-      if (!val || typeof val !== "object") continue;
-      const uid = val.userId || String(row.path || "").split(":")[2];
-      if (!uid) continue;
-      const ts =
-        Number(val.timestampMs) ||
-        parseTimeMs(val.updatedAt) ||
-        parseTimeMs(row.updated_at) ||
-        3;
-      mergeCandidate({
-        userId: String(uid),
-        reportType: val.userRemoved ? null : (val.reportType ?? null),
-        weight: Number(val.weight || 1),
-        userRemoved: Boolean(val.userRemoved),
-        timestampMs: ts,
-      });
-    }
-  }
-
-  if (userId && userConsentRes.status === "fulfilled" && userConsentRes.value?.data) {
-    const qrVote = ((userConsentRes.value.data as any)?.consent as any)?.qrVotes?.[qrId];
-    if (qrVote && typeof qrVote === "object") {
-      const ts = Number(qrVote.timestampMs) || parseTimeMs(qrVote.updatedAt) || 4;
-      mergeCandidate({
-        userId,
-        reportType: qrVote.userRemoved ? null : (qrVote.reportType ?? null),
-        weight: Number(qrVote.weight || 1),
-        userRemoved: Boolean(qrVote.userRemoved),
-        timestampMs: ts,
-      });
-    }
-  }
-
-  const reportCounts: Record<string, number> = {};
-  const weightedCounts: Record<string, number> = {};
-
-  for (const rec of byUser.values()) {
-    if (rec.userRemoved || !rec.reportType) continue;
-    reportCounts[rec.reportType] = (reportCounts[rec.reportType] || 0) + 1;
-    weightedCounts[rec.reportType] =
-      (weightedCounts[rec.reportType] || 0) + Number(rec.weight || 1);
-  }
-
-  const userRec = userId ? byUser.get(userId) : undefined;
-  const userReport = userRec && !userRec.userRemoved ? userRec.reportType : null;
-  const trust = calculateWebTrustScore(reportCounts, weightedCounts);
+  const reportCounts = reportData.counts;
+  const weightedCounts = reportData.weighted;
+  const trust = calculateMobileTrustScore(reportCounts, weightedCounts);
 
   return { reportCounts, weightedCounts, userReport, trust };
 }
 
+/**
+ * Submits a QR vote directly using mobile reportQrCode from @services/moderation/report-service.
+ */
 export async function submitQrReport(
   qrId: string,
   reportType: string,
-  qrMeta?: { content?: string; contentType?: string },
+  qrMeta?: QrReportMeta,
 ): Promise<{
   action: "created" | "updated" | "removed";
   userReport: string | null;
@@ -401,170 +278,20 @@ export async function submitQrReport(
   trust: WebTrustScore;
 }> {
   const session = await currentSession();
-  const supabase = getWebSupabase();
   const userId = session.user.id;
+  const { emailVerified } = await ensureWebQrAndUserExist(qrId, session.user, qrMeta);
 
-  const { accountAgeDays, emailVerified } = await ensureWebQrAndUserExist(
+  const { action } = await reportQrCode(
     qrId,
-    session.user,
+    userId,
+    reportType,
+    emailVerified,
     qrMeta,
   );
 
-  const current = await fetchWebQrReports(qrId, userId);
-  const existingReport = current.userReport;
-  const userRemoved = existingReport === reportType;
-  const weight = userRemoved ? 0.1 : emailVerified ? 1.2 : 1.0;
-  const now = new Date().toISOString();
-  const timestampMs = Date.now();
-
-  // 1. Local immediate persistence
-  saveLocalVote(qrId, {
-    userId,
-    reportType: userRemoved ? null : reportType,
-    weight,
-    userRemoved,
-    timestampMs,
-  });
-
-  // 2. Persist to qr_reports table (UPDATE -> DELETE+INSERT -> INSERT)
-  const persistQrReports = async () => {
-    try {
-      const { data: existingRows } = await supabase
-        .from("qr_reports")
-        .select("id")
-        .eq("qr_code_id", qrId)
-        .eq("user_id", userId);
-
-      if (Array.isArray(existingRows) && existingRows.length > 0) {
-        const { data: updated, error: updateErr } = await supabase
-          .from("qr_reports")
-          .update({
-            report_type: reportType,
-            weight,
-            account_age_days: accountAgeDays,
-            email_verified: emailVerified,
-            user_removed: userRemoved,
-            removed_at: userRemoved ? now : null,
-            updated_at: now,
-          })
-          .eq("qr_code_id", qrId)
-          .eq("user_id", userId)
-          .select();
-
-        if (!updateErr && Array.isArray(updated) && updated.length > 0) return;
-
-        const { data: deleted, error: deleteErr } = await supabase
-          .from("qr_reports")
-          .delete()
-          .eq("qr_code_id", qrId)
-          .eq("user_id", userId)
-          .select();
-
-        if (!deleteErr && Array.isArray(deleted) && deleted.length > 0) {
-          if (userRemoved) return;
-          const { error: reinsertErr } = await supabase.from("qr_reports").insert({
-            qr_code_id: qrId,
-            user_id: userId,
-            report_type: reportType,
-            weight,
-            account_age_days: accountAgeDays,
-            email_verified: emailVerified,
-            user_removed: false,
-            removed_at: null,
-            created_at: now,
-            updated_at: now,
-          });
-          if (!reinsertErr) return;
-        }
-      }
-
-      if (!userRemoved) {
-        await supabase.from("qr_reports").insert({
-          qr_code_id: qrId,
-          user_id: userId,
-          report_type: reportType,
-          weight,
-          account_age_days: accountAgeDays,
-          email_verified: emailVerified,
-          user_removed: false,
-          removed_at: null,
-          created_at: now,
-          updated_at: now,
-        });
-      }
-    } catch {}
-  };
-
-  // 3. Persist to rtdb_store, audit_logs, and users.consent
-  const persistFallbacks = async () => {
-    await Promise.allSettled([
-      supabase.from("rtdb_store").upsert(
-        {
-          path: `qr_vote:${qrId}:${userId}`,
-          value: {
-            qrCodeId: qrId,
-            userId,
-            reportType: userRemoved ? null : reportType,
-            weight,
-            userRemoved,
-            updatedAt: now,
-            timestampMs,
-          },
-          updated_at: now,
-        },
-        { onConflict: "path" },
-      ),
-      supabase.from("audit_logs").insert({
-        qr_id: qrId,
-        user_id: userId,
-        action: userRemoved ? "vote:removed" : `vote:${reportType}`,
-        vote_weight: weight,
-        account_age_days: accountAgeDays,
-        email_verified: emailVerified,
-        created_at: now,
-      }),
-      (async () => {
-        const { data: userRow } = await supabase
-          .from("users")
-          .select("consent")
-          .eq("id", userId)
-          .maybeSingle();
-        const existingConsent =
-          userRow?.consent && typeof userRow.consent === "object" && !Array.isArray(userRow.consent)
-            ? (userRow.consent as Record<string, any>)
-            : {};
-        const existingQrVotes =
-          existingConsent.qrVotes && typeof existingConsent.qrVotes === "object"
-            ? (existingConsent.qrVotes as Record<string, any>)
-            : {};
-        await supabase
-          .from("users")
-          .update({
-            consent: {
-              ...existingConsent,
-              qrVotes: {
-                ...existingQrVotes,
-                [qrId]: {
-                  reportType: userRemoved ? null : reportType,
-                  weight,
-                  userRemoved,
-                  updatedAt: now,
-                  timestampMs,
-                },
-              },
-            },
-            updated_at: now,
-          })
-          .eq("id", userId);
-      })(),
-    ]);
-  };
-
-  await Promise.all([persistQrReports(), persistFallbacks()]);
-
   const updated = await fetchWebQrReports(qrId, userId);
   return {
-    action: userRemoved ? "removed" : existingReport ? "updated" : "created",
+    action,
     ...updated,
   };
 }
@@ -576,15 +303,17 @@ export async function fetchWebQrComments(
   const supabase = getWebSupabase();
   const { data, error } = await supabase
     .from("qr_comments")
-    .select("id,user_id,user_name,text,parent_id,likes,is_edited,created_at,is_deleted")
+    .select("*")
     .eq("qr_code_id", qrId)
-    .eq("is_deleted", false)
     .order("created_at", { ascending: false })
     .limit(150);
 
   if (error) throw error;
   const rows = ((data ?? []) as Record<string, any>[]).filter(
-    (r) => !r.is_deleted && r.text !== "[deleted]",
+    (r) =>
+      !r.is_deleted &&
+      r.text !== "[deleted]" &&
+      !String(r.text ?? "").startsWith("__qr_vote__:"),
   );
 
   // Enrich with public_profiles / users
@@ -734,7 +463,7 @@ export async function addQrComment(
       created_at: now,
       updated_at: now,
     })
-    .select("id,user_id,user_name,text,parent_id,likes,is_edited,created_at")
+    .select("*")
     .single();
 
   if (error) throw error;
@@ -750,7 +479,6 @@ export async function addQrComment(
       .from("qr_codes")
       .update({
         comment_count: Math.max(0, Number(qrRow?.comment_count ?? 0)) + 1,
-        updated_at: now,
       })
       .eq("id", qrId);
   } catch {}
@@ -879,10 +607,8 @@ export async function deleteQrComment(qrId: string, commentId: string): Promise<
         .from("qr_codes")
         .update({
           comment_count: Math.max(0, Number(qrRow.comment_count ?? 1) - 1),
-          updated_at: now,
         })
         .eq("id", qrId);
     }
   } catch {}
 }
-

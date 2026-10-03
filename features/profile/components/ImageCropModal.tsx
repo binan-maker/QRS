@@ -1,17 +1,18 @@
 /**
- * ImageCropModal — Instagram-style crop screen for Android
+ * ImageCropModal — WhatsApp-style circular crop screen for profile photos
  *
- * Supports both dark and light themes:
- *   • Header, chrome, and tip adapt to the active theme
- *   • StatusBar icons + Android navigation bar colour are set to match
- *   • The overlay outside the crop box is always a dark scrim (photo editor)
- *
- * • Pan freely with one finger — image moves under the overlay
- * • Pinch to zoom — image scales around its centre
- * • CROP button — runs expo-image-manipulator on the visible crop region
+ * Provides a true circular crop overlay:
+ *   • Full dark photo-editing immersion canvas (#0B141B / #000000)
+ *   • True circular cutout mask: everything outside the circle is shaded with
+ *     a dark scrim so the user sees exactly what fits inside their round avatar
+ *   • WhatsApp-style crisp white circular boundary ring + 4 corner framing brackets
+ *   • Subtle rule-of-thirds grid clipped to the circle to aid centering the face
+ *   • Auto-cover scaling on image load so the circle is pre-filled without black gaps
+ *   • Pan & pinch-to-zoom gestures (react-native-gesture-handler + reanimated)
+ *   • 1:1 circular crop math exported via expo-image-manipulator (512x512)
  */
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useRef } from "react";
 import {
   Modal,
   View,
@@ -24,6 +25,7 @@ import {
   LayoutChangeEvent,
   Image as RNImage,
 } from "react-native";
+import Svg, { Path, Circle, Line, Defs, ClipPath, G } from "react-native-svg";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -39,15 +41,15 @@ import * as ImageManipulator from "expo-image-manipulator";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAndroidNavBar } from "@/shared/hooks/useAndroidNavBar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from "@/shared/utils/haptics";
 
-// ── constants ─────────────────────────────────────────────────────────────────
+// ── Dimensions & constants ───────────────────────────────────────────────────
 const SCREEN_W = Dimensions.get("window").width;
-// Crop box = 88% of the screen width
-const CROP_BOX = Math.round(SCREEN_W * 0.88);
-// Overlay outside the crop box — always a dark scrim regardless of theme
-const OVERLAY  = "rgba(0,0,0,0.55)";
+// Crop diameter = 82% of screen width (comfortable margin, large round preview)
+const CROP_DIAMETER = Math.round(SCREEN_W * 0.82);
+const BG_COLOR = "#0A0D12";
+const SCRIM_COLOR = "rgba(0, 0, 0, 0.74)";
 
-// ── component ─────────────────────────────────────────────────────────────────
 interface Props {
   visible:   boolean;
   imageUri:  string | null;
@@ -61,36 +63,28 @@ export default function ImageCropModal({
   onConfirm,
   onCancel,
 }: Props) {
-  const { colors, isDark } = useTheme();
-  const insets              = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
-  // ── theme-derived chrome colours ──────────────────────────────────────────
-  const bg          = isDark ? "#0A0A0A"                : colors.background;
-  const iconColor   = isDark ? "#FFFFFF"                : colors.text;
-  const titleColor  = isDark ? "#FFFFFF"                : colors.text;
-  const tipColor    = isDark ? "rgba(255,255,255,0.50)" : "rgba(12,21,37,0.45)";
-  const ringColor   = isDark ? "rgba(255,255,255,0.90)" : "rgba(0,0,0,0.70)";
-  const statusStyle = (isDark ? "light-content" : "dark-content") as
-    "light-content" | "dark-content";
+  // Keep Android navigation bar dark during crop mode
+  useAndroidNavBar(visible, BG_COLOR, colors.background, true);
 
-  // ── sync Android nav bar button style while the modal is open ───────────
-  // Uses the shared hook — only calls setButtonStyleAsync (safe on API 35+
-  // edge-to-edge builds where setBackgroundColorAsync is a no-op).
-  useAndroidNavBar(visible, bg, colors.background, isDark);
-
-  // ── area dimensions (measured via onLayout) ──────────────────────────────
-  const [areaSize, setAreaSize] = useState({ w: SCREEN_W, h: SCREEN_W });
+  // ── Area layout (measured via onLayout) ────────────────────────────────────
+  const [areaSize, setAreaSize] = useState({ w: SCREEN_W, h: SCREEN_W * 1.25 });
   const onAreaLayout = useCallback((e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
-    setAreaSize({ w: width, h: height });
+    if (width > 0 && height > 0) {
+      setAreaSize({ w: width, h: height });
+    }
   }, []);
 
-  // ── natural image size ───────────────────────────────────────────────────
-  const imgW      = useSharedValue(1);
-  const imgH      = useSharedValue(1);
+  // ── Natural image size ───────────────────────────────────────────────────
+  const imgW = useSharedValue(1);
+  const imgH = useSharedValue(1);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const minCoverScaleRef = useRef(1);
 
-  // ── gesture shared values ────────────────────────────────────────────────
+  // ── Gesture shared values ────────────────────────────────────────────────
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const scale      = useSharedValue(1);
@@ -100,7 +94,7 @@ export default function ImageCropModal({
 
   const [cropping, setCropping] = useState(false);
 
-  // ── reset state on open ──────────────────────────────────────────────────
+  // ── Reset state on open ──────────────────────────────────────────────────
   const resetGestures = useCallback(() => {
     translateX.value = 0;
     translateY.value = 0;
@@ -109,9 +103,24 @@ export default function ImageCropModal({
     savedY.value     = 0;
     savedScale.value = 1;
     setImgLoaded(false);
+    minCoverScaleRef.current = 1;
   }, [translateX, translateY, scale, savedX, savedY, savedScale]);
 
-  // Resolve the natural image size so we can compute the crop correctly.
+  // Compute scale needed to cover the circular crop area
+  const computeCoverScale = useCallback(
+    (w: number, h: number, aW: number, aH: number) => {
+      if (w <= 0 || h <= 0 || aW <= 0 || aH <= 0) return 1;
+      const fitScale = Math.min(aW / w, aH / h);
+      const dispW = w * fitScale;
+      const dispH = h * fitScale;
+      if (dispW <= 0 || dispH <= 0) return 1;
+      const cover = Math.max(CROP_DIAMETER / dispW, CROP_DIAMETER / dispH);
+      return Math.max(1, cover);
+    },
+    []
+  );
+
+  // Handle image size resolution + automatic cover zoom (WhatsApp behavior)
   const handleImageLoad = useCallback(() => {
     if (!imageUri) return;
     RNImage.getSize(
@@ -119,23 +128,27 @@ export default function ImageCropModal({
       (w, h) => {
         imgW.value = w;
         imgH.value = h;
+        const cover = computeCoverScale(w, h, areaSize.w, areaSize.h);
+        minCoverScaleRef.current = cover;
+        scale.value = cover;
+        savedScale.value = cover;
         setImgLoaded(true);
       },
       () => {
-        imgW.value = CROP_BOX;
-        imgH.value = CROP_BOX;
+        imgW.value = CROP_DIAMETER;
+        imgH.value = CROP_DIAMETER;
         setImgLoaded(true);
-      },
+      }
     );
-  }, [imageUri, imgW, imgH]);
+  }, [imageUri, imgW, imgH, areaSize.w, areaSize.h, computeCoverScale, scale, savedScale]);
 
-  // ── pan (free, no clamping — just like Instagram) ────────────────────────
+  // ── Pan gesture (free dragging) ──────────────────────────────────────────
   const pan = Gesture.Pan()
     .onStart(() => {
       savedX.value = translateX.value;
       savedY.value = translateY.value;
     })
-    .onUpdate((e) => {
+    .onUpdate((e: any) => {
       translateX.value = savedX.value + e.translationX;
       translateY.value = savedY.value + e.translationY;
     })
@@ -144,26 +157,27 @@ export default function ImageCropModal({
       savedY.value = translateY.value;
     });
 
-  // ── pinch (zoom around the image centre) ─────────────────────────────────
+  // ── Pinch gesture (smooth zoom) ──────────────────────────────────────────
   const pinch = Gesture.Pinch()
     .onStart(() => {
       savedScale.value = scale.value;
     })
-    .onUpdate((e) => {
+    .onUpdate((e: any) => {
       const next = savedScale.value * e.scale;
-      scale.value = Math.max(0.3, Math.min(next, 10));
+      scale.value = Math.max(0.4, Math.min(next, 8));
     })
     .onEnd(() => {
       savedScale.value = scale.value;
-      if (scale.value < 0.5) {
-        scale.value      = withSpring(0.5);
-        savedScale.value = 0.5;
+      const minAllow = Math.max(0.6, minCoverScaleRef.current * 0.7);
+      if (scale.value < minAllow) {
+        scale.value      = withSpring(minCoverScaleRef.current);
+        savedScale.value = minCoverScaleRef.current;
       }
     });
 
   const composed = Gesture.Simultaneous(pan, pinch);
 
-  // ── animated style applied to the image wrapper ──────────────────────────
+  // ── Animated image style ─────────────────────────────────────────────────
   const imageAnimStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
@@ -172,10 +186,23 @@ export default function ImageCropModal({
     ],
   }));
 
-  // ── crop math ─────────────────────────────────────────────────────────────
+  // ── Recenter button action ───────────────────────────────────────────────
+  const handleRecenter = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    translateX.value = withSpring(0);
+    translateY.value = withSpring(0);
+    savedX.value = 0;
+    savedY.value = 0;
+    const cover = minCoverScaleRef.current || 1;
+    scale.value = withSpring(cover);
+    savedScale.value = cover;
+  }, [translateX, translateY, savedX, savedY, scale, savedScale]);
+
+  // ── Crop execution ────────────────────────────────────────────────────────
   const handleCrop = useCallback(async () => {
     if (!imageUri || !imgLoaded || cropping) return;
     setCropping(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const gs = scale.value;
       const tx = translateX.value;
@@ -185,7 +212,10 @@ export default function ImageCropModal({
       const aW = areaSize.w;
       const aH = areaSize.h;
 
-      if (iw === 0 || ih === 0) { onConfirm(imageUri); return; }
+      if (iw === 0 || ih === 0) {
+        onConfirm(imageUri);
+        return;
+      }
 
       const fitScale = Math.min(aW / iw, aH / ih);
       const dispW    = iw * fitScale;
@@ -199,13 +229,15 @@ export default function ImageCropModal({
       const imgLeft    = imgCentreX - effectiveW / 2;
       const imgTop     = imgCentreY - effectiveH / 2;
 
-      const cropLeft = (aW - CROP_BOX) / 2;
-      const cropTop  = (aH - CROP_BOX) / 2;
+      const radius = CROP_DIAMETER / 2;
+      const cropLeft = aW / 2 - radius;
+      const cropTop  = aH / 2 - radius;
 
+      // Map on-screen circular bounding box to the original image pixel coordinates
       const rawPixelX = (cropLeft - imgLeft) / (fitScale * gs);
       const rawPixelY = (cropTop  - imgTop)  / (fitScale * gs);
-      const rawPixelW = CROP_BOX  / (fitScale * gs);
-      const rawPixelH = CROP_BOX  / (fitScale * gs);
+      const rawPixelW = CROP_DIAMETER / (fitScale * gs);
+      const rawPixelH = CROP_DIAMETER / (fitScale * gs);
 
       const clampedX = Math.max(0, Math.round(rawPixelX));
       const clampedY = Math.max(0, Math.round(rawPixelY));
@@ -225,7 +257,7 @@ export default function ImageCropModal({
           },
           { resize: { width: 512, height: 512 } },
         ],
-        { compress: 0.87, format: ImageManipulator.SaveFormat.JPEG },
+        { compress: 0.88, format: ImageManipulator.SaveFormat.JPEG }
       );
 
       onConfirm(result.uri);
@@ -234,14 +266,45 @@ export default function ImageCropModal({
     } finally {
       setCropping(false);
     }
-  }, [imageUri, imgLoaded, cropping, scale, translateX, translateY,
-      imgW, imgH, areaSize, onConfirm]);
+  }, [
+    imageUri,
+    imgLoaded,
+    cropping,
+    scale,
+    translateX,
+    translateY,
+    imgW,
+    imgH,
+    areaSize,
+    onConfirm,
+  ]);
 
-  // ── overlay dimensions ────────────────────────────────────────────────────
-  const cropLeft = (areaSize.w - CROP_BOX) / 2;
-  const cropTop  = (areaSize.h - CROP_BOX) / 2;
+  // ── Circular overlay parameters ───────────────────────────────────────────
+  const aW = areaSize.w;
+  const aH = areaSize.h;
+  const cx = aW / 2;
+  const cy = aH / 2;
+  const radius = CROP_DIAMETER / 2;
 
-  // ── render ────────────────────────────────────────────────────────────────
+  // SVG Even-Odd path: Outer rectangle with a circular hole punched out
+  const maskPath =
+    `M 0 0 L ${aW} 0 L ${aW} ${aH} L 0 ${aH} Z ` +
+    `M ${cx} ${cy - radius} ` +
+    `A ${radius} ${radius} 0 1 0 ${cx} ${cy + radius} ` +
+    `A ${radius} ${radius} 0 1 0 ${cx} ${cy - radius} Z`;
+
+  // WhatsApp corner bracket paths
+  const bracketLen = 22;
+  const bLeft   = cx - radius;
+  const bRight  = cx + radius;
+  const bTop    = cy - radius;
+  const bBottom = cy + radius;
+
+  const tlBracket = `M ${bLeft} ${bTop + bracketLen} L ${bLeft} ${bTop} L ${bLeft + bracketLen} ${bTop}`;
+  const trBracket = `M ${bRight - bracketLen} ${bTop} L ${bRight} ${bTop} L ${bRight} ${bTop + bracketLen}`;
+  const blBracket = `M ${bLeft} ${bBottom - bracketLen} L ${bLeft} ${bBottom} L ${bLeft + bracketLen} ${bBottom}`;
+  const brBracket = `M ${bRight - bracketLen} ${bBottom} L ${bRight} ${bBottom} L ${bRight} ${bBottom - bracketLen}`;
+
   return (
     <Modal
       visible={visible}
@@ -251,28 +314,30 @@ export default function ImageCropModal({
       onRequestClose={onCancel}
       onShow={resetGestures}
     >
-      <StatusBar barStyle={statusStyle} backgroundColor={bg} />
-      <GestureHandlerRootView style={[styles.root, { backgroundColor: bg }]}>
-        <View style={[styles.canvas, { backgroundColor: bg }]}>
+      <StatusBar barStyle="light-content" backgroundColor={BG_COLOR} />
+      <GestureHandlerRootView style={[styles.root, { backgroundColor: BG_COLOR }]}>
+        <View style={[styles.canvas, { backgroundColor: BG_COLOR }]}>
 
-          {/* ── Header ── */}
-          <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: bg }]}>
+          {/* ── WhatsApp-style Header ── */}
+          <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
             <Pressable
               onPress={onCancel}
               hitSlop={12}
               style={({ pressed }) => [styles.headerBtn, { opacity: pressed ? 0.6 : 1 }]}
             >
-              <Ionicons name="arrow-back" size={24} color={iconColor} />
+              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
             </Pressable>
 
-            <Text style={[styles.headerTitle, { color: titleColor }]}>Move &amp; Crop</Text>
+            <View style={styles.headerTitleWrap}>
+              <Text style={styles.headerTitle}>Move and crop</Text>
+              <Text style={styles.headerSubtitle}>Round profile photo</Text>
+            </View>
 
             <Pressable
               onPress={handleCrop}
               hitSlop={12}
               disabled={cropping || !imgLoaded}
               style={({ pressed }) => [
-                styles.headerBtn,
                 styles.cropBtn,
                 {
                   backgroundColor: colors.primary,
@@ -283,16 +348,16 @@ export default function ImageCropModal({
               {cropping ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={styles.cropBtnText}>CROP</Text>
+                <Text style={styles.cropBtnText}>DONE</Text>
               )}
             </Pressable>
           </View>
 
-          {/* ── Crop area: image + overlays ── */}
-          <View style={[styles.cropArea, { backgroundColor: bg }]} onLayout={onAreaLayout}>
+          {/* ── Interactive Crop Area: Photo Layer + WhatsApp Circular Mask ── */}
+          <View style={styles.cropArea} onLayout={onAreaLayout}>
             {imageUri && (
               <>
-                {/* Gestural image layer */}
+                {/* Gestural Image Layer */}
                 <GestureDetector gesture={composed}>
                   <Animated.View style={[StyleSheet.absoluteFillObject, imageAnimStyle]}>
                     <Animated.Image
@@ -304,40 +369,146 @@ export default function ImageCropModal({
                   </Animated.View>
                 </GestureDetector>
 
-                {/* Dark scrim: 4 bars around the crop box */}
-                {/* Top */}
-                <View pointerEvents="none"
-                  style={[styles.overlay, { top: 0, left: 0, right: 0, height: cropTop }]} />
-                {/* Bottom */}
-                <View pointerEvents="none"
-                  style={[styles.overlay, { bottom: 0, left: 0, right: 0, height: cropTop }]} />
-                {/* Left */}
-                <View pointerEvents="none"
-                  style={[styles.overlay, { top: cropTop, bottom: cropTop, left: 0, width: cropLeft }]} />
-                {/* Right */}
-                <View pointerEvents="none"
-                  style={[styles.overlay, { top: cropTop, bottom: cropTop, right: 0, width: cropLeft }]} />
-
-                {/* Square crop guide ring */}
-                <View
+                {/* WhatsApp Circular Mask & Framing Overlay */}
+                <Svg
+                  style={StyleSheet.absoluteFillObject}
+                  width={aW}
+                  height={aH}
                   pointerEvents="none"
-                  style={[styles.squareRing, {
-                    left:        cropLeft,
-                    top:         cropTop,
-                    width:       CROP_BOX,
-                    height:      CROP_BOX,
-                    borderColor: ringColor,
-                  }]}
-                />
+                >
+                  <Defs>
+                    {/* Circle clip path for inner rule-of-thirds grid */}
+                    <ClipPath id="whatsappCircleClip">
+                      <Circle cx={cx} cy={cy} r={radius} />
+                    </ClipPath>
+                  </Defs>
+
+                  {/* 1. Dark scrim covering everything OUTSIDE the circle */}
+                  <Path
+                    d={maskPath}
+                    fill={SCRIM_COLOR}
+                    fillRule="evenodd"
+                  />
+
+                  {/* 2. Inner rule-of-thirds grid (clipped strictly inside circle) */}
+                  <G clipPath="url(#whatsappCircleClip)">
+                    {/* Horizontal grid lines */}
+                    <Line
+                      x1={cx - radius}
+                      y1={cy - radius / 3}
+                      x2={cx + radius}
+                      y2={cy - radius / 3}
+                      stroke="rgba(255, 255, 255, 0.22)"
+                      strokeWidth={1}
+                      strokeDasharray="4 4"
+                    />
+                    <Line
+                      x1={cx - radius}
+                      y1={cy + radius / 3}
+                      x2={cx + radius}
+                      y2={cy + radius / 3}
+                      stroke="rgba(255, 255, 255, 0.22)"
+                      strokeWidth={1}
+                      strokeDasharray="4 4"
+                    />
+                    {/* Vertical grid lines */}
+                    <Line
+                      x1={cx - radius / 3}
+                      y1={cy - radius}
+                      x2={cx - radius / 3}
+                      y2={cy + radius}
+                      stroke="rgba(255, 255, 255, 0.22)"
+                      strokeWidth={1}
+                      strokeDasharray="4 4"
+                    />
+                    <Line
+                      x1={cx + radius / 3}
+                      y1={cy - radius}
+                      x2={cx + radius / 3}
+                      y2={cy + radius}
+                      stroke="rgba(255, 255, 255, 0.22)"
+                      strokeWidth={1}
+                      strokeDasharray="4 4"
+                    />
+                  </G>
+
+                  {/* 3. WhatsApp Circular White Boundary Ring */}
+                  <Circle
+                    cx={cx}
+                    cy={cy}
+                    r={radius}
+                    stroke="#FFFFFF"
+                    strokeWidth={2}
+                    fill="none"
+                  />
+
+                  {/* 4. WhatsApp Corner Framing Brackets */}
+                  <Path
+                    d={tlBracket}
+                    stroke="#FFFFFF"
+                    strokeWidth={3.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                  <Path
+                    d={trBracket}
+                    stroke="#FFFFFF"
+                    strokeWidth={3.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                  <Path
+                    d={blBracket}
+                    stroke="#FFFFFF"
+                    strokeWidth={3.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                  <Path
+                    d={brBracket}
+                    stroke="#FFFFFF"
+                    strokeWidth={3.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                </Svg>
               </>
             )}
           </View>
 
-          {/* ── Tip ── */}
-          <View style={[styles.tip, { paddingBottom: insets.bottom + 12, backgroundColor: bg }]}>
-            <Text style={[styles.tipText, { color: tipColor }]}>
-              Pinch to zoom · Drag to reposition
-            </Text>
+          {/* ── Bottom Controls: Recenter + Gestures Tip ── */}
+          <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) + 10 }]}>
+            <Pressable
+              onPress={handleRecenter}
+              style={({ pressed }) => [
+                styles.recenterBtn,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Ionicons name="scan-outline" size={16} color="#FFFFFF" />
+              <Text style={styles.recenterBtnText}>Recenter</Text>
+            </Pressable>
+
+            <View style={styles.tipWrap}>
+              <Ionicons name="finger-print-outline" size={14} color="rgba(255, 255, 255, 0.6)" />
+              <Text style={styles.tipText}>
+                Drag to reposition · Pinch to zoom
+              </Text>
+            </View>
+
+            <Pressable
+              onPress={onCancel}
+              style={({ pressed }) => [
+                styles.cancelBtn,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </Pressable>
           </View>
 
         </View>
@@ -346,18 +517,21 @@ export default function ImageCropModal({
   );
 }
 
-// ── Styles (non-themed only — colours injected inline above) ─────────────────
+// ── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root:   { flex: 1 },
   canvas: { flex: 1 },
 
-  // ── header ──────────────────────────────────────────────────────────────
+  // ── Header ────────────────────────────────────────────────────────────────
   header: {
     flexDirection:     "row",
     alignItems:        "center",
     justifyContent:    "space-between",
     paddingHorizontal: 16,
-    paddingBottom:     10,
+    paddingBottom:     12,
+    backgroundColor:   BG_COLOR,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255, 255, 255, 0.12)",
   },
   headerBtn: {
     padding:        6,
@@ -365,16 +539,28 @@ const styles = StyleSheet.create({
     alignItems:     "center",
     justifyContent: "center",
   },
+  headerTitleWrap: {
+    alignItems: "center",
+  },
   headerTitle: {
+    color:         "#FFFFFF",
     fontSize:      16,
     fontFamily:    "Inter_600SemiBold",
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
+  },
+  headerSubtitle: {
+    color:         "rgba(255, 255, 255, 0.55)",
+    fontSize:      11,
+    fontFamily:    "Inter_400Regular",
+    marginTop:     1,
   },
   cropBtn: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     paddingVertical:    8,
     borderRadius:      20,
-    minWidth:          70,
+    minWidth:          76,
+    alignItems:        "center",
+    justifyContent:    "center",
   },
   cropBtnText: {
     color:         "#FFFFFF",
@@ -383,31 +569,55 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
 
-  // ── crop area ────────────────────────────────────────────────────────────
+  // ── Interactive Area ──────────────────────────────────────────────────────
   cropArea: {
-    flex:     1,
-    overflow: "hidden",
+    flex:            1,
+    overflow:        "hidden",
+    backgroundColor: BG_COLOR,
   },
 
-  // ── overlay bars (always dark scrim — photo editor) ───────────────────────
-  overlay: {
-    position:        "absolute",
-    backgroundColor: OVERLAY,
+  // ── Bottom Bar ────────────────────────────────────────────────────────────
+  bottomBar: {
+    flexDirection:     "row",
+    alignItems:        "center",
+    justifyContent:    "space-between",
+    paddingHorizontal: 18,
+    paddingTop:        14,
+    backgroundColor:   BG_COLOR,
+    borderTopWidth:    StyleSheet.hairlineWidth,
+    borderTopColor:    "rgba(255, 255, 255, 0.12)",
   },
-
-  // ── square ring guide ────────────────────────────────────────────────────
-  squareRing: {
-    position:    "absolute",
-    borderWidth: 2.5,
+  recenterBtn: {
+    flexDirection:     "row",
+    alignItems:        "center",
+    gap:               6,
+    paddingVertical:   6,
+    paddingHorizontal: 10,
+    borderRadius:      16,
+    backgroundColor:   "rgba(255, 255, 255, 0.10)",
   },
-
-  // ── tip ──────────────────────────────────────────────────────────────────
-  tip: {
-    alignItems: "center",
-    paddingTop: 14,
+  recenterBtnText: {
+    color:      "#FFFFFF",
+    fontSize:   12,
+    fontFamily: "Inter_500Medium",
+  },
+  tipWrap: {
+    flexDirection: "row",
+    alignItems:    "center",
+    gap:           6,
   },
   tipText: {
-    fontSize:   12,
+    color:      "rgba(255, 255, 255, 0.6)",
+    fontSize:   11,
     fontFamily: "Inter_400Regular",
+  },
+  cancelBtn: {
+    paddingVertical:   6,
+    paddingHorizontal: 8,
+  },
+  cancelBtnText: {
+    color:      "rgba(255, 255, 255, 0.7)",
+    fontSize:   13,
+    fontFamily: "Inter_500Medium",
   },
 });

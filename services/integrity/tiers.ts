@@ -1,8 +1,8 @@
-import { db } from "@/lib/db/client";
+import { db } from "../../lib/db/client";
 import type { AccountTier } from "./types";
 import { TIER_CONFIG } from "./types";
 import { tsToMs } from "./time-utils";
-import { COLLECTIONS } from "@/shared/constants/collections";
+import { COLLECTIONS } from "../../shared/constants/collections";
 
 export async function getAccountTier(
   userId: string,

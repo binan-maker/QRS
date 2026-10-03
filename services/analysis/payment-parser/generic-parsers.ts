@@ -19,10 +19,39 @@ export function parseCryptoContent(app: AppDef, content: string): ParsedPaymentQ
 }
 
 export function parseGenericPayment(app: AppDef, content: string, lower: string): ParsedPaymentQr {
-  let recipientId = "", amount: string | undefined;
-  if (lower.includes("paypal.me/")) {
-    recipientId = content.split("paypal.me/")[1]?.split("?")[0]?.split("/")[0] || "";
-    amount = new URLSearchParams(content.split("?")[1] || "").get("amount") || undefined;
+  let recipientId = "", recipientName: string | undefined, amount: string | undefined, currency: string | undefined, note: string | undefined;
+  if (lower.includes("paypal.me/") || lower.includes("paypal.me")) {
+    const afterMe = content.includes("paypal.me/") ? content.split("paypal.me/")[1] : content.split("paypal.me")[1];
+    recipientId = afterMe?.split("?")[0]?.split("/")[0] || "";
+    try {
+      const qIdx = content.indexOf("?");
+      if (qIdx >= 0) {
+        const params = new URLSearchParams(content.slice(qIdx + 1));
+        amount = params.get("amount") || undefined;
+        currency = params.get("currencyCode") || params.get("currency") || "USD";
+        note = params.get("note") || undefined;
+      }
+    } catch {}
+  } else if (lower.includes("paypal.com/paypalme/")) {
+    recipientId = content.split("paypal.com/paypalme/")[1]?.split("?")[0]?.split("/")[0] || "";
+    try {
+      const qIdx = content.indexOf("?");
+      if (qIdx >= 0) {
+        const params = new URLSearchParams(content.slice(qIdx + 1));
+        amount = params.get("amount") || undefined;
+        currency = params.get("currencyCode") || params.get("currency") || "USD";
+      }
+    } catch {}
+  } else if (lower.startsWith("paypal://")) {
+    recipientId = content.replace("paypal://", "").split("?")[0] || "PayPal";
+    try {
+      const qIdx = content.indexOf("?");
+      if (qIdx >= 0) {
+        const params = new URLSearchParams(content.slice(qIdx + 1));
+        amount = params.get("amount") || params.get("am") || undefined;
+        recipientName = params.get("recipient") || params.get("to") || undefined;
+      }
+    } catch {}
   } else if (lower.includes("cash.app/$")) {
     recipientId = "$" + (content.split("cash.app/$")[1]?.split("?")[0] || "");
     amount = new URLSearchParams(content.split("?")[1] || "").get("amount") || undefined;
@@ -35,10 +64,33 @@ export function parseGenericPayment(app: AppDef, content: string, lower: string)
     recipientId = content.split("tikkie.me/")[1]?.split("?")[0] || "";
   } else if (lower.includes("picpay.me/")) {
     recipientId = content.split("picpay.me/")[1]?.split("?")[0] || "";
+  } else if (lower.includes("pay.google.com") || lower.includes("gpay.app.goo.gl")) {
+    recipientId = "Google Pay";
+    try {
+      const qIdx = content.indexOf("?");
+      if (qIdx >= 0) {
+        const params = new URLSearchParams(content.slice(qIdx + 1));
+        amount = params.get("amount") || params.get("am") || undefined;
+        recipientName = params.get("pn") || params.get("name") || undefined;
+        note = params.get("tn") || params.get("note") || undefined;
+      }
+    } catch {}
   } else {
     recipientId = content.slice(0, 60);
   }
-  return { app: app.id, appDisplayName: app.displayName, appCategory: app.category, region: app.region, recipientId, amount, rawContent: content, isAmountPreFilled: !!amount };
+  return {
+    app: app.id,
+    appDisplayName: app.displayName,
+    appCategory: app.category,
+    region: app.region,
+    recipientId,
+    recipientName,
+    amount,
+    currency,
+    note,
+    rawContent: content,
+    isAmountPreFilled: !!amount && parseFloat(amount) > 0,
+  };
 }
 
 export function buildParsedPayment(app: AppDef, content: string, lower: string): ParsedPaymentQr {

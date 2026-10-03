@@ -275,3 +275,7 @@ export interface CacheEntry<T> {
   expiresAt: string;
   hitCount: number;
 }
+
+export function getSignatureSalt(year: number = new Date().getFullYear()): string {
+  return `binro-qr-sig-${year}`;
+}

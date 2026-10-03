@@ -2,7 +2,7 @@
 // Handles image uploads and downloads through the provider-agnostic StorageAdapter.
 // No Firebase SDK is imported here — swap providers in lib/storage/index.ts only.
 
-import { storageAdapter } from "@/lib/storage";
+import { storageAdapter, type UploadableData, type UploadOptions } from "@/lib/storage";
 
 /**
  * Delete an image given its download URL.
@@ -19,19 +19,23 @@ export async function deleteImage(imageUrl: string): Promise<void> {
 }
 
 /**
- * Upload an image blob to storage.
+ * Upload an image (Blob, File, ArrayBuffer, Uint8Array, base64) to storage.
  * Stores files at: {folder}/{userId}/{timestamp_random}.ext
  */
 export async function uploadImage(
-  file: Blob | File,
+  file: UploadableData,
   folder: string = "images",
-  userId?: string
+  userId?: string,
+  options?: UploadOptions
 ): Promise<string> {
   try {
-    const extension = (file.type || "image/jpeg").split("/")[1] || "jpg";
+    let extension = "jpg";
+    if (typeof file === "object" && file !== null && "type" in file && (file as any).type) {
+      extension = ((file as any).type as string).split("/")[1] || "jpg";
+    }
     const filename = `${Date.now()}_${Math.random().toString(36).substring(2, 11)}.${extension}`;
     const storagePath = `${folder}/${userId || "anon"}/${filename}`;
-    return await storageAdapter.upload(storagePath, file);
+    return await storageAdapter.upload(storagePath, file, options);
   } catch (error: any) {
     console.error("[storage] uploadImage failed:", error);
     throw new Error(`Failed to upload image: ${error.message}`);
@@ -108,12 +112,13 @@ async function compressImage(blob: Blob, maxWidth: number, quality: number): Pro
  * `profile-photos/{userId}/`, preventing accidental cross-user deletions.
  */
 export async function uploadProfilePhoto(
-  file: Blob | File,
+  file: UploadableData,
   userId: string,
-  oldPhotoUrl?: string | null
+  oldPhotoUrl?: string | null,
+  options?: UploadOptions
 ): Promise<string> {
   // 1. Upload new photo first
-  const newUrl = await uploadImage(file, "profile-photos", userId);
+  const newUrl = await uploadImage(file, "profile-photos", userId, options);
 
   // 2. Fire-and-forget cleanup of the old photo
   if (oldPhotoUrl && storageAdapter.isOwnUrl(oldPhotoUrl)) {

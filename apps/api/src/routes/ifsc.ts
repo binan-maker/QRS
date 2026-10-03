@@ -47,7 +47,7 @@ const STATIC_MAP: Record<string, string> = {
  */
 export function registerIfscRoute(app: Express): void {
   app.get("/api/v1/ifsc/:code", async (req: Request, res: Response) => {
-    const code = (req.params.code || "").toUpperCase().trim();
+    const code = String(req.params.code || "").toUpperCase().trim();
     if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(code)) {
       res.status(400).json({ error: "Invalid IFSC format" });
       return;

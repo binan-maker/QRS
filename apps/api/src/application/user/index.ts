@@ -41,10 +41,6 @@ export class RegisterUserUseCase {
       scanCount: 0,
       commentCount: 0,
       totalLikesReceived: 0,
-      isOnline: false,
-      lastSeen: null,
-      pushToken: null,
-      consent: null,
     });
   }
 }
@@ -76,7 +72,7 @@ export class UpdateProfileUseCase {
       if (!isValidUsername(updates.username)) {
         throw new ValidationError("Username must be 3–32 lowercase alphanumeric characters or underscores", "username");
       }
-      if (!canChangeUsername(user.usernameLastChangedAt)) {
+      if (!canChangeUsername(user.usernameLastChangedAt ?? null)) {
         throw new ValidationError("Username can only be changed once every 30 days");
       }
       const taken = await this.repo.isUsernameTaken(updates.username);

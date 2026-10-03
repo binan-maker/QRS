@@ -111,6 +111,7 @@ config.resolver = {
   ...config.resolver,
   blockList: [
     /\.local\/.*/,
+    /apps[\/\\]web[\/\\]\.next[\/\\].*/,
   ],
   resolveRequest(context, moduleName, platform) {
     if (STUBBED_PACKAGES[moduleName]) {

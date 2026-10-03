@@ -16,7 +16,7 @@ export default function VerifyEmailScreen() {
   const { sp, px } = useAuthScale();
   const S = makeAuthStyles(colors);
 
-  const { fromLogin } = useLocalSearchParams<{ fromLogin?: string }>();
+  const { fromLogin, email } = useLocalSearchParams<{ fromLogin?: string; email?: string }>();
   const cameFromLogin = fromLogin === "true";
 
   const [resending, setResending] = useState(false);
@@ -39,7 +39,7 @@ export default function VerifyEmailScreen() {
     if (resending || cooldown > 0) return;
     setResendError(""); setResendSuccess(false); setResending(true);
     try {
-      await resendVerification();
+      await resendVerification(email || user?.email || undefined);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setResendSuccess(true);
       setCooldown(60);
@@ -51,20 +51,34 @@ export default function VerifyEmailScreen() {
 
   async function handleCheckVerified() {
     setCheckingVerification(true);
+    setResendError("");
     try {
-      // refreshUser() returns the fresh emailVerified value directly from Supabase
-      // after reload(). Do NOT use user?.emailVerified here — React state is stale
-      // until the next render, so it still reflects the pre-refresh value.
+      // 1. Try refreshUser() with the active session
       const verified = await refreshUser();
       if (verified) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         router.replace("/(tabs)");
-      } else {
-        setResendError("Email not yet verified. Please check your inbox and tap the link.");
+        return;
       }
+
+      // 2. If there is no active session on device (e.g. user came from login before confirming),
+      // the email has been confirmed in Supabase via the link. Guide them to sign in:
+      const targetEmail = email || user?.email;
+      if (targetEmail) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        router.replace({
+          pathname: "/(auth)/login",
+          params: { email: targetEmail, verified: "true" },
+        });
+        return;
+      }
+
+      setResendError("Email not yet verified. Please check your inbox and tap the link.");
     } catch {
       setResendError("Could not check verification status. Please try again.");
-    } finally { setCheckingVerification(false); }
+    } finally {
+      setCheckingVerification(false);
+    }
   }
 
   async function handleSignOut() {
@@ -89,7 +103,7 @@ export default function VerifyEmailScreen() {
             : "We sent a verification link to"}
           {"\n"}
           <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}>
-            {user?.email ?? "your email address"}
+            {user?.email ?? email ?? "your email address"}
           </Text>
           {"\n\n"}
           {cameFromLogin

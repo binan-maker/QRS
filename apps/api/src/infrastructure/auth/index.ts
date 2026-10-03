@@ -27,7 +27,7 @@ export class SupabaseAuthProvider implements IAuthProvider {
     };
   }
 
-  async createSessionToken(idToken: string, expiresInMs: number) {
+  async createSessionToken(idToken: string, expiresInMs: number): Promise<string> {
     throw new Error("Session cookies are not supported; use the Supabase access token.");
   }
 

@@ -34,6 +34,7 @@ export function encodeQrShareCode(qrId: string): string | null {
 
 export function decodeQrShareCode(code: string): string | null {
   const normalized = code.trim();
+  if (/^[0-9a-f]{20}$/i.test(normalized)) return normalized.toLowerCase();
   // 62^14 is the first Base62 range that safely covers all 80-bit IDs.
   if (!/^[0-9a-zA-Z]{1,14}$/.test(normalized)) return null;
 

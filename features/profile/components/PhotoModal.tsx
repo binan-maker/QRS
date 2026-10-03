@@ -9,7 +9,9 @@ interface Props {
   onCamera:            () => void;
   onGallery:           () => void;
   onRemove?:           () => void;
+  canRemove?:          boolean;
   hasPhoto?:           boolean;
+  hasGooglePhoto?:     boolean;
   onClose:             () => void;
   extraBottomPadding?: number;
 }
@@ -19,11 +21,20 @@ const PhotoModal = memo(function PhotoModal({
   onCamera,
   onGallery,
   onRemove,
+  canRemove = false,
   hasPhoto,
+  hasGooglePhoto,
   onClose,
   extraBottomPadding = 0,
 }: Props) {
   const { colors } = useTheme();
+
+  const isRemoveDisabled = !canRemove;
+  const removeSub = hasGooglePhoto
+    ? "Default Google photo cannot be removed"
+    : canRemove
+    ? "Revert to default avatar"
+    : "No profile photo to remove";
 
   const options = [
     {
@@ -34,6 +45,7 @@ const PhotoModal = memo(function PhotoModal({
       iconColor: colors.primary,
       onPress: onCamera,
       danger: false,
+      disabled: false,
     },
     {
       icon: "images-outline" as const,
@@ -43,18 +55,20 @@ const PhotoModal = memo(function PhotoModal({
       iconColor: colors.accent,
       onPress: onGallery,
       danger: false,
+      disabled: false,
     },
-    ...(hasPhoto && onRemove
-      ? [{
-          icon: "trash-outline" as const,
-          label: "Remove Photo",
-          sub: "Revert to default avatar",
-          iconBg: colors.dangerDim,
-          iconColor: colors.danger,
-          onPress: onRemove,
-          danger: true,
-        }]
-      : []),
+    {
+      icon: "trash-outline" as const,
+      label: "Remove Photo",
+      sub: removeSub,
+      iconBg: isRemoveDisabled
+        ? colors.isDark ? "#262626" : "#F2F4F7"
+        : colors.dangerDim,
+      iconColor: isRemoveDisabled ? colors.textMuted : colors.danger,
+      onPress: isRemoveDisabled ? undefined : onRemove,
+      danger: !isRemoveDisabled,
+      disabled: isRemoveDisabled,
+    },
   ];
 
   return (
@@ -62,8 +76,13 @@ const PhotoModal = memo(function PhotoModal({
       {options.map((opt, i) => (
         <Fragment key={opt.label}>
           <Pressable
-            style={({ pressed }) => [styles.option, { opacity: pressed ? 0.72 : 1 }]}
+            disabled={opt.disabled}
+            style={({ pressed }) => [
+              styles.option,
+              opt.disabled ? { opacity: 0.38 } : { opacity: pressed ? 0.72 : 1 },
+            ]}
             onPress={() => {
+              if (opt.disabled) return;
               onClose();
               // Wait for the bottom sheet close animation to complete (220 ms)
               // before launching system UI. A small extra buffer ensures the
@@ -75,12 +94,19 @@ const PhotoModal = memo(function PhotoModal({
               <Ionicons name={opt.icon} size={22} color={opt.iconColor} />
             </View>
             <View style={styles.optionText}>
-              <Text style={[styles.optionLabel, { color: opt.danger ? colors.danger : colors.text }]}>
+              <Text
+                style={[
+                  styles.optionLabel,
+                  { color: opt.disabled ? colors.textMuted : opt.danger ? colors.danger : colors.text },
+                ]}
+              >
                 {opt.label}
               </Text>
               <Text style={[styles.optionSub, { color: colors.textMuted }]}>{opt.sub}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            {!opt.disabled && (
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            )}
           </Pressable>
           {i < options.length - 1 && (
             <View style={[styles.rowDivider, { backgroundColor: colors.surfaceBorder }]} />

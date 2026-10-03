@@ -1,74 +1,720 @@
-.appFrame { min-height: 100dvh; background: var(--background); }
-.page { width: min(calc(100% - 48px), 1060px); min-height: 100dvh; margin: 0 auto; padding: 28px 0 48px; }
-.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
-.header h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); letter-spacing: -.055em; }
-.signIn {
-  display: inline-flex; gap: 8px; align-items: center; min-height: 42px; padding: 0 18px;
-  color: var(--primary); border: 1px solid #abc5e8; border-radius: 24px; background: #edf4ff;
-  font-size: 14px; font-weight: 600; text-decoration: none;
+/* ═══════════════════════════════════════════════════════════════════════════
+   BINRO WEB: HOME PAGE STYLES (1:1 with features/home/HomeScreen.tsx)
+   All colors are sourced from @shared/constants/colors.ts (Colors.light).
+   Typography uses mobile Inter_400Regular / Inter_600SemiBold / Inter_700Bold.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.appFrame {
+  min-height: 100dvh;
+  background: var(--background);
 }
-.signIn span { font-size: 21px; line-height: 1; transform: rotate(180deg); }
+
+.page {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 18px 40px;
+  box-sizing: border-box;
+}
+
+/* ── HomeHeader (features/home/components/HomeHeader.tsx) ────────────────── */
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 0;
+}
+
+.greeting,
+.header h1 {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.3px;
+}
+
+.greetingHighlight {
+  color: var(--primary);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.userActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatarRing {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  border: 2px solid var(--primary);
+  background: transparent;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.avatarInner {
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background-color: var(--surface-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.avatarInitial {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.signOutBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  border: 1px solid var(--danger-dim);
+  background: var(--danger-dim);
+  color: var(--danger);
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.12s ease;
+}
+
+.signOutBtn:hover {
+  opacity: 0.88;
+}
+
+.signOutBtn:active {
+  transform: scale(0.96);
+}
+
+.signIn,
+.signInPill {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  border-radius: 22px;
+  border: 1px solid var(--primary);
+  background: var(--primary-dim);
+  color: var(--primary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  text-decoration: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.signIn:hover,
+.signInPill:hover {
+  opacity: 0.88;
+}
+
+.signIn:active,
+.signInPill:active {
+  transform: scale(0.98);
+}
+
+/* ── HeroScanCard (features/home/components/HeroScanCard.tsx) ────────────── */
 .scanHero {
-  position: relative; display: flex; min-height: 174px; align-items: center; gap: 18px; overflow: hidden;
-  padding: 24px 28px; border: 1px solid #c3d4ee; border-radius: 28px; background: linear-gradient(112deg, #e7f0ff, #d6e7ff);
-  text-decoration: none; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 20px;
+  margin-bottom: 0;
+  border-radius: 26px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease;
 }
+
 .scanHero:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(7, 93, 204, 0.12);
+  box-shadow: 0 12px 32px var(--card-glow);
 }
-.scanHero::after { position: absolute; inset: 0; background: linear-gradient(90deg, transparent 35%, rgba(255,255,255,.2)); content: ""; pointer-events: none; }
-.heroIcon { z-index: 1; display: grid; width: 94px; height: 94px; flex: 0 0 auto; place-items: center; color: var(--primary); border: 1px solid #a5c5f2; border-radius: 24px; background: rgba(220, 234, 255, .9); }
-.heroCopy { z-index: 1; display: grid; gap: 5px; }
-.heroCopy strong { color: var(--primary); font-size: 24px; letter-spacing: -.05em; }
-.heroCopy span { color: var(--text); font-size: 14px; font-weight: 600; }
-.heroCopy small { margin-top: 23px; color: #566a83; font-size: 11px; }
-.heroArrow {
-  z-index: 1; display: grid; width: 54px; height: 54px; margin-left: auto; place-items: center;
-  color: #fff; border-radius: 50%; background: var(--primary); text-decoration: none;
+
+.scanHero:active {
+  opacity: 0.93;
+  transform: scale(0.985);
 }
-.heroOrbOne, .heroOrbTwo { position: absolute; border: 1px solid rgba(255,255,255,.4); border-radius: 50%; background: rgba(181, 211, 255, .24); }
-.heroOrbOne { right: -12px; top: -25px; width: 120px; height: 120px; }
-.heroOrbTwo { right: 78px; bottom: -32px; width: 98px; height: 98px; }
-.recentSection { margin-top: 30px; }
-.recentSection > h2 { display: flex; gap: 11px; align-items: center; margin: 0 0 18px; font-size: 17px; letter-spacing: -.025em; }
-.recentSection > h2 span { width: 13px; height: 13px; border-radius: 50%; background: var(--primary); }
+
+.heroOrbOne,
+.heroOrbTwo {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.heroOrbOne {
+  width: 130px;
+  height: 130px;
+  right: -30px;
+  top: -30px;
+}
+
+.heroOrbTwo {
+  width: 80px;
+  height: 80px;
+  right: 60px;
+  bottom: -20px;
+}
+
+.heroCornerArc {
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  border-radius: 55px;
+  right: -55px;
+  bottom: -55px;
+  border-width: 1.5px;
+  border-style: solid;
+  pointer-events: none;
+}
+
+.heroTopRow {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+@keyframes hero-icon-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+.heroIcon,
+.heroIconRing {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  border-width: 1.5px;
+  border-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  animation: hero-icon-pulse 2.4s ease-in-out infinite;
+}
+
+.heroCopy,
+.heroTextBlock {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.heroHeading {
+  color: var(--primary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 27px;
+}
+
+.heroTitle {
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  line-height: 18px;
+}
+
+.heroArrow,
+.heroArrowBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 21px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--primary);
+  color: #ffffff;
+  transition: transform 0.15s ease;
+}
+
+.scanHero:hover .heroArrow {
+  transform: translateX(3px);
+}
+
+.heroTagline,
+.heroFooterText {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-top: 14px;
+  color: var(--text-secondary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
+  text-align: left;
+}
+
+/* ── Recent Scans Section (features/home/components/RecentScansList.tsx) ─── */
+.recentSection {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sectionTitle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sectionDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  background-color: var(--primary);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.seeAllBtn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 11px;
+  border-radius: 12px;
+  background-color: var(--primary-dim);
+  color: var(--primary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.seeAllBtn:hover {
+  opacity: 0.85;
+}
+
+.fullHistoryBtn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  color: var(--primary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 4px;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s ease,
+    opacity 0.15s ease;
+}
+
+.fullHistoryBtn:hover {
+  opacity: 0.96;
+  outline: none;
+  border-color: var(--surface-border);
+  transform: translateY(-2px) scale(1.015);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.fullHistoryBtn:active {
+  transform: scale(0.985);
+  opacity: 0.82;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition-duration: 0.08s;
+}
+
+/* ── EmptyScans (features/home/components/EmptyScans.tsx) ─────────────────── */
 .emptyCard {
-  display: flex; min-height: 330px; flex-direction: column; align-items: center; justify-content: center;
-  padding: 30px; border: 1px solid var(--line); border-radius: 25px; background: var(--surface);
-  box-shadow: 0 5px 15px rgba(59, 96, 145, .04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px;
+  gap: 8px;
+  border-radius: 22px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  box-shadow: 0 2px 12px var(--card-glow);
 }
-.emptyIcon { display: grid; width: 105px; height: 105px; margin-bottom: 22px; place-items: center; color: var(--primary); border: 2px solid #d2e0f0; border-radius: 50%; background: #f0f5fc; }
-.emptyIcon::after { position: absolute; width: 76px; height: 76px; border: 1px solid #c8d8ed; border-radius: 22px; content: ""; }
-.emptyCard h3 { margin: 0; font-size: 18px; letter-spacing: -.04em; }
-.emptyCard p { margin: 11px 0 21px; color: #94a3b4; font-size: 14px; }
+
+.emptyIconArea {
+  position: relative;
+  display: flex;
+  width: 68px;
+  height: 68px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.emptyIconRing {
+  position: absolute;
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  border-width: 1.5px;
+  border-style: solid;
+  pointer-events: none;
+}
+
+.emptyIcon {
+  display: flex;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyTitle {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.emptySubtitle {
+  margin: 0 0 4px;
+  color: var(--text-muted);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
+  text-align: center;
+  max-width: 260px;
+}
+
 .scanButton {
-  display: inline-flex; gap: 9px; align-items: center; min-height: 51px; padding: 0 27px; color: #fff;
-  border-radius: 17px; background: var(--primary); box-shadow: 0 8px 18px rgba(7, 93, 204, .18);
-  font-size: 14px; font-weight: 700; text-decoration: none;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border-radius: 14px;
+  margin-top: 4px;
+  background-color: var(--primary-dim);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
-@media (min-width: 900px) {
-  .page { padding-top: 50px; }
-  .scanHero { min-height: 235px; padding-inline: 58px; }
-  .heroIcon { width: 122px; height: 122px; }
-  .heroCopy strong { font-size: 31px; }
-  .heroCopy span { font-size: 17px; }
-  .heroCopy small { font-size: 13px; }
-  .heroArrow { width: 64px; height: 64px; margin-right: 16px; }
-  .emptyCard { min-height: 420px; }
+
+.scanButton:hover {
+  background-color: var(--primary);
+  color: #ffffff;
 }
-@media (max-width: 600px) {
-  .page { width: calc(100% - 44px); padding-top: 54px; }
-  .header { margin-bottom: 29px; }
-  .header h1 { font-size: 22px; }
-  .signIn { min-height: 38px; padding: 0 14px; font-size: 13px; }
-  .scanHero { min-height: 171px; gap: 14px; padding: 21px; border-radius: 26px; }
-  .heroIcon { width: 93px; height: 93px; }
-  .heroCopy strong { font-size: 22px; }
-  .heroCopy span { font-size: 13px; }
-  .heroCopy small { margin-top: 18px; font-size: 10px; }
-  .heroArrow { width: 51px; height: 51px; }
-  .recentSection { margin-top: 28px; }
-  .recentSection > h2 { font-size: 16px; }
-  .emptyCard { min-height: 335px; margin-bottom: 10px; }
+
+.scanButton:active {
+  transform: scale(0.98);
+}
+
+/* ── Responsive Layout Grid ─────────────────────────────────────────────── */
+.homeGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.heroCardCol {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.recentScansCol {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ── Tablet Presentation (641px - 1023px) ─────────────────────────────────── */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .appFrame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 32px 24px 70px;
+    background:
+      radial-gradient(circle at 18% 10%, var(--primary-dim), transparent 45%),
+      radial-gradient(circle at 82% 90%, var(--card-glow), transparent 45%),
+      var(--background);
+    width: 100%;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 720px;
+    min-height: auto;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .header {
+    margin-bottom: 24px;
+  }
+
+  .greeting {
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  .homeGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+  }
+
+  .scanHero {
+    margin-bottom: 0;
+    padding: 24px 24px 20px;
+    height: auto;
+    min-height: auto;
+    box-sizing: border-box;
+    justify-content: flex-start;
+  }
+
+  .heroIcon {
+    width: 74px;
+    height: 74px;
+  }
+
+  .heroHeading {
+    font-size: 23px;
+    line-height: 28px;
+  }
+}
+
+/* ── Desktop Presentation (>= 1024px) ─────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .appFrame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 44px clamp(32px, 5vw, 72px) 110px;
+    background:
+      radial-gradient(circle at 12% 10%, var(--primary-dim), transparent 45%),
+      radial-gradient(circle at 88% 85%, var(--card-glow), transparent 45%),
+      var(--background);
+    width: 100%;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 1280px;
+    min-height: auto;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .header {
+    margin-bottom: 32px;
+    width: 100%;
+  }
+
+  .headerRight {
+    display: none;
+  }
+
+  .greeting {
+    font-size: 28px;
+    line-height: 34px;
+    letter-spacing: -0.4px;
+  }
+
+  /* Two-column stretchable layout for desktop */
+  .homeGrid {
+    display: grid;
+    grid-template-columns: minmax(380px, 460px) minmax(420px, 1fr);
+    gap: 36px;
+    align-items: start;
+    width: 100%;
+  }
+
+  .heroCardCol {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: sticky;
+    top: 36px;
+  }
+
+  .scanHero {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-bottom: 0;
+    padding: 30px 28px 24px;
+    min-height: 250px;
+    box-sizing: border-box;
+    border-radius: 28px;
+  }
+
+  .heroIcon {
+    width: 82px;
+    height: 82px;
+    border-radius: 24px;
+  }
+
+  .heroHeading {
+    font-size: 26px;
+    line-height: 32px;
+    letter-spacing: -0.6px;
+  }
+
+  .heroTitle {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .heroArrow {
+    width: 46px;
+    height: 46px;
+    border-radius: 23px;
+  }
+
+  .heroTagline {
+    font-size: 12px;
+    line-height: 18px;
+    margin-top: 24px;
+  }
+
+  .recentScansCol {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sectionHeader {
+    margin-bottom: 16px;
+  }
+
+  .sectionTitle {
+    font-size: 18px;
+  }
+
+  .emptyCard {
+    padding: 44px 28px;
+    min-height: 240px;
+    box-sizing: border-box;
+    justify-content: center;
+  }
+}
+
+/* Extra wide displays (>= 1440px) */
+@media (min-width: 1440px) {
+  .page {
+    max-width: 1400px;
+  }
+
+  .homeGrid {
+    grid-template-columns: minmax(440px, 500px) minmax(460px, 1fr);
+    gap: 44px;
+  }
+
+  .scanHero {
+    padding: 36px 32px 28px;
+    min-height: 280px;
+  }
+
+  .heroHeading {
+    font-size: 28px;
+    line-height: 34px;
+  }
+}
+
+/* ── Mobile Layout (< 640px) ─────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .appFrame {
+    background: var(--background);
+  }
+
+  .page {
+    max-width: 480px;
+    padding: 20px 16px 36px;
+  }
 }

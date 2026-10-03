@@ -7,4 +7,4 @@
 import { supabaseStorageProvider } from "./providers/supabase";
 
 export const storageAdapter = supabaseStorageProvider;
-export type { StorageAdapter } from "./adapter";
+export type { StorageAdapter, UploadableData, UploadOptions } from "./adapter";

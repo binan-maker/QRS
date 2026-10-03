@@ -13,4 +13,4 @@ export { ErrorBoundary } from "./feedback/ErrorBoundary";
 export { ScreenErrorBoundary } from "./feedback/ScreenErrorBoundary";
 export { default as ConsentModal } from "./consent/ConsentModal";
 export { default as ConsentManager } from "./consent/ConsentManager";
-export { NotificationsModal } from "./notifications/NotificationsModal";
+export { default as NotificationsModal } from "./notifications/NotificationsModal";

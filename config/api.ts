@@ -15,8 +15,8 @@ import { ENV } from "./env";
 // `__DEV__` is true during `expo start` / Metro dev server. It is false in
 // production builds. Falls back to NODE_ENV check for Jest / Node contexts.
 const IS_DEV: boolean =
-  typeof __DEV__ !== "undefined"
-    ? Boolean(__DEV__)
+  typeof (globalThis as any).__DEV__ !== "undefined"
+    ? Boolean((globalThis as any).__DEV__)
     : process.env.NODE_ENV !== "production";
 
 function computeBaseUrl(): string {

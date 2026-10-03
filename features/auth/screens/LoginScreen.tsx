@@ -4,7 +4,7 @@ import {
   KeyboardAvoidingView, Platform, ScrollView,
 } from "react-native";
 import Animated from "react-native-reanimated";
-import { Link, router } from "expo-router";
+import { Link, router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "@/shared/utils/haptics";
@@ -25,7 +25,12 @@ export default function LoginScreen() {
   const { sp, px, height } = useAuthScale();
   const S = makeAuthStyles(colors);
 
-  const [email, setEmail] = useState("");
+  const { email: initialEmail, verified: justVerified } = useLocalSearchParams<{
+    email?: string;
+    verified?: string;
+  }>();
+
+  const [email, setEmail] = useState(initialEmail || "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState("");
@@ -33,6 +38,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [verifiedNotice, setVerifiedNotice] = useState(justVerified === "true");
 
   const brandStyle = useFadeSlide(0, -16);
   const cardStyle  = useFadeSlide(80, 28);
@@ -62,9 +68,13 @@ export default function LoginScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.dismissAll();
     } catch (e: any) {
-      if (e.code === "auth/email-not-verified") {
+      if (
+        e.code === "auth/email-not-verified" ||
+        e.code === "email_not_confirmed" ||
+        e.message?.toLowerCase().includes("email not confirmed")
+      ) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        router.replace({ pathname: "/(auth)/verify-email", params: { fromLogin: "true" } });
+        router.replace({ pathname: "/(auth)/verify-email", params: { fromLogin: "true", email: email.trim() } });
         return;
       }
       setErrorCode(e.code ?? "");
@@ -116,6 +126,17 @@ export default function LoginScreen() {
             </Animated.View>
 
             <Animated.View style={[{ backgroundColor: colors.isDark ? "rgba(16,25,41,0.94)" : "#fff", borderColor: colors.surfaceBorder, borderWidth: 1, borderRadius: 20, padding: sp(20), shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.07, shadowRadius: 24, elevation: 5 }, cardStyle]}>
+              {verifiedNotice && !error ? (
+                <View style={[S.errorBanner, { backgroundColor: colors.safeDim, borderColor: colors.safe + "40", marginBottom: sp(12) }]}>
+                  <View style={S.errorRow}>
+                    <Ionicons name="checkmark-circle-outline" size={14} color={colors.safe} />
+                    <Text style={[S.errorText, { color: colors.safe, fontSize: sp(12) }]}>
+                      Email verified! Please enter your password to sign in.
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+
               {error ? (
                 <View style={[S.errorBanner, { backgroundColor: bannerBg, borderColor: bannerBorder, marginBottom: sp(12) }]}>
                   <View style={S.errorRow}>

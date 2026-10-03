@@ -326,3 +326,6 @@ export function getRiskLevelLabel(riskScore: number): string {
   if (riskScore >= 15) return 'Low Risk';
   return 'Safe';
 }
+
+export { analyzeUrl as analyzeUrlSecurity };
+export type UrlSecurityAnalysis = UrlAnalysisResult;

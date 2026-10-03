@@ -80,11 +80,11 @@ const worker = new Worker<AnalyticsJobData>(
   },
 );
 
-worker.on("completed", (job) => {
+worker.on("completed", (job: any) => {
   console.log(`[analytics.worker] Job ${job.id} done (${job.data.event} on ${job.data.qrId})`);
 });
 
-worker.on("failed", (job, err) => {
+worker.on("failed", (job: any, err: Error) => {
   console.error(`[analytics.worker] Job ${job?.id} failed:`, err.message);
 });
 

@@ -11,14 +11,17 @@ import {
   setCachedHomeScans,
   invalidateHomeScansCache,
 } from "@/services/cache/qr-cache";
-import { mergeAndDeduplicateScans } from "@/services/scan-history/dedup";
+import {
+  mergeAndDeduplicateScans,
+  normalizeScanContent,
+} from "@/services/scan-history/dedup";
 import type { LocalScan } from "@/features/home/types";
 
 const HOME_STALE_MS   = 5 * 60 * 1000;
 const MAX_RECENT      = 5;
-// Fetch more from cloud than we display so that dedup (local vs cloud
-// minute-bucket collapse) never reduces the visible count below MAX_RECENT.
-const CLOUD_FETCH     = MAX_RECENT * 3; // fetch 15, show 5
+// Fetch a deeper page from cloud so that after unique QR deduplication
+// (YouTube watch-history semantics) we still have up to MAX_RECENT items.
+const CLOUD_FETCH     = 50;
 const homeQueryKey    = (uid: string) => ["home-recent-scans", uid] as const;
 const localStorageKey = (uid: string) => `local_scan_history_${uid}`;
 
@@ -158,36 +161,48 @@ export function useRecentScans() {
 
     const qk = homeQueryKey(user.id);
     const cloudData = queryClient.getQueryData<LocalScan[]>(qk);
-    const isCloudScan = Array.isArray(cloudData) && cloudData.some((s) => s.id === scanId);
+    const targetScan = (cloudData || []).find((s) => s.id === scanId) ||
+                       localScans.find((s) => s.id === scanId);
+    const targetQrId = targetScan?.qrCodeId;
+    const targetNormContent = targetScan?.content ? normalizeScanContent(targetScan.content) : null;
+
+    const isMatch = (s: LocalScan) => {
+      if (s.id === scanId) return true;
+      if (targetQrId && s.qrCodeId === targetQrId) return true;
+      if (targetNormContent && s.content && normalizeScanContent(s.content) === targetNormContent) return true;
+      return false;
+    };
+
+    const isCloudScan = Array.isArray(cloudData) && cloudData.some(isMatch);
 
     if (isCloudScan) {
       // Snapshot for rollback
       const prev = cloudData;
 
-      // Optimistic removal from React Query cache
+      // Optimistic removal from React Query cache (all matching duplicates)
       queryClient.setQueryData<LocalScan[]>(qk, (old) =>
-        old ? old.filter((s) => s.id !== scanId) : old
+        old ? old.filter((s) => !isMatch(s)) : old
       );
       // Bust disk cache so next pre-warm won't re-show the deleted item
       invalidateHomeScansCache(user.id);
 
       try {
-        await deleteUserScan(user.id, scanId);
+        await deleteUserScan(user.id, scanId, targetQrId);
       } catch {
         // Revert optimistic update on failure
         queryClient.setQueryData(qk, prev);
       }
     } else {
-      // Local scan: remove from AsyncStorage
+      // Local scan: remove from AsyncStorage (all matching duplicates)
       try {
         const stored = await AsyncStorage.getItem(localStorageKey(user.id));
         if (!stored) return;
-        const updated = (JSON.parse(stored) as LocalScan[]).filter((s) => s.id !== scanId);
+        const updated = (JSON.parse(stored) as LocalScan[]).filter((s) => !isMatch(s));
         await AsyncStorage.setItem(localStorageKey(user.id), JSON.stringify(updated));
         setLocalScans(updated);
       } catch {}
     }
-  }, [user?.id]);
+  }, [user?.id, localScans]);
 
   return {
     recentScans,

@@ -42,6 +42,7 @@ interface HistoryItemProps {
   index?: number;
   animate?: boolean;
   showTime?: boolean;
+  risk?: string;
 }
 
 const HistoryItem = memo(function HistoryItem({

@@ -14,6 +14,7 @@ export interface AuthUser {
   uid: string;
   email: string | undefined;
   emailVerified: boolean;
+  name?: string;
 }
 
 declare global {
@@ -63,6 +64,7 @@ export async function authenticate(
       uid: user.uid,
       email: user.email,
       emailVerified: user.emailVerified,
+      name: user.name,
     };
     next();
   } catch (e: any) {
@@ -103,6 +105,7 @@ export async function optionalAuth(
       uid: user.uid,
       email: user.email,
       emailVerified: user.emailVerified,
+      name: user.name,
     };
   } catch {
     // silently ignore — request continues as unauthenticated

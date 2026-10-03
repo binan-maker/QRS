@@ -61,7 +61,8 @@ let _redisReady = false;
 async function getRedis(): Promise<any> {
   if (_redis) return _redis;
   try {
-    const { Redis } = await (import("@upstash/redis") as any).catch(() => ({ Redis: null }));
+    const pkgName = "@upstash/redis";
+    const { Redis } = await (import(pkgName) as any).catch(() => ({ Redis: null }));
     if (
       Redis &&
       process.env.UPSTASH_REDIS_REST_URL &&
@@ -89,7 +90,7 @@ export class UpstashCacheService implements ICacheService {
     const redis = await getRedis();
     if (_redisReady && redis) {
       try {
-        const raw = await redis.get<T>(key);
+        const raw = (await redis.get(key)) as T | null;
         return raw ?? null;
       } catch (e) {
         console.warn("[Cache] Redis GET failed, using memory:", e);

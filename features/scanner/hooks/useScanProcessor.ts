@@ -19,6 +19,7 @@ import {
   recordScan,
   detectContentType,
   getQrCodeId,
+  isPaymentQr,
 } from "@/lib/data-service";
 import { validateQrInput } from "@/services/moderation/profanity-filter";
 import {
@@ -89,10 +90,14 @@ export function useScanProcessor({
 
   function navigateToQrDetail(qrId: string, content?: string, contentType?: string) {
     setScanSuccess(true);
+    const effectiveType =
+      content && isPaymentQr(content)
+        ? "payment"
+        : contentType || "text";
     if (content) {
       safePush({
         pathname: `/qr-detail/${qrId}`,
-        params: { hintContent: content, hintContentType: contentType || "text" },
+        params: { hintContent: content, hintContentType: effectiveType },
       } as any);
     } else {
       safePush(`/qr-detail/${qrId}`);

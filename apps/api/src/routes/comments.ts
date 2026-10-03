@@ -155,7 +155,7 @@ commentsRouter.post(
       if (error) throw error;
 
       // Increment comment count on the QR code record
-      await adjustQrCommentCount(client, qrId, 1);
+      await adjustQrCommentCount(client, String(qrId), 1);
 
       return res.status(201).json({ data: mapCommentRow(newComment) });
     } catch (error: any) {
@@ -256,7 +256,7 @@ commentsRouter.delete(
           .update({ is_deleted: true, updated_at: new Date().toISOString() })
           .eq("id", commentId);
 
-        await adjustQrCommentCount(client, qrId, -1);
+        await adjustQrCommentCount(client, String(qrId), -1);
       }
 
       return res.json({ ok: true });

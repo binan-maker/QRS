@@ -46,7 +46,7 @@ interface AuthContextValue {
   signInWithGoogle: () => Promise<void>;
   switchGoogleAccount: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
-  resendVerification: () => Promise<void>;
+  resendVerification: (targetEmail?: string) => Promise<void>;
   refreshUser: () => Promise<boolean>;
   updateLocalDisplayName: (name: string) => void;
   googleRequest: ReturnType<typeof GoogleTypes.useAuthRequest>[0];

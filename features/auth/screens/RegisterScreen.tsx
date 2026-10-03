@@ -77,8 +77,11 @@ export default function RegisterScreen() {
     } catch (e: any) {
       if (e.code === "auth/verification-sent") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setRegisteredEmail(email.trim());
-        setVerificationSent(true);
+        router.replace({
+          pathname: "/(auth)/verify-email",
+          params: { email: email.trim() },
+        });
+        return;
       } else {
         setErrorCode(e.code ?? "");
         setError(e.message || "Sign up failed. Please try again.");

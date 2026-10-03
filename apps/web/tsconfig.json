@@ -23,9 +23,51 @@
       }
     ],
     "baseUrl": ".",
+    "typeRoots": [
+      "./node_modules/@types",
+      "../../node_modules/@types"
+    ],
     "paths": {
       "@/*": [
-        "./*"
+        "./*",
+        "../../*"
+      ],
+      "@shared/*": [
+        "../../shared/*"
+      ],
+      "@services/*": [
+        "../../services/*"
+      ],
+      "@features/*": [
+        "../../features/*"
+      ],
+      "@lib/*": [
+        "../../lib/*"
+      ],
+      "@config": [
+        "../../config/index"
+      ],
+      "@config/*": [
+        "../../config/*"
+      ],
+      "@/shared/*": [
+        "../../shared/*"
+      ],
+      "@/services/*": [
+        "../../services/*"
+      ],
+      "@/features/*": [
+        "../../features/*"
+      ],
+      "@/lib/*": [
+        "./lib/*",
+        "../../lib/*"
+      ],
+      "@/config": [
+        "../../config/index"
+      ],
+      "@/config/*": [
+        "../../config/*"
       ]
     }
   },

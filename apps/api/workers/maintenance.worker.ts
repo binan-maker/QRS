@@ -48,7 +48,7 @@ async function expireNotifications(): Promise<void> {
   }
 
   const batch = db.batch();
-  snapshot.docs.forEach((notification) => batch.delete(notification.ref));
+  snapshot.docs.forEach((notification: any) => batch.delete(notification.ref));
   await batch.commit();
   console.log(`[maintenance] Deleted ${snapshot.size} notifications older than 30 days`);
 }
@@ -78,7 +78,7 @@ async function cleanupSoftDeletedUsers(): Promise<void> {
   }
 
   const batch = db.batch();
-  snapshot.docs.forEach((user) => batch.delete(user.ref));
+  snapshot.docs.forEach((user: any) => batch.delete(user.ref));
   await batch.commit();
   console.log(`[maintenance] Hard-deleted ${snapshot.size} soft-deleted user records`);
 }
@@ -103,11 +103,11 @@ const worker = new Worker<MaintenanceJobData>(
   { connection, concurrency: 1 }, // maintenance tasks must not run in parallel
 );
 
-worker.on("completed", (job) => {
+worker.on("completed", (job: any) => {
   console.log(`[maintenance.worker] Task "${job.data.task}" completed`);
 });
 
-worker.on("failed", (job, err) => {
+worker.on("failed", (job: any, err: Error) => {
   console.error(`[maintenance.worker] Task "${job?.data.task}" failed:`, err.message);
 });
 

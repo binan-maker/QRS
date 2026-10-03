@@ -427,6 +427,19 @@ async function setDocumentRow(parsed: ParsedPath, data: Record<string, any>): Pr
   const { error: insertErr } = await supabase.from(parsed.table).insert(row);
   if (!insertErr) return;
 
+  if (parsed.table === "qr_codes" && insertErr.code !== "23505") {
+    const minQrRow: Record<string, any> = {
+      id: row.id,
+      content: row.content || row.id,
+      content_type: row.content_type || "text",
+      scan_count: row.scan_count ?? 1,
+      comment_count: row.comment_count ?? 0,
+    };
+    if (row.created_at) minQrRow.created_at = row.created_at;
+    const { error: minErr } = await supabase.from("qr_codes").upsert(minQrRow, { onConflict: "id" });
+    if (!minErr) return;
+  }
+
   // Concurrent write or existing row hidden from initial select: fall back to update / upsert
   if (insertErr.code === "23505") {
     let updateQuery = supabase.from(parsed.table).update(row);
@@ -460,12 +473,17 @@ export const supabaseDb: DbAdapter = {
     let q = supabase.from(table).select("*");
     q = applyDocumentIdentity(q, { table, id, extraFilters });
     if (COMPOSITE_TABLES.has(table)) {
-      if (table === "qr_reports") {
-        q = q.order("updated_at", { ascending: false }).order("created_at", { ascending: false });
-      }
-      const { data, error } = await q.limit(1);
+      const { data, error } = await q.limit(5);
       if (error) throw toDbError(error);
-      const row = Array.isArray(data) ? data[0] : null;
+      const rows = Array.isArray(data) ? [...data] : [];
+      if (table === "qr_reports" && rows.length > 1) {
+        rows.sort((a: any, b: any) => {
+          const tA = new Date(a.updated_at ?? a.created_at ?? 0).getTime() || 0;
+          const tB = new Date(b.updated_at ?? b.created_at ?? 0).getTime() || 0;
+          return tB - tA;
+        });
+      }
+      const row = rows[0] ?? null;
       return row ? keysToCamel(row as Record<string, any>) : null;
     }
     const { data, error } = await q.maybeSingle();
@@ -830,8 +848,10 @@ export const supabaseRtdb: RealtimeAdapter = {
       .select("value")
       .eq("path", path)
       .maybeSingle()
-      .then(({ data }) => { cb((data as any)?.value ?? null); })
-      .catch(() => { cb(null); });
+      .then(
+        ({ data }) => { cb((data as any)?.value ?? null); },
+        () => { cb(null); }
+      );
 
     // Attempt Realtime subscription — silently no-op on free plan.
     const channel = supabase

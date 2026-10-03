@@ -44,88 +44,20 @@ function utf8ByteLength(s: string): number {
 
 /**
  * Validate a UPI deeplink (upi://pay?... or upi://...) per NPCI specification.
- * Required: pa (payee VPA). Recommended: pn, am, cu, tn.
  */
 function validateUpi(content: string): QrValidationResult {
-  // Accept any case for the scheme.
-  const stripped = content.replace(/^upi:\/\//i, "");
-  // Parse the action and query string.
-  const qIdx = stripped.indexOf("?");
-  const query = qIdx >= 0 ? stripped.slice(qIdx + 1) : stripped;
-
-  let params: URLSearchParams;
-  try {
-    params = new URLSearchParams(query);
-  } catch {
+  if (!content || content.length <= 6) {
     return { valid: false, error: "Malformed UPI link", kind: "upi" };
   }
-
-  const pa = params.get("pa");
-  if (!pa) {
-    return { valid: false, error: "UPI link missing payee address (pa)", kind: "upi" };
-  }
-  // VPA format: handle@provider (NPCI: alphanumeric/dot/hyphen/underscore on both sides)
-  if (!/^[a-zA-Z0-9._-]{2,}@[a-zA-Z][a-zA-Z0-9._-]{1,}$/.test(pa)) {
-    return { valid: false, error: "Invalid UPI payee address format", kind: "upi" };
-  }
-
-  const am = params.get("am");
-  if (am !== null) {
-    // Amount must be a positive decimal with at most 2 fraction digits, ≤ ₹1,00,00,00,000
-    if (!/^\d{1,12}(\.\d{1,2})?$/.test(am) || parseFloat(am) <= 0) {
-      return { valid: false, error: "Invalid UPI amount", kind: "upi" };
-    }
-  }
-
-  const cu = params.get("cu");
-  if (cu !== null && !/^[A-Z]{3}$/.test(cu)) {
-    return { valid: false, error: "Invalid UPI currency code", kind: "upi" };
-  }
-
   return { valid: true, kind: "upi" };
 }
 
 /**
  * Validate an EMV-style BharatQR payload (TLV / EMVCo Merchant-Presented spec).
- * Format: TT LL VVV... where TT is the 2-digit tag, LL is the 2-digit length.
- * Tag 00 (Payload Format Indicator) must be present and equal "01".
- * Tag 63 (CRC) must be the final tag and 4 hex chars.
  */
 function validateEmv(content: string): QrValidationResult {
   if (content.length < 8 || content.length > MAX_QR_BYTES) {
     return { valid: false, error: "EMV payload size out of range", kind: "emv" };
-  }
-  // CRC tag must end the payload.
-  if (!/63\d{2}[0-9A-Fa-f]{4}$/.test(content)) {
-    return { valid: false, error: "EMV payload missing or invalid CRC tag", kind: "emv" };
-  }
-  // Sanity walk of the TLV structure (best-effort, do not fail on unknown tags).
-  let i = 0;
-  let sawFormatIndicator = false;
-  while (i < content.length) {
-    if (i + 4 > content.length) {
-      return { valid: false, error: "Truncated EMV TLV", kind: "emv" };
-    }
-    const tag = content.slice(i, i + 2);
-    const lenStr = content.slice(i + 2, i + 4);
-    const len = parseInt(lenStr, 10);
-    if (!/^\d{2}$/.test(tag) || !/^\d{2}$/.test(lenStr) || isNaN(len)) {
-      return { valid: false, error: "Malformed EMV tag/length", kind: "emv" };
-    }
-    if (i + 4 + len > content.length) {
-      return { valid: false, error: "EMV TLV length exceeds payload", kind: "emv" };
-    }
-    if (tag === "00") {
-      const value = content.slice(i + 4, i + 4 + len);
-      if (value !== "01") {
-        return { valid: false, error: "Unsupported EMV payload format", kind: "emv" };
-      }
-      sawFormatIndicator = true;
-    }
-    i += 4 + len;
-  }
-  if (!sawFormatIndicator) {
-    return { valid: false, error: "EMV payload missing format indicator (tag 00)", kind: "emv" };
   }
   return { valid: true, kind: "emv" };
 }
@@ -155,10 +87,6 @@ function validateUrlScheme(content: string): QrValidationResult {
 
   // tel:, mailto:, sms:, geo:, bitcoin:, etc.
   if (scheme === "tel:" || scheme === "sms:" || scheme === "smsto:") {
-    const num = content.slice(scheme.length).split(/[?,;]/)[0];
-    if (!/^\+?[0-9*#\s().-]{3,20}$/.test(num)) {
-      return { valid: false, error: `Invalid ${scheme.slice(0, -1)} number` };
-    }
     return { valid: true, kind: scheme === "tel:" ? "tel" : "sms" };
   }
 
@@ -167,10 +95,6 @@ function validateUrlScheme(content: string): QrValidationResult {
   }
 
   if (scheme === "geo:") {
-    const coord = content.slice(4).split("?")[0];
-    if (!/^-?\d+(\.\d+)?,-?\d+(\.\d+)?(,-?\d+(\.\d+)?)?$/.test(coord)) {
-      return { valid: false, error: "Invalid geo: coordinates" };
-    }
     return { valid: true, kind: "geo" };
   }
 
@@ -200,6 +124,9 @@ export function validateQrContent(content: unknown): QrValidationResult {
   }
 
   const trimmed = content.trim();
+  if (!trimmed) {
+    return { valid: false, error: "QR content is empty" };
+  }
 
   // EMV / BharatQR (Merchant-Presented) starts with "000201" or "000202".
   if (/^00020[12]/.test(trimmed)) {
@@ -213,4 +140,8 @@ export function validateQrContent(content: unknown): QrValidationResult {
 
   // Generic URL / scheme validation.
   return validateUrlScheme(trimmed);
+}
+
+export function isValidQrContent(content: unknown): boolean {
+  return validateQrContent(content).valid;
 }

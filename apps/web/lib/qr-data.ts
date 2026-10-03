@@ -2,22 +2,29 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * BINRO WEB: PUBLIC QR DATA & DATABASE ACCESS LAYER
  * ───────────────────────────────────────────────────────────────────────────────
- * Queries canonical QR metadata, trust scores, and community notes from Supabase.
- * Connects directly to public.qr_codes and public.qr_comments.
+ * Directly imports trust score and report aggregation services from the mobile
+ * source (@services/trust/trust-service, @services/moderation/report-service,
+ * @shared/utils/qr-content, @features/qr-detail/content-types).
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 import { createHash } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { isWebSupabaseConfigured } from "./supabase";
+import {
+  calculateTrustScore as calculateMobileTrustScore,
+  type TrustScore,
+} from "@services/trust/trust-service";
+import {
+  getMergedQrVotesSummary,
+  seedQrReportCountsInMemory,
+} from "@services/moderation/report-service";
+import { detectContentType } from "@shared/utils/qr-content";
+import { normalizeQrDetailContentType } from "@features/qr-detail/content-types";
+import { isPaymentQr } from "@services/analysis";
 
 export const ANDROID_APP_URL = "https://play.google.com/store/apps/details?id=com.qrguard.app";
 
-export type PublicTrust = {
-  score: number;
-  label: string;
-  totalReports: number;
-};
+export type PublicTrust = TrustScore;
 
 export type PublicComment = {
   id: string;
@@ -48,34 +55,35 @@ export type PublicQrRecord = {
 };
 
 /**
- * Computes deterministic 20-character hex ID for arbitrary text or URL content.
+ * Computes deterministic 20-character hex ID matching mobile services/qr/qr-service.ts (getQrCodeId).
  */
 export function getQrIdForContent(content: string): string {
-  return createHash("sha256").update(content.trim()).digest("hex").slice(0, 20);
+  return createHash("sha256").update(content).digest("hex").slice(0, 20);
 }
 
-let publicClient: SupabaseClient | null = null;
+let serverClient: SupabaseClient | null = null;
 
-function getPublicSupabase(): SupabaseClient | null {
-  if (publicClient) return publicClient;
+export function getServerSupabase(): SupabaseClient | null {
+  if (serverClient) return serverClient;
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
     process.env.EXPO_PUBLIC_SUPABASE_URL ||
     process.env.SUPABASE_URL;
 
-  const anonKey =
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_ANON_KEY;
 
-  if (!url || !anonKey || url.includes("YOUR_PROJECT_REF") || anonKey === "your_supabase_anon_key") {
+  if (!url || !key || url.includes("YOUR_PROJECT_REF") || key === "your_supabase_anon_key") {
     return null;
   }
 
-  publicClient = createClient(url, anonKey, {
+  serverClient = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  return publicClient;
+  return serverClient;
 }
 
 function asNumber(value: unknown, fallback = 0): number {
@@ -86,169 +94,27 @@ function asString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function parseTimeMs(val: any): number {
-  if (!val) return 0;
-  if (typeof val === "number") return val;
-  const ms = new Date(val).getTime();
-  return Number.isFinite(ms) ? ms : 0;
-}
+export { calculateMobileTrustScore as calculateTrustScore };
 
 /**
- * Exact mobile trust score algorithm from services/trust/trust-service.ts
+ * Fetches public QR details, real community votes, trust score, and comments
+ * using the mobile report-service and trust-service implementations.
  */
-export function calculateTrustScore(
-  reportCounts: Record<string, number>,
-  weightedCounts?: Record<string, number>,
-): PublicTrust {
-  const rawSafe = reportCounts.safe || 0;
-  const rawScam = reportCounts.scam || 0;
-  const rawSpam = reportCounts.spam || 0;
-  const rawFake = reportCounts.fake || 0;
-  const rawTotal = rawSafe + rawScam + rawSpam + rawFake;
-
-  if (rawTotal === 0) return { score: -1, label: "Unrated", totalReports: 0 };
-
-  const useWeighted = Boolean(weightedCounts && Object.keys(weightedCounts).length > 0);
-  const resolveWeight = (rawCount: number, weightedVal?: number): number => {
-    if (rawCount <= 0) return 0;
-    if (!useWeighted) return rawCount;
-    return weightedVal && weightedVal > 0 ? weightedVal : rawCount;
-  };
-
-  let wSafe = resolveWeight(rawSafe, weightedCounts?.safe);
-  let wScam = resolveWeight(rawScam, weightedCounts?.scam);
-  let wSpam =
-    resolveWeight(rawSpam, weightedCounts?.spam) +
-    resolveWeight(rawFake, weightedCounts?.fake);
-
-  const wNeg = wScam + wSpam;
-  const wPos = wSafe;
-  if (useWeighted && rawTotal < 15 && wNeg > wPos * 2) {
-    const skepticism = 0.65;
-    wScam *= skepticism;
-    wSpam *= skepticism;
-  }
-
-  const wTotal = wSafe + wScam + wSpam;
-  if (wTotal === 0) return { score: -1, label: "Unrated", totalReports: rawTotal };
-
-  const safeRatio = wSafe / wTotal;
-  const confidence = Math.min(rawTotal / 20, 1);
-  const score = 50 + (safeRatio * 100 - 50) * confidence;
-
-  let label = "Dangerous";
-  if (score >= 75) label = "Trusted";
-  else if (score >= 55) label = "Likely Safe";
-  else if (score >= 40) label = "Uncertain";
-  else if (score >= 25) label = "Suspicious";
-
-  return {
-    score: Math.round(score),
-    label,
-    totalReports: rawTotal,
-  };
-}
-
-interface VoteEntry {
-  userId: string;
-  reportType: string | null;
-  weight: number;
-  userRemoved: boolean;
-  timestampMs: number;
-}
-
-function summarizeReportSources(
-  qrReportsRows: any[],
-  auditRows: any[],
-  rtdbRows: any[],
-): {
-  reportCounts: Record<string, number>;
-  weightedCounts: Record<string, number>;
-  trust: PublicTrust;
-} {
-  const byUser = new Map<string, VoteEntry>();
-
-  for (const r of qrReportsRows) {
-    const uid = r.user_id || r.userId;
-    if (!uid) continue;
-    const ts = Math.max(parseTimeMs(r.updated_at ?? r.updatedAt), parseTimeMs(r.created_at ?? r.createdAt), 1);
-    const existing = byUser.get(uid);
-    if (!existing || ts >= existing.timestampMs) {
-      byUser.set(uid, {
-        userId: uid,
-        reportType: r.user_removed ? null : (r.report_type ?? null),
-        weight: Number(r.weight || 1),
-        userRemoved: Boolean(r.user_removed),
-        timestampMs: ts,
-      });
-    }
-  }
-
-  for (const row of auditRows) {
-    const uid = row.user_id;
-    const action: string = row.action || "";
-    if (!uid || !action.startsWith("vote:")) continue;
-    const voteType = action.slice("vote:".length);
-    const isRemoved = voteType === "removed" || !voteType;
-    const ts = parseTimeMs(row.created_at) || 2;
-    const existing = byUser.get(uid);
-    if (!existing || ts >= existing.timestampMs) {
-      byUser.set(uid, {
-        userId: uid,
-        reportType: isRemoved ? null : voteType,
-        weight: Number(row.vote_weight || 1),
-        userRemoved: isRemoved,
-        timestampMs: ts,
-      });
-    }
-  }
-
-  for (const row of rtdbRows) {
-    const val = row?.value;
-    if (!val || typeof val !== "object") continue;
-    const uid = val.userId || String(row.path || "").split(":")[2];
-    if (!uid) continue;
-    const ts = Number(val.timestampMs) || parseTimeMs(val.updatedAt) || parseTimeMs(row.updated_at) || 3;
-    const existing = byUser.get(uid);
-    if (!existing || ts >= existing.timestampMs) {
-      byUser.set(uid, {
-        userId: uid,
-        reportType: val.userRemoved ? null : (val.reportType ?? null),
-        weight: Number(val.weight || 1),
-        userRemoved: Boolean(val.userRemoved),
-        timestampMs: ts,
-      });
-    }
-  }
-
-  const reportCounts: Record<string, number> = {};
-  const weightedCounts: Record<string, number> = {};
-
-  for (const rec of byUser.values()) {
-    if (rec.userRemoved || !rec.reportType) continue;
-    reportCounts[rec.reportType] = (reportCounts[rec.reportType] || 0) + 1;
-    weightedCounts[rec.reportType] = (weightedCounts[rec.reportType] || 0) + Number(rec.weight || 1);
-  }
-
-  const trust = calculateTrustScore(reportCounts, weightedCounts);
-  return { reportCounts, weightedCounts, trust };
-}
-
-/**
- * Fetches public QR details, real community votes, and comments from Supabase.
- */
-export async function getPublicQrRecord(qrId: string, fallbackContent?: string): Promise<PublicQrRecord | null> {
-  const supabase = getPublicSupabase();
+export async function getPublicQrRecord(
+  qrId: string,
+  fallbackContent?: string,
+): Promise<PublicQrRecord | null> {
+  const supabase = getServerSupabase();
   if (!supabase) {
     if (!fallbackContent) return null;
     const content = fallbackContent.trim();
-    const isUrl =
-      /^https?:\/\//i.test(content) ||
-      (/^[a-z0-9-]+(\.[a-z0-9-]+)+\/?/i.test(content) && !content.includes(" "));
+    const contentType = isPaymentQr(content)
+      ? "payment"
+      : normalizeQrDetailContentType(detectContentType(content));
     return {
       id: qrId,
       content,
-      contentType: isUrl ? "url" : "text",
+      contentType,
       createdAt: null,
       scanCount: 1,
       commentCount: 0,
@@ -261,53 +127,94 @@ export async function getPublicQrRecord(qrId: string, fallbackContent?: string):
   }
 
   try {
-    const [qrRes, commentsRes, reportsRes, auditRes, rtdbRes] = await Promise.all([
+    const [qrRes, commentsRes, voteSummaryRes] = await Promise.all([
       supabase.from("qr_codes").select("*").eq("id", qrId).maybeSingle(),
       supabase
         .from("qr_comments")
-        .select("id, user_id, user_name, parent_id, text, likes, is_edited, is_deleted, created_at")
+        .select("*")
         .eq("qr_code_id", qrId)
-        .eq("is_deleted", false)
         .order("created_at", { ascending: false })
-        .limit(100),
-      supabase
-        .from("qr_reports")
-        .select("user_id, report_type, weight, user_removed, created_at, updated_at")
-        .eq("qr_code_id", qrId)
-        .limit(500),
-      supabase
-        .from("audit_logs")
-        .select("user_id, action, vote_weight, created_at")
-        .eq("qr_id", qrId)
-        .like("action", "vote:%")
-        .order("created_at", { ascending: false })
-        .limit(500),
-      supabase
-        .from("rtdb_store")
-        .select("path, value, updated_at")
-        .like("path", `qr_vote:${qrId}:%`)
-        .limit(500),
+        .limit(150),
+      getMergedQrVotesSummary(qrId, supabase),
     ]);
 
     const qrData = (qrRes.data ?? null) as Record<string, any> | null;
-    const rawContent = asString(
+    const dbContent = asString(
       qrData?.content ??
         qrData?.raw_content ??
         qrData?.destination ??
-        qrData?.raw_destination ??
-        fallbackContent,
+        qrData?.raw_destination,
     );
+    const fallback = asString(fallbackContent);
+
+    const isCorruptedDb =
+      !dbContent ||
+      dbContent.trim().toLowerCase() === "tel:" ||
+      /^(tel|sms|smsto|mailto):?$/i.test(dbContent.trim());
+    const rawContent =
+      isCorruptedDb && fallback && fallback.trim().length > 4
+        ? fallback
+        : dbContent || fallback;
 
     if (!rawContent && !qrData) return null;
     const content = rawContent || qrId;
-    const isUrl =
-      /^https?:\/\//i.test(content) ||
-      (/^[a-z0-9-]+(\.[a-z0-9-]+)+\/?/i.test(content) && !content.includes(" "));
     const rawType = asString(qrData?.content_type ?? qrData?.contentType);
-    const contentType = rawType?.toLowerCase() === "url" || (!rawType && isUrl) ? "url" : (rawType ?? "text");
+    const detectedType = String(detectContentType(content));
+    const isPayment = isPaymentQr(content) || rawType === "payment";
+    const isPhone = !isPayment && (/^tel:/i.test(content) || /^\+?[\d\s\-().]{7,20}$/.test(content));
+    const isEmail = !isPayment && /^mailto:/i.test(content);
+    const isSms = !isPayment && /^smsto?:/i.test(content);
+    const contentType = isPayment
+      ? "payment"
+      : isPhone
+        ? "phone"
+        : isEmail
+          ? "email"
+          : isSms
+            ? "sms"
+            : normalizeQrDetailContentType(rawType || detectedType);
+
+    let reportCounts = voteSummaryRes.counts;
+    let weightedCounts = voteSummaryRes.weighted;
+
+    // If no votes found under qrId and content produces an alternate hash (e.g. trimmed vs raw), check that too
+    if (Object.keys(reportCounts).length === 0 && content && content !== qrId) {
+      const candidateIds = Array.from(
+        new Set([
+          getQrIdForContent(content),
+          getQrIdForContent(content.trim()),
+        ]),
+      ).filter((cid) => cid !== qrId);
+
+      for (const altId of candidateIds) {
+        const altSummary = await getMergedQrVotesSummary(altId, supabase);
+        if (Object.keys(altSummary.counts).length > 0) {
+          reportCounts = altSummary.counts;
+          weightedCounts = altSummary.weighted;
+          break;
+        }
+      }
+    }
+
+    seedQrReportCountsInMemory(qrId, reportCounts, weightedCounts);
+
+    const collusionFlags = qrData?.suspicious_vote_flag
+      ? {
+          suspicious: true,
+          safeWeightMultiplier: Number(qrData?.suspicious_safe_multiplier ?? 1),
+          negativeWeightMultiplier: Number(qrData?.suspicious_neg_multiplier ?? 1),
+        }
+      : undefined;
+
+    const trust = calculateMobileTrustScore(reportCounts, weightedCounts, collusionFlags);
 
     const rawComments = Array.isArray(commentsRes.data)
-      ? commentsRes.data.filter((row: any) => !row.is_deleted && row.text !== "[deleted]")
+      ? commentsRes.data.filter(
+          (row: any) =>
+            !row.is_deleted &&
+            row.text !== "[deleted]" &&
+            !String(row.text ?? "").startsWith("__qr_vote__:"),
+        )
       : [];
 
     // Enrich comment authors from public_profiles / users
@@ -364,12 +271,6 @@ export async function getPublicQrRecord(qrId: string, fallbackContent?: string):
         createdAt: asString(row.created_at),
       };
     });
-
-    const { reportCounts, weightedCounts, trust } = summarizeReportSources(
-      Array.isArray(reportsRes.data) ? reportsRes.data : [],
-      Array.isArray(auditRes.data) ? auditRes.data : [],
-      Array.isArray(rtdbRes.data) ? rtdbRes.data : [],
-    );
 
     return {
       id: qrId,

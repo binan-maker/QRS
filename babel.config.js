@@ -20,6 +20,8 @@ module.exports = function (api) {
             "@": "./",
             "@shared": "./shared",
             "@services": "./services",
+            "@features": "./features",
+            "@lib": "./lib",
           },
           extensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
         },

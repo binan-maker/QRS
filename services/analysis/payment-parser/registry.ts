@@ -12,9 +12,9 @@ export interface AppDef {
 
 export const PAYMENT_APP_REGISTRY: AppDef[] = [
   { id: "upi", displayName: "UPI", category: "upi_india", region: "India", schemes: ["upi://pay"], urlPatterns: [], trustedDomains: ["upi.npci.org.in"] },
-  { id: "gpay_india", displayName: "Google Pay (GPay)", category: "upi_india", region: "India", schemes: ["tez://upi", "gpay://upi"], urlPatterns: ["pay.google.com/gp/p/ui"], trustedDomains: ["pay.google.com"] },
-  { id: "phonepe", displayName: "PhonePe", category: "upi_india", region: "India", schemes: ["phonepe://pay", "phonepe://upi"], urlPatterns: ["phonepe.com/transact"], trustedDomains: ["phonepe.com"] },
-  { id: "paytm", displayName: "Paytm", category: "upi_india", region: "India", schemes: ["paytm://"], urlPatterns: ["p.paytm.me", "paytm.com/qr"], trustedDomains: ["paytm.com", "p.paytm.me"] },
+  { id: "gpay_india", displayName: "Google Pay (GPay)", category: "upi_india", region: "India", schemes: ["tez://upi", "gpay://upi", "tez://", "gpay://", "googlepay://"], urlPatterns: ["pay.google.com", "gpay.app.goo.gl", "google.com/pay"], trustedDomains: ["pay.google.com"] },
+  { id: "phonepe", displayName: "PhonePe", category: "upi_india", region: "India", schemes: ["phonepe://pay", "phonepe://upi", "phonepe://"], urlPatterns: ["phonepe.com/transact", "phonepe.com"], trustedDomains: ["phonepe.com"] },
+  { id: "paytm", displayName: "Paytm", category: "upi_india", region: "India", schemes: ["paytm://", "paytmmp://"], urlPatterns: ["p.paytm.me", "paytm.com/qr", "paytm.com"], trustedDomains: ["paytm.com", "p.paytm.me"] },
   { id: "bhim", displayName: "BHIM", category: "upi_india", region: "India", schemes: ["bhim://"], urlPatterns: [], trustedDomains: ["bhimupi.org.in"] },
   { id: "amazon_pay", displayName: "Amazon Pay", category: "upi_india", region: "India", schemes: ["amazonpay://", "amazon://pay"], urlPatterns: ["amazon.in/pay", "amazonpay.in"], trustedDomains: ["amazon.in", "amazonpay.in"] },
   { id: "cred", displayName: "CRED Pay", category: "upi_india", region: "India", schemes: ["cred://", "credpay://"], urlPatterns: ["cred.club/pay"], trustedDomains: ["cred.club"] },
@@ -52,7 +52,7 @@ export const PAYMENT_APP_REGISTRY: AppDef[] = [
   { id: "bharatqr", displayName: "BharatQR (NPCI)", category: "upi_india", region: "India", schemes: ["bharatqr://"], urlPatterns: ["bharatqr.com", "npci.org.in/bharatqr"], trustedDomains: ["bharatqr.com", "npci.org.in"] },
   { id: "alipay", displayName: "Alipay (支付宝)", category: "china", region: "China", schemes: ["alipay://", "alipays://"], urlPatterns: ["qr.alipay.com", "global.alipay.com", "intl.alipay.com"], trustedDomains: ["alipay.com", "alipayobjects.com"] },
   { id: "wechat_pay", displayName: "WeChat Pay (微信支付)", category: "china", region: "China", schemes: ["wxp://", "weixin://wxpay", "weixin://dl/pay"], urlPatterns: ["wx.tenpay.com", "weixin.qq.com/q/", "qr.weixin.qq.com"], trustedDomains: ["weixin.qq.com", "tenpay.com"] },
-  { id: "paypal", displayName: "PayPal", category: "global_wallet", region: "Global", schemes: ["paypal://"], urlPatterns: ["paypal.me/", "paypal.com/qrcodes", "paypal.com/paypalme"], trustedDomains: ["paypal.com", "paypal.me"] },
+  { id: "paypal", displayName: "PayPal", category: "global_wallet", region: "Global", schemes: ["paypal://", "paypal:"], urlPatterns: ["paypal.me", "paypal.com/qrcodes", "paypal.com/paypalme", "paypal.com/pay", "paypal.com/donate"], trustedDomains: ["paypal.com", "paypal.me"] },
   { id: "venmo", displayName: "Venmo", category: "us_payment", region: "USA", schemes: ["venmo://"], urlPatterns: ["venmo.com/u/", "venmo.com/code"], trustedDomains: ["venmo.com"] },
   { id: "cash_app", displayName: "Cash App", category: "us_payment", region: "USA", schemes: ["cashapp://"], urlPatterns: ["cash.app/$"], trustedDomains: ["cash.app"] },
   { id: "zelle", displayName: "Zelle", category: "us_payment", region: "USA", schemes: ["zelle://"], urlPatterns: ["zellepay.com"], trustedDomains: ["zellepay.com"] },
@@ -111,15 +111,17 @@ export const PAYMENT_APP_REGISTRY: AppDef[] = [
 ];
 
 export const BANK_HANDLE_TO_APP: Record<string, { id: PaymentAppId; name: string }> = {
-  "okhdfcbank": { id: "hdfc_bank", name: "HDFC Bank" },
+  "okhdfcbank": { id: "gpay_india", name: "Google Pay (HDFC)" },
+  "okaxis": { id: "gpay_india", name: "Google Pay (Axis)" },
+  "oksbi": { id: "gpay_india", name: "Google Pay (SBI)" },
+  "okicici": { id: "gpay_india", name: "Google Pay (ICICI)" },
+  "gpay": { id: "gpay_india", name: "Google Pay" },
+  "tez": { id: "gpay_india", name: "Google Pay" },
   "hdfcbank": { id: "hdfc_bank", name: "HDFC Bank" },
   "payzapp": { id: "hdfc_bank", name: "HDFC Bank (PayZapp)" },
-  "okaxis": { id: "axis_pay", name: "Axis Pay" },
   "axisbank": { id: "axis_pay", name: "Axis Pay" },
   "axl": { id: "axis_pay", name: "Axis Pay" },
-  "oksbi": { id: "yono_sbi", name: "YONO SBI" },
   "sbi": { id: "yono_sbi", name: "YONO SBI" },
-  "okicici": { id: "imobile_pay", name: "iMobile Pay (ICICI)" },
   "icici": { id: "imobile_pay", name: "iMobile Pay (ICICI)" },
   "ibl": { id: "imobile_pay", name: "iMobile Pay (ICICI)" },
   "ybl": { id: "phonepe", name: "PhonePe (Yes Bank)" },

@@ -12,12 +12,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicQrRecord, getQrIdForContent, type PublicQrRecord } from "../../../lib/qr-data";
 import { decodeQrShareCode } from "../../../lib/qr-share";
+import { isPaymentQr } from "@services/analysis";
 import QrVerificationView from "./QrVerificationView";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "QR Details — BinRo",
+  title: "BinRo",
   description: "View QR code destination, real community trust score, votes, and comments on BinRo.",
 };
 
@@ -44,14 +45,32 @@ export default async function QrDetailsPage({
   // 3. Fallback when QR code is brand new (not yet inserted in qr_codes) — never show fake trust score
   if (!record) {
     const rawContent = content?.trim() || "";
+    const isPayment = isPaymentQr(rawContent);
+    const isPhone = !isPayment && (/^tel:/i.test(rawContent) || /^\+?[\d\s\-().]{7,20}$/.test(rawContent));
+    const isEmail = !isPayment && /^mailto:/i.test(rawContent);
+    const isSms = !isPayment && /^smsto?:/i.test(rawContent);
     const isUrl =
-      /^https?:\/\//i.test(rawContent) ||
-      (/^[a-z0-9-]+(\.[a-z0-9-]+)+\/?/i.test(rawContent) && !rawContent.includes(" "));
+      !isPayment &&
+      !isPhone &&
+      !isEmail &&
+      !isSms &&
+      (/^https?:\/\//i.test(rawContent) ||
+        (/^[a-z0-9-]+(\.[a-z0-9-]+)+\/?/i.test(rawContent) && !rawContent.includes(" ")));
 
     record = {
       id: qrId,
       content: rawContent,
-      contentType: isUrl ? "url" : "text",
+      contentType: isPayment
+        ? "payment"
+        : isPhone
+          ? "phone"
+          : isEmail
+            ? "email"
+            : isSms
+              ? "sms"
+              : isUrl
+                ? "url"
+                : "text",
       createdAt: null,
       scanCount: 1,
       commentCount: 0,

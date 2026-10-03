@@ -8,6 +8,8 @@
  * in user-generated comments and QR code content.
  */
 
+import { validateQrContent } from "../analysis/qr-validator";
+
 // Comprehensive list of profanity patterns (English + common variations)
 const PROFANITY_PATTERNS: {
   pattern: RegExp;
@@ -174,13 +176,6 @@ export function validateQrInput(content: string): {
   valid: boolean;
   error?: string;
 } {
-  // Lazy-require to avoid import cycles during native bundle.
-
-  const { validateQrContent } = require("../analysis/qr-validator") as {
-
-    validateQrContent: (c: unknown) => { valid: boolean; error?: string };
-  };
-
   const structural = validateQrContent(content);
   if (!structural.valid) return structural;
 

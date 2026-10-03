@@ -1,101 +1,406 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BINRO WEB: DOWNLOAD PAGE STYLES
+   1:1 with mobile AuthBrandBlock, GuestView, ScreenHeader, and Toast
+   All colors sourced from @shared/constants/colors.ts (Colors.light)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .page {
-  display: grid;
   min-height: 100dvh;
-  place-items: center;
-  padding: 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 18px 32px;
+  box-sizing: border-box;
   background: var(--background);
 }
-.card {
-  width: min(100%, 470px);
-  padding: 25px;
-  border: 1px solid var(--line);
-  border-radius: 25px;
-  background: var(--surface);
-  box-shadow: 0 18px 50px rgba(60, 91, 132, .08);
-}
-.backLink {
-  color: #61758c;
-  font-size: 13px;
-  text-decoration: none;
-}
-.icon {
-  display: grid;
-  width: 88px;
-  height: 88px;
-  margin: 35px auto 23px;
-  place-items: center;
-  color: var(--primary);
-  border: 1px solid #aac7ec;
-  border-radius: 28px;
-  background: var(--primary-soft);
-  box-shadow: inset 0 0 0 12px #d2e3fa;
-}
-.eyebrow {
-  margin: 0 0 9px;
-  color: var(--primary);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .15em;
-  text-align: center;
-}
-.card h1 {
-  margin: 0;
-  font-size: 30px;
-  letter-spacing: -.06em;
-  text-align: center;
-}
-.intro {
-  margin: 12px auto 26px;
-  color: #66788d;
-  font-size: 14px;
-  line-height: 1.6;
-  text-align: center;
-}
-.storeButton, .comingSoon {
+
+.inner {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
   display: flex;
-  min-height: 64px;
-  gap: 12px;
+  flex-direction: column;
+}
+
+/* ── Mobile Toast Pill (1:1 with features/qr-detail/components/QrToast.tsx) ── */
+@keyframes qr-toast-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.toastPill {
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  display: inline-flex;
+  flex-direction: row;
   align-items: center;
-  padding: 0 15px;
-  border-radius: 16px;
+  justify-content: center;
+  gap: 7px;
+  background-color: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--surface-border);
+  padding: 11px 18px;
+  border-radius: 100px;
+  z-index: 9999;
+  box-shadow: 0 4px 14px var(--card-glow);
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 200ms ease, transform 200ms ease;
 }
-.storeButton {
-  color: #fff;
-  background: var(--primary);
-  box-shadow: 0 9px 18px rgba(7, 93, 204, .17);
+
+.toastPillVisible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  animation: qr-toast-pop 160ms ease-out;
+}
+
+.toastPillHidden {
+  opacity: 0;
+  transform: translate(-50%, 8px);
+}
+
+.toastPillText {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  color: var(--text);
+}
+
+/* ── Top Navigation Bar (1:1 with shared/components/ui/ScreenHeader.tsx) ─── */
+.navBar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 52px;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.backBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 19px;
+  border-width: 1px;
+  border-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   text-decoration: none;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s ease, transform 0.12s ease;
 }
-.storeButton:hover { background: var(--primary-dark); }
-.storeButton > span:nth-child(2), .comingSoon span:nth-child(2) { flex: 1; }
-.storeButton strong, .storeButton small, .comingSoon strong, .comingSoon small { display: block; }
-.storeButton strong, .comingSoon strong { font-size: 14px; }
-.storeButton small, .comingSoon small { margin-top: 3px; font-size: 11px; opacity: .78; }
-.playMark, .appleMark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  place-items: center;
-  font-size: 18px;
+
+.backBtn:hover {
+  opacity: 0.85;
 }
-.playMark { color: #fff; border-radius: 10px; background: rgba(255,255,255,.17); font-size: 14px; }
-.appleMark { color: #8292a5; font-family: Georgia, serif; font-size: 28px; }
-.comingSoon {
-  margin-top: 10px;
-  color: #8292a5;
-  border: 1px solid var(--line);
-  background: #f8faff;
+
+.backBtn:active {
+  transform: scale(0.96);
 }
-.note {
-  margin: 22px 0 0;
-  color: #9aa8b7;
-  font-size: 11px;
-  line-height: 1.5;
+
+.navTitle {
+  flex: 1;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
   text-align: center;
 }
-@media (max-width: 520px) {
-  .page { padding: 16px; }
-  .card { padding: 21px 18px; }
-  .icon { margin-top: 29px; }
-  .card h1 { font-size: 27px; }
+
+.navSpacer {
+  width: 38px;
+  flex-shrink: 0;
 }
+
+/* ── Brand Block (1:1 with features/auth/components/AuthBrandBlock.tsx) ──── */
+.brandBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 8px;
+}
+
+.brandName {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 36px;
+}
+
+.brandDivider {
+  width: 32px;
+  height: 2.5px;
+  border-radius: 2px;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.pageTitle {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  text-align: center;
+}
+
+.pageSubtitle {
+  margin: 2px 0 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  text-align: center;
+  max-width: 280px;
+  line-height: 20px;
+}
+
+/* ── Main Card (1:1 with features/auth/styles.ts & GuestView.tsx) ────────── */
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 24px 20px;
+  border-radius: 20px;
+  border-width: 1px;
+  border-style: solid;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.guestIconRing {
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+  border-width: 1.5px;
+  border-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.guestTitle {
+  margin: 0 0 4px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ── Official Google Play & Apple App Store Banners ──────────────────────── */
+.storeBadgesGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.officialStoreBanner {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid #a6a6a6;
+  background-color: #000000;
+  color: #ffffff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.officialStoreBanner:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
+.officialStoreBanner:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.storeBadgeSvg {
+  flex-shrink: 0;
+}
+
+.storeBannerTextCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  line-height: 1;
+}
+
+.storeBannerKicker {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin-bottom: 3px;
+}
+
+.storeBannerKickerIos {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 9.5px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+  margin-bottom: 3px;
+}
+
+.storeBannerTitle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+/* ── Footer link row (1:1 with features/auth/styles.ts) ──────────────────── */
+.footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.footerText {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.footerLink {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.footerLink:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 400px) {
+  .storeBadgesGroup {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Tablet & Desktop Responsive Layout (Mobile <= 600px untouched) ──────── */
+@media (min-width: 601px) {
+  .page {
+    justify-content: center;
+    padding: 32px 24px;
+    background:
+      radial-gradient(circle at 18% 12%, var(--primary-dim), transparent 42%),
+      radial-gradient(circle at 82% 88%, var(--card-glow), transparent 42%),
+      var(--background);
+  }
+
+  .inner {
+    max-width: 480px;
+    padding: 26px 28px 30px;
+    background: var(--surface-overlay);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--surface-border);
+    border-radius: 28px;
+    box-shadow: 0 22px 56px var(--card-glow);
+  }
+
+  .navBar {
+    margin-bottom: 16px;
+  }
+
+  .brandBlock {
+    margin-bottom: 26px;
+  }
+
+  .card {
+    padding: 28px 24px;
+    border-radius: 22px;
+    gap: 14px;
+  }
+
+  .storeBadgesGroup {
+    gap: 12px;
+    margin-top: 6px;
+  }
+
+  .officialStoreBanner {
+    min-height: 56px;
+    padding: 10px 16px;
+  }
+
+  .toastPill {
+    bottom: 48px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page {
+    padding: 44px 32px;
+  }
+
+  .inner {
+    max-width: 510px;
+    padding: 30px 34px 34px;
+    border-radius: 30px;
+  }
+
+  .brandName {
+    font-size: 32px;
+    line-height: 38px;
+  }
+
+  .pageTitle {
+    font-size: 22px;
+  }
+
+  .pageSubtitle {
+    font-size: 14px;
+    max-width: 320px;
+  }
+
+  .card {
+    padding: 32px 28px;
+    gap: 16px;
+  }
+
+  .guestIconRing {
+    width: 84px;
+    height: 84px;
+    border-radius: 42px;
+  }
+
+  .guestTitle {
+    font-size: 20px;
+  }
+}
+

@@ -5,11 +5,13 @@
 // All other files use the adapter interface from lib/auth.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../../supabase";
 import type { AuthAdapter, AuthAdapterUser } from "../adapter";
 import type { User } from "@supabase/supabase-js";
 
 // ─── User wrapper ──────────────────────────────────────────────────────────────
+
+let currentSession: { user: User; access_token: string } | null = null;
 
 function wrapUser(user: User, accessToken: string): AuthAdapterUser {
   const meta = user.user_metadata ?? {};
@@ -19,16 +21,38 @@ function wrapUser(user: User, accessToken: string): AuthAdapterUser {
     displayName:
       meta.full_name ?? meta.name ?? meta.display_name ?? user.email?.split("@")[0] ?? null,
     photoURL: meta.avatar_url ?? meta.picture ?? null,
-    emailVerified: !!user.email_confirmed_at,
+    get emailVerified() {
+      return !!user.email_confirmed_at;
+    },
     getIdToken: async (_forceRefresh?: boolean) => {
       if (_forceRefresh) {
         const { data } = await supabase.auth.refreshSession();
+        if (data.session) {
+          accessToken = data.session.access_token;
+          currentSession = { user: data.session.user, access_token: data.session.access_token };
+        }
         return data.session?.access_token ?? accessToken;
       }
       return accessToken;
     },
     reload: async () => {
-      await supabase.auth.refreshSession();
+      // 1. Fetch fresh user directly from Supabase server to get latest email_confirmed_at
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (!userError && userData?.user) {
+        user = userData.user;
+        const { data: sessData } = await supabase.auth.getSession();
+        if (sessData?.session?.access_token) {
+          accessToken = sessData.session.access_token;
+        }
+        currentSession = { user: userData.user, access_token: accessToken };
+      } else {
+        const { data: sessData } = await supabase.auth.refreshSession();
+        if (sessData?.session?.user && sessData.session.access_token) {
+          user = sessData.session.user;
+          accessToken = sessData.session.access_token;
+          currentSession = { user: sessData.session.user, access_token: sessData.session.access_token };
+        }
+      }
     },
   };
 }
@@ -36,7 +60,11 @@ function wrapUser(user: User, accessToken: string): AuthAdapterUser {
 // ─── Get current access token ─────────────────────────────────────────────────
 
 async function getCurrentToken(): Promise<string> {
+  if (currentSession?.access_token) return currentSession.access_token;
   const { data } = await supabase.auth.getSession();
+  if (data.session) {
+    currentSession = { user: data.session.user, access_token: data.session.access_token };
+  }
   return data.session?.access_token ?? "";
 }
 
@@ -46,8 +74,10 @@ export const supabaseAuthProvider: AuthAdapter = {
   onIdTokenChanged(cb) {
     const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user && session.access_token) {
+        currentSession = { user: session.user, access_token: session.access_token };
         cb(wrapUser(session.user, session.access_token));
       } else {
+        currentSession = null;
         cb(null);
       }
     });
@@ -55,11 +85,19 @@ export const supabaseAuthProvider: AuthAdapter = {
   },
 
   getCurrentUser() {
-    // Supabase getUser() is async; we use the cached session for the sync call.
-    // The session is kept up to date by onAuthStateChange.
-    const session = (supabase.auth as any)._session as { user?: User; access_token?: string } | null;
-    if (session?.user && session.access_token) {
-      return wrapUser(session.user, session.access_token);
+    if (currentSession?.user && currentSession.access_token) {
+      return wrapUser(currentSession.user, currentSession.access_token);
+    }
+    return null;
+  },
+
+  async refreshCurrentUser() {
+    const { data: sessData } = await supabase.auth.getSession();
+    if (sessData?.session?.access_token) {
+      const { data: userData } = await supabase.auth.getUser();
+      const u = userData?.user || sessData.session.user;
+      currentSession = { user: u, access_token: sessData.session.access_token };
+      return wrapUser(u, sessData.session.access_token);
     }
     return null;
   },
@@ -68,19 +106,36 @@ export const supabaseAuthProvider: AuthAdapter = {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     if (!data.user || !data.session) throw new Error("Sign-in failed — no session returned");
+    currentSession = { user: data.user, access_token: data.session.access_token };
     return wrapUser(data.user, data.session.access_token);
   },
 
-  async signUp(email, password) {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+  async signUp(email, password, displayName) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: displayName
+        ? {
+            data: {
+              full_name: displayName,
+              display_name: displayName,
+              name: displayName,
+            },
+          }
+        : undefined,
+    });
     if (error) throw error;
     if (!data.user) throw new Error("Sign-up failed — no user returned");
-    // After signUp, a session may already exist (if email confirmation is disabled).
+    // After signUp, a session may already exist (or pending email confirmation).
     const token = data.session?.access_token ?? "";
+    if (data.session) {
+      currentSession = { user: data.user, access_token: token };
+    }
     return wrapUser(data.user, token);
   },
 
   async signOut() {
+    currentSession = null;
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   },
@@ -113,15 +168,45 @@ export const supabaseAuthProvider: AuthAdapter = {
   async sendVerificationEmail(_user) {
     // Supabase sends a confirmation email on sign-up automatically.
     // To resend: call resend with OTP type=signup.
-    const { error } = await supabase.auth.resend({ type: "signup", email: _user.email ?? "" });
-    if (error) throw error;
+    if (!_user.email) return;
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email: _user.email });
+      if (error) {
+        console.warn("[supabaseAuthProvider] resend verification email:", error.message);
+      }
+    } catch (err: any) {
+      console.warn("[supabaseAuthProvider] resend error:", err?.message);
+    }
   },
 
   async updateDisplayName(_user, displayName) {
-    const { error } = await supabase.auth.updateUser({
-      data: { full_name: displayName, display_name: displayName },
-    });
-    if (error) throw error;
+    // Only call updateUser if there is an active session
+    const { data } = await supabase.auth.getSession();
+    if (!data?.session) {
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: displayName, display_name: displayName, name: displayName },
+      });
+      if (error) {
+        if (
+          error.message?.toLowerCase().includes("session") ||
+          (error as any).name === "AuthSessionMissingError"
+        ) {
+          return;
+        }
+        throw error;
+      }
+    } catch (err: any) {
+      if (
+        err?.message?.toLowerCase().includes("session") ||
+        err?.name === "AuthSessionMissingError"
+      ) {
+        return;
+      }
+      throw err;
+    }
   },
 
   async reauthenticate(user, email, password) {

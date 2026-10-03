@@ -67,6 +67,7 @@ export const COLLECTIONS = {
   FEATURE_VOTES: TABLES.FEATURE_VOTES,
   FEEDBACK: TABLES.FEEDBACK,
   AUDIT_LOGS: TABLES.AUDIT_LOGS,
+  COUNTERS: "counters",
 } as const;
 
 export type TableName = (typeof TABLES)[keyof typeof TABLES];

@@ -1,16 +1,641 @@
-.appFrame { min-height: 100dvh; background: var(--background); }
-.page { display: flex; width: min(calc(100% - 48px), 1060px); min-height: 100dvh; margin: 0 auto; flex-direction: column; align-items: center; justify-content: center; padding: 30px 0 126px; }
-.guestCard { display: flex; width: min(100%, 510px); flex-direction: column; align-items: center; padding: 42px 24px 36px; text-align: center; }
-.guestIconRing { display: grid; width: 98px; height: 98px; margin-bottom: 24px; place-items: center; color: var(--primary); border-radius: 50%; background: #e6efff; }
-.guestCard h1 { margin: 0; font-size: 22px; letter-spacing: -.045em; }
-.guestCard p { margin: 13px 0 27px; color: #536375; font-size: 14px; }
-.loading { color: var(--muted) !important; }
-.memberBadge { margin: -9px 0 22px; padding: 6px 10px; color: var(--green); border-radius: 99px; background: #e1f7f0; font-size: 11px; font-weight: 600; }
-.signInButton { display: inline-flex; width: min(100%, 394px); min-height: 54px; align-items: center; justify-content: center; color: #fff; border: 0; border-radius: 16px; background: var(--primary); cursor: pointer; font: inherit; font-size: 15px; font-weight: 700; text-decoration: none; }
-.createLink { min-height: 43px; margin-top: 8px; padding: 12px 20px; color: #155294; font-size: 14px; font-weight: 600; text-decoration: none; }
-.error { width: min(100%, 510px); margin: 16px 0 0; padding: 11px 12px; color: var(--danger); border-radius: 12px; background: #fff0f1; font-size: 12px; }
-.bottomNav { position: fixed; right: 50%; bottom: 0; z-index: 2; display: flex; width: min(100%, 1060px); min-height: 86px; transform: translateX(50%); align-items: center; justify-content: space-around; padding: 8px 20px; border: 1px solid var(--line); border-bottom: 0; border-radius: 25px 25px 0 0; background: rgba(255,255,255,.96); box-shadow: 0 -7px 25px rgba(77,106,144,.07); backdrop-filter: blur(15px); }
-.navItem { display: grid; min-width: 75px; gap: 5px; justify-items: center; padding: 9px 17px; color: #708196; border-radius: 12px; font-size: 12px; text-decoration: none; }
-.navItemActive { color: var(--primary); background: var(--primary-soft); }
-@media (min-width: 900px) { .bottomNav { bottom: 18px; width: min(calc(100% - 48px), 510px); border-bottom: 1px solid var(--line); border-radius: 25px; } }
-@media (max-width: 600px) { .page { width: calc(100% - 44px); padding-top: 54px; } .guestCard { padding-inline: 0; } .bottomNav { min-height: 88px; } }
+/* ═══════════════════════════════════════════════════════════════════════════
+   BINRO WEB: PROFILE SCREEN STYLES (1:1 with features/profile/styles.ts)
+   All colors are sourced from @shared/constants/colors.ts via CSS variables.
+   Typography uses mobile Inter_400Regular / Inter_600SemiBold / Inter_700Bold.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.container {
+  min-height: 100dvh;
+  width: 100%;
+  background-color: var(--background);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.inner {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 16px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* ── Top Bar (features/profile/styles.ts topBar) ─────────────────────────── */
+.topBar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.pageTitle {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.topBarActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.iconBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.iconBtn:hover {
+  opacity: 0.85;
+}
+
+.iconBtn:active {
+  transform: scale(0.96);
+}
+
+/* ── Avatar + Identity (features/profile/styles.ts avatarSection) ────────── */
+.avatarSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.avatarPressable {
+  position: relative;
+  margin-bottom: 6px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.avatarRing {
+  width: 84px;
+  height: 84px;
+  border-radius: 42px;
+  border: 2px solid var(--primary);
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.avatarInner {
+  width: 76px;
+  height: 76px;
+  border-radius: 38px;
+  background-color: var(--surface-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.avatarPhoto {
+  width: 76px;
+  height: 76px;
+  border-radius: 38px;
+  object-fit: cover;
+}
+
+.avatarInitials {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--primary);
+  user-select: none;
+}
+
+.cameraBtn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  background-color: var(--primary);
+  border: 2px solid var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.displayName {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.usernameText {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary);
+  text-align: center;
+}
+
+.editProfileBtn {
+  margin-top: 6px;
+  padding: 8px 22px;
+  border-radius: 10px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.editProfileBtn:hover {
+  opacity: 0.85;
+}
+
+.editProfileBtn:active {
+  transform: scale(0.98);
+}
+
+/* ── Profile Actions (History button) ────────────────────────────────────── */
+.profileActions {
+  width: 100%;
+  margin-bottom: 22px;
+}
+
+.profileActionBtn {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.profileActionBtn:hover {
+  opacity: 0.88;
+}
+
+.profileActionIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background-color: var(--accent-dim);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profileActionCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.profileActionLabel {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.profileActionSubtext {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ── Sign Out Button ─────────────────────────────────────────────────────── */
+.signOutBtn {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 14px;
+  padding: 13px;
+  border: 1px solid var(--danger);
+  background-color: var(--danger-dim);
+  color: var(--danger);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.signOutBtn:hover {
+  opacity: 0.85;
+}
+
+.signOutBtn:active {
+  transform: scale(0.98);
+}
+
+/* ── Guest View (features/profile/components/GuestView.tsx) ──────────────── */
+.guestWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.guestInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+}
+
+.guestIconRing {
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+  background-color: var(--primary-dim);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.guestTitle {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.guestSub {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  line-height: 19px;
+}
+
+.guestSignInBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 40px;
+  border-radius: 14px;
+  margin-top: 6px;
+  background-color: var(--primary);
+  color: var(--primary-text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  box-sizing: border-box;
+}
+
+.guestSignInBtn:hover {
+  opacity: 0.9;
+}
+
+.guestSignInBtn:active {
+  transform: scale(0.98);
+}
+
+.guestRegBtn {
+  padding: 10px;
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.guestRegBtn:hover {
+  opacity: 0.8;
+}
+
+/* ── Modal overlay for Photo actions ─────────────────────────────────────── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background-color: var(--modal-overlay);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalSheet {
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--surface);
+  border-radius: 24px;
+  border: 1px solid var(--surface-border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.22s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modalTitle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin: 0 0 8px;
+}
+
+.modalOptionBtn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background-color: var(--surface-light);
+  border: 1px solid var(--surface-border);
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.modalOptionBtn:hover {
+  opacity: 0.85;
+}
+
+.modalOptionDanger {
+  color: var(--danger);
+  background-color: var(--danger-dim);
+  border-color: var(--danger-dim);
+}
+
+.modalCancelBtn {
+  margin-top: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1px solid var(--surface-border);
+  color: var(--text-secondary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── Profile Layout Structure ───────────────────────────────────────────── */
+.profileGrid {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.profileRightCol {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* ── Tablet Responsive Layout (640px – 1023px) ───────────────────────────── */
+@media (min-width: 640px) {
+  .inner {
+    max-width: 760px;
+    padding: 28px 28px 100px;
+  }
+
+  .topBar {
+    margin-bottom: 28px;
+  }
+
+  .pageTitle {
+    font-size: 26px;
+  }
+
+  .avatarSection {
+    background-color: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 24px;
+    padding: 32px 24px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+    margin-bottom: 24px;
+  }
+
+  .avatarRing {
+    width: 96px;
+    height: 96px;
+    border-radius: 48px;
+  }
+
+  .avatarInner {
+    width: 86px;
+    height: 86px;
+    border-radius: 43px;
+  }
+
+  .avatarPhoto {
+    width: 86px;
+    height: 86px;
+    border-radius: 43px;
+  }
+
+  .avatarInitials {
+    font-size: 30px;
+  }
+
+  .cameraBtn {
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+  }
+
+  .displayName {
+    font-size: 22px;
+  }
+
+  .profileActionBtn {
+    padding: 16px 20px;
+    border-radius: 18px;
+  }
+
+  .modalSheet {
+    max-width: 420px;
+    border-radius: 24px;
+    margin: auto;
+  }
+}
+
+/* ── Desktop Responsive Layout (>= 1024px) ───────────────────────────────── */
+@media (min-width: 1024px) {
+  .inner {
+    max-width: 1280px;
+    padding: 32px clamp(32px, 5vw, 64px) 48px;
+  }
+
+  .topBar {
+    margin-bottom: 32px;
+    width: 100%;
+  }
+
+  .pageTitle {
+    font-size: 28px;
+    letter-spacing: -0.4px;
+  }
+
+  /* Two-column stretchable profile grid */
+  .profileGrid {
+    display: grid;
+    grid-template-columns: minmax(360px, 440px) 1fr;
+    gap: 36px;
+    align-items: start;
+    width: 100%;
+  }
+
+  .profileRightCol {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .avatarSection {
+    padding: 40px 32px;
+    border-radius: 28px;
+    background-color: var(--surface);
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
+    margin-bottom: 0;
+  }
+
+  .avatarRing {
+    width: 104px;
+    height: 104px;
+    border-radius: 52px;
+  }
+
+  .avatarInner {
+    width: 94px;
+    height: 94px;
+    border-radius: 47px;
+  }
+
+  .avatarPhoto {
+    width: 94px;
+    height: 94px;
+    border-radius: 47px;
+  }
+
+  .avatarInitials {
+    font-size: 34px;
+  }
+
+  .displayName {
+    font-size: 24px;
+  }
+
+  .profileActionBtn {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .profileActionBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* Extra wide screens (>= 1440px) */
+@media (min-width: 1440px) {
+  .inner {
+    max-width: 1400px;
+  }
+
+  .profileGrid {
+    grid-template-columns: minmax(400px, 480px) 1fr;
+    gap: 44px;
+  }
+}
+

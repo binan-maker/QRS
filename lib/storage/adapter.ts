@@ -9,12 +9,19 @@
 // interchangeable.
 // ═══════════════════════════════════════════════════════════════════════════════
 
+export type UploadableData = Blob | File | ArrayBuffer | Uint8Array | string;
+
+export interface UploadOptions {
+  contentType?: string;
+  cacheControl?: string;
+}
+
 export interface StorageAdapter {
   /**
-   * Upload a Blob/File to the given storage path.
+   * Upload a file, ArrayBuffer, or base64 data to the given storage path.
    * Returns the publicly accessible download URL.
    */
-  upload(path: string, file: Blob | File): Promise<string>;
+  upload(path: string, file: UploadableData, options?: UploadOptions): Promise<string>;
 
   /**
    * Delete a file at the given storage path.

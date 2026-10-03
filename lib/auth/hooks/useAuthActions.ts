@@ -76,7 +76,15 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
       cacheAuthUser(authUser);
       trackLoginCompleted("email");
     } catch (e: any) {
-      if (e.code === "auth/email-not-verified") throw e;
+      if (
+        e.code === "auth/email-not-verified" ||
+        e.code === "email_not_confirmed" ||
+        e.message?.toLowerCase().includes("email not confirmed")
+      ) {
+        const err = new Error(getAuthErrorMessage("auth/email-not-verified")) as any;
+        err.code = "auth/email-not-verified";
+        throw err;
+      }
       throw mapAuthError(e);
     }
   }
@@ -93,13 +101,38 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
         err.code = "auth/invalid-email-domain";
         throw err;
       }
-      const adapterUser = await authAdapter.signUp(email, password);
-      await authAdapter.updateDisplayName(adapterUser, displayName);
-      await authAdapter.sendVerificationEmail(adapterUser);
-      await authAdapter.signOut();
-      const err = new Error("VERIFICATION_SENT") as any;
-      err.code = "auth/verification-sent";
-      throw err;
+      const adapterUser = await authAdapter.signUp(email, password, displayName);
+      
+      // If user requires email verification:
+      // Supabase already sends the confirmation email on sign-up automatically.
+      if (!adapterUser.emailVerified) {
+        // Keep the unverified session so refreshUser() can detect confirmation when user taps "I've verified my email"
+        const err = new Error("VERIFICATION_SENT") as any;
+        err.code = "auth/verification-sent";
+        throw err;
+      }
+
+      // If email verification is disabled in Supabase and user is immediately active:
+      await syncUserToDb(
+        adapterUser.uid,
+        adapterUser.email,
+        displayName || adapterUser.displayName,
+        adapterUser.photoURL,
+        undefined,
+        adapterUser.emailVerified,
+      );
+      const idToken = await adapterUser.getIdToken();
+      const authUser: AuthUser = {
+        id: adapterUser.uid,
+        email: adapterUser.email ?? "",
+        displayName: displayName || adapterUser.displayName || adapterUser.email?.split("@")[0] || "User",
+        photoURL: adapterUser.photoURL,
+        emailVerified: true,
+      };
+      setUser(authUser);
+      setToken(idToken);
+      cacheAuthUser(authUser);
+      trackLoginCompleted("email");
     } catch (e: any) {
       if (e.code === "auth/verification-sent") throw e;
       if (e.code === "auth/invalid-email-domain") throw e;
@@ -170,10 +203,12 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
 
   // ── resendVerification ──────────────────────────────────────────────────────
 
-  async function resendVerification() {
+  async function resendVerification(targetEmail?: string) {
     try {
-      const currentUser = authAdapter.getCurrentUser();
-      if (currentUser) await authAdapter.sendVerificationEmail(currentUser);
+      const emailToSend = targetEmail || user?.email || authAdapter.getCurrentUser()?.email;
+      if (emailToSend) {
+        await authAdapter.sendVerificationEmail({ email: emailToSend } as any);
+      }
     } catch (e: any) {
       throw mapAuthError(e);
     }
@@ -188,12 +223,19 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
   // ── refreshUser ─────────────────────────────────────────────────────────────
 
   async function refreshUser(): Promise<boolean> {
-    const currentUser = authAdapter.getCurrentUser();
-    if (!currentUser) return false;
     try {
-      await currentUser.reload();
-      // Read AFTER reload — React state is stale until the next render.
-      const reloaded = authAdapter.getCurrentUser();
+      let reloaded = authAdapter.refreshCurrentUser
+        ? await authAdapter.refreshCurrentUser()
+        : null;
+
+      if (!reloaded) {
+        const currentUser = authAdapter.getCurrentUser();
+        if (currentUser) {
+          await currentUser.reload();
+          reloaded = authAdapter.getCurrentUser();
+        }
+      }
+
       if (reloaded) {
         if (reloaded.emailVerified) {
           try {
@@ -230,8 +272,9 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
           } catch {}
         }
         setUser(authUser);
-        cacheAuthUser(authUser);
-      // Return the fresh verification state from the provider, not from React state.
+        if (reloaded.emailVerified) {
+          cacheAuthUser(authUser);
+        }
         return reloaded.emailVerified;
       }
     } catch {}

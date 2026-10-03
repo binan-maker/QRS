@@ -45,7 +45,7 @@ export function subscribeToComments(
     { orderBy: { field: "createdAt", direction: "desc" }, limit: pageLimit },
     (docs) => {
       const comments: CommentItem[] = docs
-        .filter((d) => !d.data.isDeleted)
+        .filter((d) => !d.data.isDeleted && !String(d.data.text || "").startsWith("__qr_vote__:"))
         .map((d) => docToComment(d, qrId));
 
       onUpdate(comments);
@@ -104,7 +104,9 @@ export async function getComments(
   );
   const hasMore = docs.length > pageLimit;
   const allDocs = hasMore ? docs.slice(0, pageLimit) : docs;
-  const filtered = allDocs.filter((d) => !d.data.isDeleted);
+  const filtered = allDocs.filter(
+    (d) => !d.data.isDeleted && !String(d.data.text || "").startsWith("__qr_vote__:")
+  );
 
   await Promise.all(
     filtered.map(async (d) => {

@@ -26,6 +26,8 @@ export interface UrlScanResult {
   source?: "local" | "google-safe-browsing" | "api-unavailable";
 }
 
+export type UrlSafetyResult = UrlScanResult;
+
 const BLOCKED_SHORTENERS = [
   "bit.ly", "tinyurl.com", "t.co", "ow.ly", "is.gd", "buff.ly",
   "adf.ly", "j.mp", "short.link", "rebrand.ly", "cutt.ly", "rb.gy",

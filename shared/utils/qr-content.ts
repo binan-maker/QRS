@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { isPaymentQr, parseAnyPaymentQr } from "@/services/analysis/payment-parser";
 
-export type QrContentType = "url" | "text";
+export type QrContentType = "url" | "payment" | "text" | "phone" | "email" | "sms" | "wifi";
 
 export interface QrTypeDefinition {
   key: string;
@@ -9,8 +9,10 @@ export interface QrTypeDefinition {
   color: string;
   bg: string;
   gradient: readonly [string, string];
-  category: "web" | "text";
+  category: "web" | "text" | "payment";
   openLabel: string;
+  appScheme?: string;
+  webFallback?: boolean;
   getDisplayLabel: (content: string) => string;
   getSubtitle: (content: string) => string | null;
 }
@@ -28,6 +30,34 @@ function getHost(content: string) {
 }
 
 export const QR_CONTENT_TYPES: Record<string, QrTypeDefinition> = {
+  payment: {
+    key: "payment",
+    label: "Payment",
+    icon: "card-outline",
+    color: "#059669",
+    bg: "#ECFDF5",
+    gradient: ["#047857", "#10B981"],
+    category: "payment",
+    openLabel: "Pay via App",
+    getDisplayLabel: (content) => {
+      const parsed = parseAnyPaymentQr(content);
+      if (parsed) {
+        if (parsed.recipientName) return `${parsed.appDisplayName} • ${parsed.recipientName}`;
+        if (parsed.vpa) return `${parsed.appDisplayName} • ${parsed.vpa}`;
+        if (parsed.recipientId) return `${parsed.appDisplayName} • ${truncate(parsed.recipientId, 24)}`;
+        return parsed.appDisplayName;
+      }
+      return "Payment QR";
+    },
+    getSubtitle: (content) => {
+      const parsed = parseAnyPaymentQr(content);
+      if (parsed?.amount) {
+        const curr = parsed.currency || (parsed.appCategory === "upi_india" ? "₹" : "");
+        return `Pre-filled: ${curr}${parsed.amount}`;
+      }
+      return parsed?.vpa || parsed?.recipientId || "Scan to pay";
+    },
+  },
   text: {
     key: "text",
     label: "Text",
@@ -57,6 +87,19 @@ export const QR_CONTENT_TYPES: Record<string, QrTypeDefinition> = {
 export function detectContentType(content: string): QrContentType {
   const value = content?.trim();
   if (!value) return "text";
+
+  // 1. Payment QR codes (UPI, Google Pay, PayPal, PhonePe, Paytm, Venmo, Cash App, Crypto, EMVCo, etc.)
+  if (isPaymentQr(value)) {
+    return "payment";
+  }
+
+  // 2. Direct communication schemes
+  if (/^tel:/i.test(value) || /^\+?[\d\s\-().]{7,20}$/.test(value)) return "phone";
+  if (/^mailto:/i.test(value)) return "email";
+  if (/^smsto?:/i.test(value)) return "sms";
+  if (/^wifi:/i.test(value)) return "wifi";
+
+  // 3. URLs
   try {
     const url = new URL(value);
     return url.protocol === "http:" || url.protocol === "https:" ? "url" : "text";
@@ -67,7 +110,7 @@ export function detectContentType(content: string): QrContentType {
   }
 }
 
-export function getQrTypeMeta(contentType: string): QrTypeDefinition {
+export function getQrTypeMeta(contentType: string, _templateKey?: string): QrTypeDefinition {
   return QR_CONTENT_TYPES[contentType] ?? QR_CONTENT_TYPES.text;
 }
 
@@ -81,18 +124,29 @@ export function getSubtitle(content: string, contentType?: string) {
 }
 
 export function resolveEffectiveType(contentType: string, templateKey?: string) {
-  const candidate = templateKey === "url" || templateKey === "text" ? templateKey : contentType;
-  return candidate === "url" || candidate === "text" ? candidate : "text";
+  const candidate = (templateKey || contentType)?.toLowerCase();
+  if (
+    candidate === "payment" ||
+    candidate === "upi" ||
+    candidate === "paypal" ||
+    candidate === "crypto" ||
+    candidate === "paymentlink"
+  ) {
+    return "payment";
+  }
+  if (candidate === "url") return "url";
+  if (candidate === "phone" || candidate === "email" || candidate === "sms" || candidate === "wifi") {
+    return candidate;
+  }
+  return "text";
 }
 
 export function useQrMeta(content: string, contentType: string, templateKey?: string) {
-  return useMemo(() => {
-    const effectiveType = resolveEffectiveType(contentType, templateKey);
-    const typeMeta = getQrTypeMeta(effectiveType);
-    return {
-      typeMeta,
-      displayLabel: getDisplayLabel(content, effectiveType),
-      subtitle: getSubtitle(content, effectiveType),
-    };
-  }, [content, contentType, templateKey]);
+  const effectiveType = resolveEffectiveType(contentType, templateKey);
+  const typeMeta = getQrTypeMeta(effectiveType);
+  return {
+    typeMeta,
+    displayLabel: getDisplayLabel(content, effectiveType),
+    subtitle: getSubtitle(content, effectiveType),
+  };
 }

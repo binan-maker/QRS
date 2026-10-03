@@ -8,7 +8,6 @@ import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, router } from "expo-router";
-import { useIsFocused } from "@react-navigation/native";
 import { useTopInset } from "@/shared/utils/platform";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -44,7 +43,7 @@ export default function ScannerScreen() {
   // ── cameraPreviewReady: true only after onCameraReady fires ───────────────
   const [cameraPreviewReady, setCameraPreviewReady] = useState(false);
 
-  const isFocused = useIsFocused();
+  const [isFocused, setIsFocused] = useState(true);
 
   // ── cameraActive: delayed mount gate ──────────────────────────────────────
   const [cameraActive, setCameraActive] = useState(false);
@@ -87,8 +86,12 @@ export default function ScannerScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      setIsFocused(true);
       cameraAvailableRef.current = true;
       setCameraAvailable(true);
+      return () => {
+        setIsFocused(false);
+      };
     }, [])
   );
 

@@ -1,19 +1,17 @@
-/**
- * ═══════════════════════════════════════════════════════════════════════════════
- * BINRO WEB: SUPABASE CLIENT FACTORY & ENVIRONMENT DETECTOR
- * ───────────────────────────────────────────────────────────────────────────────
- * Provides resilient client-side & server-side Supabase client instances.
- * Detects whether real database credentials are configured or using placeholders.
- * ═══════════════════════════════════════════════════════════════════════════════
- */
+// ═══════════════════════════════════════════════════════════════════════════════
+// WEB SUPABASE CLIENT — singleton Supabase client for Next.js web app.
+// Shares globalThis.__binroSupabaseClient with root lib/supabase.ts.
+// ═══════════════════════════════════════════════════════════════════════════════
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-let clientInstance: SupabaseClient | null = null;
+const isBrowserWeb =
+  typeof window !== "undefined" && typeof document !== "undefined";
 
-/**
- * Returns true if valid Supabase connection details are available in environment variables.
- */
+const globalForSupabase = globalThis as unknown as {
+  __binroSupabaseClient?: SupabaseClient;
+};
+
 export function isWebSupabaseConfigured(): boolean {
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
@@ -27,39 +25,44 @@ export function isWebSupabaseConfigured(): boolean {
 
   return Boolean(
     url &&
-    anonKey &&
-    !url.includes("placeholder") &&
-    !url.includes("YOUR_PROJECT_REF") &&
-    anonKey !== "placeholder-anon-key" &&
-    anonKey !== "your_supabase_anon_key"
+      anonKey &&
+      !url.includes("placeholder") &&
+      !url.includes("YOUR_PROJECT_REF") &&
+      anonKey !== "placeholder-anon-key" &&
+      anonKey !== "your_supabase_anon_key"
   );
 }
 
-/**
- * Returns the active Supabase client singleton, safely initializing with fallback if unconfigured.
- */
-export function getWebSupabase(): SupabaseClient {
-  if (clientInstance) return clientInstance;
+export function getSupabaseClient(): SupabaseClient {
+  if (globalForSupabase.__binroSupabaseClient) {
+    return globalForSupabase.__binroSupabaseClient;
+  }
 
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
     process.env.EXPO_PUBLIC_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
     "https://placeholder.supabase.co";
-
   const anonKey =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_ANON_KEY ||
     "placeholder-anon-key";
 
-  clientInstance = createClient(url, anonKey, {
+  const client = createClient(url, anonKey, {
     auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
+      autoRefreshToken: isBrowserWeb,
+      persistSession: isBrowserWeb,
+      detectSessionInUrl: isBrowserWeb,
     },
   });
 
-  return clientInstance;
+  globalForSupabase.__binroSupabaseClient = client;
+  return client;
 }
+
+export function getWebSupabase(): SupabaseClient {
+  return getSupabaseClient();
+}
+
+export const supabase: SupabaseClient = getSupabaseClient();

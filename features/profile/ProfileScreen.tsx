@@ -49,6 +49,7 @@ function ProfileScreen() {
     initials,
     refreshing, handleRefresh,
     handlePickPhoto, handleRemovePhoto, handleSignOut,
+    canRemovePhoto, hasGooglePhoto,
   } = useProfile();
   const { cachedUrl: photoURL } = useAvatar();
   // Pull auth loading state so we never flash GuestView during the initial
@@ -79,7 +80,6 @@ function ProfileScreen() {
 
   const openPhotoModal  = useCallback(() => setPhotoModalOpen(true),  [setPhotoModalOpen]);
   const closePhotoModal = useCallback(() => setPhotoModalOpen(false), [setPhotoModalOpen]);
-  const closeNotifModal = useCallback(() => setNotifOpen(false),      [setNotifOpen]);
   const onCamera        = useCallback(() => handlePickPhoto("camera"),  [handlePickPhoto]);
   const onGallery       = useCallback(() => handlePickPhoto("gallery"), [handlePickPhoto]);
 
@@ -242,7 +242,9 @@ function ProfileScreen() {
         onCamera={onCamera}
         onGallery={onGallery}
         onRemove={handleRemovePhoto}
+        canRemove={canRemovePhoto}
         hasPhoto={!!photoURL}
+        hasGooglePhoto={hasGooglePhoto}
         onClose={closePhotoModal}
         extraBottomPadding={39}
       />

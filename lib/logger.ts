@@ -62,6 +62,7 @@ function emit(
 }
 
 export interface Logger {
+  log(message: string, data?: unknown): void;
   debug(message: string, data?: unknown): void;
   info(message: string, data?: unknown): void;
   warn(message: string, data?: unknown): void;
@@ -79,6 +80,7 @@ export interface Logger {
  */
 export function createLogger(tag: string): Logger {
   return {
+    log:   (msg, data) => emit("info",  tag, msg, data),
     debug: (msg, data) => emit("debug", tag, msg, data),
     info:  (msg, data) => emit("info",  tag, msg, data),
     warn:  (msg, data) => emit("warn",  tag, msg, data),
