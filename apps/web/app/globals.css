@@ -228,6 +228,12 @@ textarea:focus-visible {
   background: var(--primary);
 }
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes rise-in {
   from {
     opacity: 0;

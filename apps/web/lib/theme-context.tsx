@@ -54,17 +54,22 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>(() => getStoredMode());
-  const [systemDark, setSystemDark] = useState<boolean>(() => getSystemPrefersDark());
+  const [mode, setModeState] = useState<ThemeMode>("system");
+  const [systemDark, setSystemDark] = useState<boolean>(false);
+  const [mounted, setMounted] = useState<boolean>(false);
 
-  // Listen to OS prefers-color-scheme changes
+  // Initialize on client mount and listen to OS prefers-color-scheme changes
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const stored = getStoredMode();
+    const sysDark = getSystemPrefersDark();
+    setModeState(stored);
+    setSystemDark(sysDark);
+    setMounted(true);
+
     try {
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      setSystemDark(mediaQuery.matches);
-
       const handler = (e: MediaQueryListEvent) => {
         setSystemDark(e.matches);
       };
@@ -75,14 +80,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const isDark = useMemo(() => {
+    if (!mounted) return false;
     if (mode === "dark") return true;
     if (mode === "light") return false;
     return systemDark;
-  }, [mode, systemDark]);
+  }, [mounted, mode, systemDark]);
 
   // Apply data-theme to HTML tag and persist
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !mounted) return;
 
     const themeStr = isDark ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", themeStr);
@@ -94,7 +100,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(key, mode);
       }
     } catch {}
-  }, [mode, isDark]);
+  }, [mounted, mode, isDark]);
 
   const setMode = useCallback((newMode: ThemeMode) => {
     setModeState(newMode);

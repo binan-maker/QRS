@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Ionicons } from "@/lib/mobile-icons";
 import { useAuth } from "@/lib/auth-context";
 import { getWebSupabase } from "@/lib/supabase";
-import styles from "../auth/auth.module.css";
+import styles from "../auth.module.css";
 
 function ResetPasswordContent() {
   const router = useRouter();

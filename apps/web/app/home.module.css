@@ -509,12 +509,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding: 32px 24px 70px;
+    min-height: calc(100dvh - 60px);
+    padding: 20px 24px 32px;
     background:
       radial-gradient(circle at 18% 10%, var(--primary-dim), transparent 45%),
       radial-gradient(circle at 82% 90%, var(--card-glow), transparent 45%),
       var(--background);
     width: 100%;
+    box-sizing: border-box;
   }
 
   .page {
@@ -522,14 +524,17 @@
     max-width: 720px;
     min-height: auto;
     padding: 0;
+    margin: 0 auto;
     background: transparent;
     border: none;
     border-radius: 0;
     box-shadow: none;
+    box-sizing: border-box;
   }
 
   .header {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+    width: 100%;
   }
 
   .greeting {
@@ -540,7 +545,7 @@
   .homeGrid {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
     width: 100%;
   }
 
@@ -571,27 +576,31 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding: 44px clamp(32px, 5vw, 72px) 110px;
+    min-height: calc(100dvh - 60px);
+    padding: 20px 24px 32px;
     background:
       radial-gradient(circle at 12% 10%, var(--primary-dim), transparent 45%),
       radial-gradient(circle at 88% 85%, var(--card-glow), transparent 45%),
       var(--background);
     width: 100%;
+    box-sizing: border-box;
   }
 
   .page {
     width: 100%;
-    max-width: 1280px;
+    max-width: 1200px;
     min-height: auto;
     padding: 0;
+    margin: 0 auto;
     background: transparent;
     border: none;
     border-radius: 0;
     box-shadow: none;
+    box-sizing: border-box;
   }
 
   .header {
-    margin-bottom: 32px;
+    margin-bottom: 18px;
     width: 100%;
   }
 
@@ -600,16 +609,16 @@
   }
 
   .greeting {
-    font-size: 28px;
-    line-height: 34px;
+    font-size: 26px;
+    line-height: 32px;
     letter-spacing: -0.4px;
   }
 
   /* Two-column stretchable layout for desktop */
   .homeGrid {
     display: grid;
-    grid-template-columns: minmax(380px, 460px) minmax(420px, 1fr);
-    gap: 36px;
+    grid-template-columns: minmax(360px, 440px) 1fr;
+    gap: 28px;
     align-items: start;
     width: 100%;
   }
@@ -618,8 +627,6 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    position: sticky;
-    top: 36px;
   }
 
   .scanHero {
@@ -627,22 +634,22 @@
     flex-direction: column;
     justify-content: space-between;
     margin-bottom: 0;
-    padding: 30px 28px 24px;
-    min-height: 250px;
+    padding: 28px 26px 22px;
+    min-height: 220px;
     box-sizing: border-box;
-    border-radius: 28px;
+    border-radius: 26px;
   }
 
   .heroIcon {
-    width: 82px;
-    height: 82px;
-    border-radius: 24px;
+    width: 78px;
+    height: 78px;
+    border-radius: 22px;
   }
 
   .heroHeading {
-    font-size: 26px;
-    line-height: 32px;
-    letter-spacing: -0.6px;
+    font-size: 25px;
+    line-height: 30px;
+    letter-spacing: -0.5px;
   }
 
   .heroTitle {
@@ -651,15 +658,15 @@
   }
 
   .heroArrow {
-    width: 46px;
-    height: 46px;
-    border-radius: 23px;
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
   }
 
   .heroTagline {
     font-size: 12px;
     line-height: 18px;
-    margin-top: 24px;
+    margin-top: 18px;
   }
 
   .recentScansCol {
@@ -670,40 +677,18 @@
   }
 
   .sectionHeader {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
 
   .sectionTitle {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .emptyCard {
-    padding: 44px 28px;
-    min-height: 240px;
+    padding: 32px 24px;
+    min-height: 220px;
     box-sizing: border-box;
     justify-content: center;
-  }
-}
-
-/* Extra wide displays (>= 1440px) */
-@media (min-width: 1440px) {
-  .page {
-    max-width: 1400px;
-  }
-
-  .homeGrid {
-    grid-template-columns: minmax(440px, 500px) minmax(460px, 1fr);
-    gap: 44px;
-  }
-
-  .scanHero {
-    padding: 36px 32px 28px;
-    min-height: 280px;
-  }
-
-  .heroHeading {
-    font-size: 28px;
-    line-height: 34px;
   }
 }
 

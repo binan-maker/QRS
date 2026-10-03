@@ -136,7 +136,6 @@ export default function AuthCallbackPage() {
           marginBottom: "16px",
         }}
       />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <p style={{ fontSize: "14px", color: "var(--text-secondary, #64748b)", fontWeight: 500 }}>
         Completing sign in...
       </p>

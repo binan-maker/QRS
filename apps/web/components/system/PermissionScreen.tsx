@@ -6,8 +6,8 @@
 
 import React from "react";
 import { useTheme } from "@/lib/theme-context";
-import { Ionicons } from "../../icons";
-import styles from "../../scanner.module.css";
+import { Ionicons } from "@/lib/mobile-icons";
+import styles from "@/app/scanner/scanner.module.css";
 
 interface Props {
   canAskAgain:         boolean;

@@ -1,11 +1,12 @@
 "use client";
 
 // ─── Desktop & Tablet Top Navigation Bar ────────────────────────────────────
-// iPhone-style glassmorphism top navigation bar for Tablet & Desktop (>= 640px)
+// Eye-catching, pixel-aligned top navigation bar for Tablet & Desktop (>= 640px)
+// Seamless background when at top, soft blurred background when content scrolls.
 // Navigation items: Home | Scan | Profile
-// Right controls: Theme Toggle only (Dark / Light)
+// Right controls: Theme Toggle (Dark / Light) with hydration safety
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Ionicons } from "@/lib/mobile-icons";
@@ -15,6 +16,20 @@ import styles from "./DesktopNavbar.module.css";
 export function DesktopNavbar() {
   const pathname = usePathname();
   const { isDark, toggleTheme } = useTheme();
+  const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 8;
+      setScrolled((prev) => (prev !== isScrolled ? isScrolled : prev));
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // On the camera scanner page, the camera is full-screen and has its own overlay bar
   if (pathname === "/scanner") {
@@ -26,21 +41,26 @@ export function DesktopNavbar() {
   const isProfile = pathname.startsWith("/profile");
 
   return (
-    <header className={styles.navbar} aria-label="Desktop navigation">
+    <header
+      className={`${styles.navbar} ${scrolled ? styles.navbarScrolled : ""}`}
+      aria-label="Desktop navigation"
+    >
       <div className={styles.navContainer}>
-        {/* Left: Official BinRo Logo + Brand name (No "Web" badge) */}
+        {/* Left: Official BinRo Logo + Eye-Catching Brand typography */}
         <Link href="/" className={styles.brandLink} aria-label="BinRo Home">
           <img
             src="/icon1.png"
             alt="BinRo Logo"
-            width={34}
-            height={34}
+            width={32}
+            height={32}
             className={styles.brandLogoImg}
           />
-          <span className={styles.brandText}>BinRo</span>
+          <span className={styles.brandText}>
+            Bin<span className={styles.brandAccent}>Ro</span>
+          </span>
         </Link>
 
-        {/* Center: Navigation Links — ONLY Home, Scan, Profile */}
+        {/* Center: Navigation Links — Home, Scan, Profile */}
         <nav className={styles.navLinks} aria-label="Primary navigation">
           <Link
             href="/"
@@ -49,7 +69,7 @@ export function DesktopNavbar() {
           >
             <Ionicons
               name={isHome ? "home" : "home-outline"}
-              size={17}
+              size={16}
               color="currentColor"
             />
             <span>Home</span>
@@ -62,7 +82,7 @@ export function DesktopNavbar() {
           >
             <Ionicons
               name={isScan ? "scan" : "scan-outline"}
-              size={17}
+              size={16}
               color="currentColor"
             />
             <span>Scan</span>
@@ -75,24 +95,25 @@ export function DesktopNavbar() {
           >
             <Ionicons
               name={isProfile ? "person" : "person-outline"}
-              size={17}
+              size={16}
               color="currentColor"
             />
             <span>Profile</span>
           </Link>
         </nav>
 
-        {/* Right: Theme Toggle Only (No profile avatar or username) */}
+        {/* Right: Theme Toggle with hydration mismatch protection */}
         <div className={styles.navRight}>
           <button
             type="button"
             onClick={toggleTheme}
             className={styles.themeBtn}
-            title={isDark ? "Switch to light theme" : "Switch to dark theme"}
-            aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+            title={mounted ? (isDark ? "Switch to light theme" : "Switch to dark theme") : "Toggle theme"}
+            aria-label={mounted ? (isDark ? "Switch to light theme" : "Switch to dark theme") : "Toggle theme"}
+            suppressHydrationWarning
           >
             <Ionicons
-              name={isDark ? "sunny-outline" : "moon-outline"}
+              name={mounted && isDark ? "sunny-outline" : "moon-outline"}
               size={18}
               color="currentColor"
             />

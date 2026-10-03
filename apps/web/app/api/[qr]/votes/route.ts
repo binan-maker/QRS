@@ -2,15 +2,16 @@ import { NextResponse } from "next/server";
 import { calculateTrustScore } from "@services/trust/trust-service";
 import { getMergedQrVotesSummary } from "@services/moderation/report-service";
 import { getServerSupabase } from "@/lib/qr-data";
-import { isValidQrId } from "@/lib/security";
+import { isValidQrId } from "@/lib/web-security";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ qrId: string }> }
+  { params }: { params: Promise<{ qr: string }> }
 ) {
-  const { qrId } = await params;
+  const { qr } = await params;
+  const qrId = qr;
   if (!qrId || !isValidQrId(qrId)) {
     return NextResponse.json(
       { reportCounts: {}, weightedCounts: {}, trust: { score: -1, label: "Unrated", totalReports: 0 } },

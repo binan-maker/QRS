@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import { AuthProvider } from "@/lib/auth-context";
 import { AvatarProvider } from "@/lib/avatar-context";
 import { ThemeProvider } from "@/lib/theme-context";
@@ -23,6 +24,20 @@ export const metadata: Metadata = {
   },
 };
 
+const themeScript = `(function() {
+  try {
+    var mode = localStorage.getItem('binro_theme_mode') || localStorage.getItem('qrguard_theme_mode') || 'system';
+    var isDark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme-mode', mode);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  } catch (e) {}
+})();`;
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
@@ -31,28 +46,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       className={inter.variable}
       suppressHydrationWarning
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var mode = localStorage.getItem('binro_theme_mode') || localStorage.getItem('qrguard_theme_mode') || 'system';
-                  var isDark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-                  document.documentElement.setAttribute('data-theme-mode', mode);
-                  if (isDark) {
-                    document.documentElement.classList.add('dark');
-                  } else {
-                    document.documentElement.classList.remove('dark');
-                  }
-                } catch (e) {}
-              })();
-            `,
-          }}
+      <body className={inter.className} suppressHydrationWarning>
+        <Script
+          id="binro-theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeScript }}
         />
-      </head>
-      <body className={inter.className}>
         <AuthProvider>
           <AvatarProvider>
             <ThemeProvider>

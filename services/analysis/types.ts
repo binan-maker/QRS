@@ -68,3 +68,11 @@ export interface ParsedUpiQr {
   bankHandle: string;
   isAmountPreFilled: boolean;
 }
+
+export interface PaymentSafetyResult {
+  isSuspicious: boolean;
+  warnings: string[];
+  riskLevel: "safe" | "caution" | "dangerous";
+  appInfo: string;
+  evidence: Evidence[];
+}

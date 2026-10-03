@@ -78,27 +78,18 @@ const AvatarContext = createContext<AvatarContextState>({
 export function AvatarProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
 
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return (
-      localStorage.getItem(AVATAR_URL_KEY) ||
-      localStorage.getItem("user_avatar_custom") ||
-      null
-    );
-  });
-
-  const [version, setVersion] = useState<number>(() => {
-    if (typeof window === "undefined") return 0;
-    const v = localStorage.getItem(AVATAR_VER_KEY);
-    return v ? Number(v) : 0;
-  });
-
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [version, setVersion] = useState<number>(0);
   const [isHydrated, setIsHydrated] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   // Initialize and synchronize avatar from user auth metadata or Supabase DB
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // Load initial cached version if present
+    const cachedVer = localStorage.getItem(AVATAR_VER_KEY);
+    if (cachedVer) setVersion(Number(cachedVer));
 
     let active = true;
 
