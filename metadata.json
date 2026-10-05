@@ -1,6 +1,6 @@
 {
   "name": "BinRo",
-  "description": "A calm, public safety check for QR links shared through BinRo.",
+  "description": "Scan any QR code safely with BinRo. Preview hidden links before opening, check real-time community trust scores, and protect yourself from QR code scams and phishing.",
   "capabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]
