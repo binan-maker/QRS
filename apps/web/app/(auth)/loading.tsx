@@ -5,24 +5,19 @@ export default function AuthLoading() {
   return (
     <main className={styles.page} aria-busy="true">
       <div className={styles.inner}>
-        {/* Navigation Back Button Skeleton */}
-        <header className={styles.navBar}>
-          <div className="ytSkeleton" style={{ width: "38px", height: "38px", borderRadius: "19px" }} />
-        </header>
-
         {/* Brand & Title Skeleton */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", margin: "16px 0 24px" }}>
+        <div className={styles.brandBlock}>
           <div
             className="ytSkeleton"
-            style={{ width: "52px", height: "52px", borderRadius: "14px", marginBottom: "16px" }}
+            style={{ width: "110px", height: "28px", borderRadius: "8px", marginBottom: "4px" }}
           />
           <div
             className="ytSkeleton"
-            style={{ width: "160px", height: "26px", borderRadius: "8px", marginBottom: "8px" }}
+            style={{ width: "32px", height: "3px", borderRadius: "2px", marginBottom: "6px" }}
           />
           <div
             className="ytSkeleton"
-            style={{ width: "210px", height: "14px", borderRadius: "4px" }}
+            style={{ width: "160px", height: "22px", borderRadius: "6px" }}
           />
         </div>
 
