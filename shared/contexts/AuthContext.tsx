@@ -1,0 +1,144 @@
+// ── AuthContext ───────────────────────────────────────────────────────────────
+// Thin provider that wires together the extracted auth hooks and exposes a
+// stable context value to the component tree.
+//
+// Session and auth behavior lives in:
+//   lib/auth/hooks/useAuthSession.ts  — Supabase token listener
+//   lib/auth/hooks/useGoogleAuth.ts     — Google sign-in (native + web)
+//   lib/auth/hooks/useAuthActions.ts    — signIn / signUp / signOut / etc.
+//   lib/auth/user-sync.ts               — user document sync
+//   lib/auth/email-validation.ts        — server-side email validation
+//
+// For auth state outside React (API utils, background services) use:
+//   import { useAuthStore } from "@/store/authStore";
+
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from "react";
+import type * as GoogleTypes from "expo-auth-session/providers/google";
+import { useAuthStore } from "@/store/authStore";
+import { useAuthSession } from "@/lib/auth/hooks/useAuthSession";
+import { useGoogleAuth } from "@/lib/auth/hooks/useGoogleAuth";
+import { useAuthActions } from "@/lib/auth/hooks/useAuthActions";
+import { getAuthErrorMessage } from "@/lib/auth/utils";
+import type { AuthUser } from "@/lib/auth/types";
+import { getCachedAuthUser } from "@/lib/auth/session-cache";
+import { prefetchStartupPrefs } from "@/lib/startup-prefs";
+
+export { getAuthErrorMessage };
+export type { AuthUser };
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AuthContextValue {
+  user: AuthUser | null;
+  token: string | null;
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, displayName: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  switchGoogleAccount: () => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  resendVerification: (targetEmail?: string) => Promise<void>;
+  refreshUser: () => Promise<boolean>;
+  updateLocalDisplayName: (name: string) => void;
+  googleRequest: ReturnType<typeof GoogleTypes.useAuthRequest>[0];
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  // Supabase restores its persisted session asynchronously. Reuse the last
+  // display-safe identity for the first render so a returning user never sees
+  // the guest header while the live token is being restored.
+  const [user, setUser] = useState<AuthUser | null>(() => getCachedAuthUser());
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Covers the narrow startup race where the single startup multiGet has not
+  // resolved by the first React render. This never overwrites a live auth
+  // result and keeps the cached identity out of the guest UI path.
+  useEffect(() => {
+    if (user) return;
+    prefetchStartupPrefs().then(() => {
+      const cachedUser = getCachedAuthUser();
+      if (cachedUser) setUser((current) => current ?? cachedUser);
+    }).catch(() => {});
+  }, [user]);
+
+  // Shared flag: the session hook sets this when the provider restores a
+  // session; useGoogleAuth reads it to skip a redundant signInSilently call.
+  const sessionRestoredRef = useRef(false);
+
+  // ── Sync local state → Zustand store ──────────────────────────────────────
+  // Components that need auth state outside React read from useAuthStore.
+  // AuthContext local state remains the rendering source of truth.
+  useEffect(() => {
+    const store = useAuthStore.getState();
+    store.setUser(user);
+    store.setToken(token);
+    store.setLoading(isLoading);
+    store.setInitialized(!isLoading);
+  }, [user, token, isLoading]);
+
+  // ── Session listener ────────────────────────────────────────────────────────
+  useAuthSession({ setUser, setToken, setIsLoading, sessionRestoredRef });
+
+  // ── Google sign-in ─────────────────────────────────────────────────────────
+  const { googleRequest, signInWithGoogle, switchGoogleAccount } = useGoogleAuth({
+    setUser,
+    setToken,
+    sessionRestoredRef,
+  });
+
+  // ── Auth actions ───────────────────────────────────────────────────────────
+  const {
+    signIn,
+    signUp,
+    signOut,
+    sendPasswordReset,
+    resendVerification,
+    refreshUser,
+    updateLocalDisplayName,
+  } = useAuthActions({ user, setUser, setToken });
+
+  // ── Context value ──────────────────────────────────────────────────────────
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      isLoading,
+      signIn,
+      signUp,
+      signOut,
+      signInWithGoogle,
+      switchGoogleAccount,
+      sendPasswordReset,
+      resendVerification,
+      refreshUser,
+      updateLocalDisplayName,
+      googleRequest,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, token, isLoading, googleRequest],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
+}

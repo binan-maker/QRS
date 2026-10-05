@@ -1,0 +1,475 @@
+"use client";
+
+import React from "react";
+
+export type IoniconName = string;
+export type MaterialCommunityIconName = string;
+
+interface IconProps {
+  name: string;
+  size?: number;
+  color?: string;
+  style?: React.CSSProperties;
+}
+
+const IONICON_512_PATHS: Record<string, string> = {
+  "shield-checkmark":
+    "M239 44Q252 38 256.5 38.5Q261 39 279 47Q361 83 451 100Q468 103 471 105Q477 108 479 116Q483 141 477 194Q464 306 393 388Q373 412 351 429Q314 460 275 479Q259 487 252 485Q239 483 206 462Q135 418 92 352Q67 314 53 273Q38 232 34 184Q32 172 32 146.5Q32 121 33 116Q35 108 41 105Q44 103 61 100Q154 82 239 44ZM343 168Q341 166 336 166.5Q331 167 329 168Q326 169 275 228L224 287L205 268Q183 246 176 246Q170 246 165 250Q161 253 160.5 259.5Q160 266 163 270Q165 274 190 298Q209 317 215 321.5Q221 326 225 326Q231 326 239 317.5Q247 309 292 257Q349 192 350 189Q352 182 351 176Q348 170 343 168Z",
+  "shield-checkmark-outline":
+    "M233 47Q251 39 255.5 38.5Q260 38 279 47Q328 68 363 79Q398 90 451 100Q468 103 471 105Q477 108 479 116Q480 120 480 144Q480 168 479 179Q472 264 433 332Q419 356 401 378Q379 406 352 429Q314 460 274 479Q261 486 256 486Q251 486 238 479Q198 460 160 429Q133 406 111 378Q93 356 79 332Q40 264 33 179Q32 168 32 144Q32 120 33 116Q35 108 41 105Q44 103 61 100Q151 83 233 47ZM270 78Q256 72 255.5 72Q255 72 242 78Q167 111 81 128Q65 132 64.5 133Q64 134 64.5 154.5Q65 175 66 186Q74 262 112 324Q135 362 171.5 395.5Q208 429 248 449L256 453L264 449Q291 435 319 414Q430 328 445 190Q447 175 447.5 154.5Q448 134 447 133Q447 132 431 128Q347 112 270 78ZM329 168Q331 167 336 166.5Q341 166 343 168Q348 170 351 176Q354 182 350 189Q349 192 292 257Q248 308 239.5 317Q231 326 226 326Q221 326 216 322.5Q211 319 191 299Q165 274 163 271Q159 265 161 257.5Q163 250 170 247Q178 244 185 248Q187 250 206 269L224 287L275 228Q326 169 329 168Z",
+  "warning":
+    "M242 73Q253 70 264 75Q272 79 282.5 97Q293 115 351 222Q359 238 364 246Q451 408 452 413Q454 422 450 432Q446 445 433 450L428 452L250 452L73 452L68 450Q55 445 50 432Q47 422 49 413Q50 408 134.5 251.5Q219 95 222 90Q230 76 242 73ZM259 181Q250 178 241 182Q232 186 230 196Q228 199 231.5 263.5Q235 328 236 331Q242 343 255 339Q261 337 265 331Q266 328 269 263.5Q272 199 272 197Q269 186 259 181ZM258 365Q255 364 250 364Q245 364 243 365Q231 370 231 383Q231 392 238 398Q244 404 250.5 404Q257 404 263 398Q270 392 270 383Q270 370 258 365Z",
+  "warning-outline":
+    "M249 56Q282 52 298 81Q306 94 388.5 248Q471 402 472 405Q476 417 473 430Q467 458 440 466L434 468L256 468L78 468L72 466Q45 458 39 430Q36 417 40 405Q41 402 123.5 248Q206 94 214 81Q218 74 223 70Q234 58 249 56ZM265 90.5Q262 88 257 88Q250 88 245 92Q244 94 161.5 246.5Q79 399 72 412Q69 419 71 426Q73 433 80 435Q82 436 256 436Q430 436 432 435Q438 433 440.5 427Q443 421 442 416Q441 414 359 261.5Q277 109 271 99Q268 93 265 90.5ZM252 180Q259 179 267 183Q278 188 277 204Q277 215 274.5 270.5Q272 326 271 328Q270 333 264.5 336.5Q259 340 253 339Q245 338 242 331Q240 327 237 260Q234 201 235 197Q237 183 252 180ZM248 365Q251 364 256 364Q264 364 270 369.5Q276 375 276 383Q276 390 271 396Q266 403 256 403Q246 403 241 396Q236 390 236 383Q236 371 248 365Z",
+  "close-circle":
+    "M242 55Q312 50 370 88Q387 100 403 116Q453 165 463 238Q464 245 464 262Q464 279 463 286Q453 359 403 409Q353 459 280 469Q273 470 256 470Q239 470 232 469Q159 459 109 409Q59 359 50 287Q40 212 82 148Q110 107 151.5 82.5Q193 58 242 55ZM199 184Q193 181 186 184Q180 186 178 192Q175 199 178 205Q179 208 206 235L233 262L206 289Q179 316 178 319Q175 325 178 332Q180 338 186 340Q192 343 199 340Q201 340 228 312L256 285L284 312Q306 335 311.5 339Q317 343 322 342Q330 341 334 334Q338 327 335 320Q334 317 306 290L279 262L306 235Q333 208 334 205Q337 199 334 192Q332 186 326 184Q319 181 313 184Q310 185 283 212L256 239L229 212Q202 185 199 184Z",
+  "close-circle-outline":
+    "M241 55Q256 54 269 55Q351 60 407 119Q452 167 462 234Q464 244 464 262Q464 280 462 290Q454 345 421 388Q405 411 382 427Q339 460 284 468Q274 470 256 470Q238 470 228 468Q173 460 130 427Q107 411 91 388Q58 345 50 290Q48 280 48 262Q48 244 50 234Q58 180 91 136Q107 114 130 97Q181 59 241 55ZM284 88Q278 87 261.5 86.5Q245 86 240 87Q212 90 193 98Q149 115 119.5 151Q90 187 82 235Q81 244 81 262Q81 280 82 289Q89 332 114 366Q139 400 178 420Q214 438 256 438Q298 438 334 420Q372 400 397 366.5Q422 333 430 290Q431 281 431 262.5Q431 244 430 235Q420 175 378 135Q338 98 284 88ZM188 183Q194 181 199 184Q201 185 228 212L256 239L284 211Q312 184 314 183Q322 181 327 184Q333 187 335 194Q337 198 335 203Q334 206 307 234L279 262L307 290Q334 318 335 322Q338 333 329 339Q323 343 316 341Q312 340 284 313L256 285L228 313Q200 340 196 341Q187 344 180.5 337.5Q174 331 177 322Q178 318 205 290L233 262L205 234Q178 206 177 202Q175 196 178.5 190Q182 184 188 183Z",
+  "mail-unread":
+    "M420 71Q434 68 448 72Q469 78 482.5 95Q496 112 496 134Q496 156 482.5 173Q469 190 448 196Q425 202 402.5 190.5Q380 179 372 156Q363 131 375 105Q379 97 387 89Q401 75 420 71ZM79 87Q80 87 147.5 86.5Q215 86 281.5 86Q348 86 348 86.5Q348 87 346 92Q336 112 336 138Q337 158 346 176Q350 185 349.5 185.5Q349 186 302 222L256 258L189 206Q122 154 119 152Q114 149 107.5 150.5Q101 152 98 158Q92 169 101 178Q105 181 176 236Q247 291 249 292Q256 296 263 292Q265 291 317.5 250.5Q370 210 371 209.5Q372 209 376 212Q386 220 401 225Q439 238 475 220L480 218L480 390L478 397Q470 422 447 433Q439 437 419.5 437.5Q400 438 256 438Q111 438 92 437.5Q73 437 64 432Q41 421 34 395Q32 390 32 262Q32 156 32.5 142Q33 128 37 118Q49 93 79 87Z",
+  "mail-unread-outline":
+    "M423 71Q435 69 448 72Q462 76 473 85Q488 97 493 116Q499 134 493 152Q490 163 482 173Q469 190 448 196Q431 201 415 196Q399 191 387 179Q379 171 375 163Q366 143 369 124Q373 103 387.5 88.5Q402 74 423 71ZM75 88Q81 86 202 86Q323 86 326 87Q336 91 336 102Q336 111 327 116Q326 117 204 118L82 118L78 120Q71 124 66 132L64 135L64 262L64 389L66 392Q71 400 78 404L82 406L256 406L429 406L433 404Q440 400 444 393Q446 390 446 315L447 241L449 237Q454 229 463 229Q473 229 477 239Q479 242 479 314.5Q479 387 478 392Q476 404 469 413Q461 426 448 432Q439 437 420 437.5Q401 438 255 438Q80 438 74 436Q63 433 53 425Q39 414 34 396Q32 390 32 262Q32 134 34 128Q37 117 44 108Q56 92 75 88ZM105 152Q112 148 119 152Q122 153 189 206L256 258L261 254Q266 250 299 225Q332 200 336 198Q343 195 349 198Q357 201 358.5 208.5Q360 216 356 222Q354 224 310 257.5Q266 291 263 292Q256 296 249 292Q247 291 176 236Q105 181 101 178Q96 173 96 166Q96 156 105 152Z",
+  "thumbs-down":
+    "M80 41Q85 38 89.5 38Q94 38 141 43Q180 47 188 48.5Q196 50 201 55Q208 62 208 74Q208 85 202.5 90.5Q197 96 189 98Q177 101 96 102Q86 102 81 100Q64 92 64 70.5Q64 49 80 41ZM216 40Q218 38 242 38.5Q266 39 275 41Q320 48 350 66L357 70L391 70Q420 71 428 72Q436 73 447 78Q469 88 482 108Q489 119 493 132Q495 140 496 171Q496 209 490 224Q474 264 432 275Q424 278 403 278Q382 278 379 280Q374 282 367 297Q337 355 274 446Q260 467 256 474Q248 488 233 486Q212 483 200 470Q188 457 188 437Q187 426 196 402Q215 353 217 337Q217 330 215 326Q213 317 217 309Q223 296 223 278Q223 265 220.5 257.5Q218 250 218 246.5Q218 243 220.5 235Q223 227 223 214Q223 201 220 193Q216 182 220 173Q227 150 220 129Q218 121 218 118Q218 115 220.5 107Q223 99 223 89Q224 68 215 53Q211 43 216 40ZM51 110Q55 109 60 109.5Q65 110 126 113Q187 116 191 117Q205 121 207 136Q211 154 200 163Q194 168 183 169Q172 170 106 172Q53 174 49 172Q40 169 35.5 158.5Q31 148 32 136Q36 115 51 110ZM31 186Q35 184 41 184Q49 184 118.5 187.5Q188 191 190 191Q200 193 204.5 201.5Q209 210 207 222Q205 235 193 240Q188 242 113 245Q38 248 34 247Q21 242 17 225Q16 221 16 213Q18 194 31 186ZM63 262L68 260L113 261Q186 262 192 264Q208 271 208 288Q208 295 206 299Q200 313 184 315Q180 316 126.5 320Q73 324 71 323Q60 320 53 308.5Q46 297 48 285Q51 269 63 262Z",
+  "thumbs-down-outline":
+    "M99 40Q107 38 148 40Q183 41 188 43Q190 43 199.5 41.5Q209 40 221 39Q232 38 251.5 38Q271 38 279 39Q315 43 348 64L357 70L389 70Q420 70 430.5 71.5Q441 73 453 80Q481 94 492 124Q496 137 496 178Q495 212 493 218Q480 261 440 274Q427 278 401 278Q382 278 379 280Q374 282 366 298Q339 351 284 433Q261 467 256 474Q249 486 237 486Q216 485 202 471.5Q188 458 188 438Q188 426 200 394Q209 370 211 362Q218 340 216 339Q216 339 152.5 334Q89 329 84 327Q69 323 59 310.5Q49 298 48 282Q47 274 51 262Q50 260 46 259Q28 251 20 234Q13 218 18 202Q21 190 31 180L38 173L35 168Q27 146 38 126Q47 111 63 105Q67 104 65 97Q61 79 70 62Q80 45 99 40ZM145 72Q106 70 101 74Q96 80 97 92Q100 98 105 101Q109 102 156 101Q192 98 192 85Q191 74 145 72ZM271 71Q254 69 230 71Q222 71 223 72Q228 96 215 113L213 121Q222 128 224 144Q226 163 215 177L211 182L214 186Q224 197 224 215Q224 233 213 243L214 251Q224 262 224 279Q224 293 218 302L235 310Q244 314 247 324Q252 336 243 366Q240 377 225 418Q217 437 221 445Q225 453 231 452Q232 452 262.5 407Q293 362 305 341Q322 314 339 281Q350 260 361 253.5Q372 247 402 246Q427 245 432 243Q455 235 462 212Q464 206 464 174Q464 142 462 137Q456 118 439 108Q432 104 425 103Q418 102 388 102Q352 102 348 101Q344 100 335 94Q305 74 271 71ZM133.5 135Q73 134 67.5 140.5Q62 147 65 155Q67 164 76 165Q80 166 129 165Q185 164 188 159Q193 154 192 147.5Q191 138 133.5 135ZM146 200Q58 198 53 203Q47 208 48.5 216Q50 228 60 230Q175 229 181 227Q193 224 192 213Q191 200 146 200ZM150 265Q94 263 92 264Q83 267 81 276Q79 285 86 292Q92 297 137 295Q184 293 190 285Q193 279 190.5 273.5Q188 265 150 265Z",
+  "thumbs-up":
+    "M264.5 40Q268 38 274 38Q292 38 305.5 48Q319 58 323 74Q326 87 323 102Q321 108 315 122Q297 170 295 187Q295 194 297 198Q299 207 295 215Q289 228 289 246Q289 259 291.5 266.5Q294 274 294 277.5Q294 281 291.5 289Q289 297 289 310Q289 323 291.5 330.5Q294 338 294 341.5Q294 345 291.5 353Q289 361 289 374Q289 387 291.5 395Q294 403 294 406Q294 409 291.5 417Q289 425 289 438Q289 456 296 469Q301 482 295 485Q281 490 237 483Q192 477 161 458L155 454L121 454Q87 453 80 452Q48 443 30 416Q23 405 19 392Q17 384 16 353Q16 315 22 300Q36 265 70 252Q83 247 110 246Q134 245 137 241Q139 239 148 222Q175 171 211 117Q253 55 258 46Q261 42 264.5 40ZM385.5 204Q437 200 440 201Q451 202 458.5 214.5Q466 227 464 239Q461 255 449 261L444 264L362.5 263Q327 262 322 261Q311 257 307 249Q301 237 306 225Q313 211 330 209Q334 208 385.5 204ZM389 280Q474 276 479 278Q487 281 491.5 290.5Q496 300 496 311Q495 324 487 333Q481 340 468 340Q457 340 390 336.5Q323 333 321 333Q307 329 305 314Q301 296 313 287Q318 284 389 280ZM391 352Q460 350 465 353Q478 359 479.5 378Q481 397 470 408Q465 414 456.5 414Q448 414 391 411Q325 408 321 407Q307 403 305 388Q302 376 307 367Q311 359 320 356Q325 355 391 352ZM368 424Q427 422 432 425Q441 429 445.5 440.5Q450 452 447 463Q441 486 421 486Q416 486 370 481Q324 476 322 475Q313 473 309 466Q300 453 306 439Q309 431 318 427Q323 425 368 424Z",
+  "thumbs-up-outline":
+    "M264.5 40.5Q268 39 274 38Q296 38 310 52Q324 66 324 86Q324 98 316 122Q299 165 296 182Q295 185 297 186Q304 187 412 195Q424 195 428 197Q453 204 461 229Q466 244 461 262L468 267Q481 273 488 284Q495 294 496 308Q497 329 481 344L474 351L477 356Q486 379 473 399Q465 411 453 417L446 420L447 427Q451 445 442 462Q435 474 423 480Q412 486 399 486Q344 485 326 482Q321 480 317 481Q289 489 244 486Q199 483 163 459L155 454L122 454Q81 454 66 448Q33 435 20 400Q16 387 16 346Q17 312 19 304.5Q21 297 24 292Q33 272 51 260Q72 246 114 246Q133 246 137 241Q139 239 146 226Q173 173 238 77Q252 56 256.5 49Q261 42 264.5 40.5ZM286 74Q280 72 236 137Q199 194 173 243Q161 266 148 273Q136 278 110 278Q91 278 86 279Q74 281 64 290.5Q54 300 50 312Q48 318 48 350Q48 382 50 387Q58 412 83 420Q87 422 127 422L166 423L176 429Q206 449 239 453Q246 454 267 454Q288 454 289 453Q288 447 288 438Q288 423 300 407L298 403Q286 389 288 368Q290 356 297 347L301 342L298 338Q288 327 288 309Q288 291 299 281L298 273Q288 262 288 245Q288 231 294 222L297 218L290 217Q278 216 271 210Q262 201 263 187Q264 165 282 119Q293 92 293 87Q293 78 286 74ZM421 228Q418 227 371 229L332 231L328 234Q316 240 321 251Q325 257 334 258Q340 259 379 260Q423 261 427 256Q432 252 432 245Q432 233 421 228ZM456 296Q452 294 331 297Q324 299 321 305Q317 314 325 320Q329 323 393 325Q450 326 454 325Q464 321 464 310Q464 301 456 296ZM439 360Q436 358 331 361Q320 364 320 374Q320 385 332 387Q337 388 385 389Q437 390 444.5 383.5Q448 379 448 374Q448 364 439 360ZM406 423Q332 422 328 426Q320 430 320 438Q320 449 329 450Q405 454 410 451Q417 445 414 431Q412 426 406 423Z",
+  "flashlight":
+    "M320 40Q326 38 334.5 38.5Q343 39 349 42Q355 45 414.5 104Q474 163 476 169Q488 195 463 221Q458 226 454 226Q452 226 441 216Q430 206 371 147Q312 87 302 76.5Q292 66 292 64Q292 60 298 54Q309 44 320 40ZM266 92Q268 91 269.5 91Q271 91 349 169Q427 247 427 249Q426 253 412 258Q393 265 365 267Q349 269 339 275Q334 278 234.5 377.5Q135 477 131 479Q127 481 121 483Q94 492 69 472Q52 458 43 445Q22 414 40 386Q43 381 141.5 282Q240 183 244 178Q250 167 250 160Q250 137 257 114Q263 94 266 92ZM234 276Q227 272 219 274Q211 277 207 285Q203 293 207 301Q210 308 216 311Q226 316 235 310Q244 304 244 293Q244 281 234 276Z",
+  "flashlight-outline":
+    "M321 40Q326 38 334.5 38.5Q343 39 349 41.5Q355 44 414 104Q463 154 470.5 162.5Q478 171 480 180Q481 186 479 192Q476 209 453 231Q435 248 416 256Q397 264 364 267Q349 269 339 275Q334 278 234.5 377.5Q135 477 131 479Q100 497 69 472Q54 460 44 446Q22 418 38 388Q41 383 140.5 283.5Q240 184 243 179Q249 169 251 153Q255 106 274 79Q287 62 304 49Q313 43 321 40ZM391.5 126.5Q336 71 333 70Q328 70 318 80L311 86L371 147L432 207L438 200Q449 189 448 184Q447 182 391.5 126.5ZM405 226Q390 211 349 169L292 112L290 116Q285 129 282 158Q281 176 275 187Q270 197 256 212Q242 227 166 303Q84 385 73.5 396.5Q63 408 64 415Q66 424 79 438Q98 457 111 453Q115 452 214.5 353Q314 254 319 250Q330 243 341 239Q347 237 369 235Q402 229 405 226ZM219 274Q235 269 243 285Q246 292 243 300Q240 308 233 312Q226 315 218 312Q209 309 206 300Q203 292 207 284.5Q211 277 219 274Z",
+  "images-outline":
+    "M48 40Q54 39 226 39L397 39L404 41Q418 46 429 57Q448 76 448 106L448 118L454 118Q474 120 489 132Q504 144 510 164Q512 169 512 299Q512 410 511.5 425Q511 440 505 451Q502 460 493.5 468Q485 476 478 479Q467 485 450 485.5Q433 486 296.5 486Q160 486 142.5 485.5Q125 485 115 480Q100 472 90 457.5Q80 443 80 428L80 423L67 422Q54 422 50 421Q32 416 18.5 402.5Q5 389 1 371Q0 364 0 230Q0 96 1 89Q5 71 17.5 58Q30 45 48 40ZM390 71Q386 70 223.5 70Q61 70 57 71Q42 74 35 89L33 93L33 229Q32 364 34 368Q39 383 55 388Q60 390 70 390L80 390L80 281Q80 190 80.5 176.5Q81 163 86 153Q98 129 123 121Q127 120 134.5 119Q142 118 279 118L416 118L415 106Q415 93 413 89Q406 74 390 71ZM463 153L458 151L297 150Q136 150 132 152Q123 155 118 162Q113 169 112.5 179Q112 189 112 266L112.5 358L208 274Q218 268 230 267Q239 267 244 268Q253 270 259.5 275.5Q266 281 291 305L350 363L363 350Q381 333 390 330Q404 325 417 329Q425 331 431 335Q437 339 460 358L480 375L479 171L477 167Q472 157 463 153ZM363 180Q372 178 382 180Q387 181 394 184Q407 191 414 204.5Q421 218 419 232Q417 247 406 258Q395 269 380 272Q352 276 335.5 253.5Q319 231 331 206Q335 197 344.5 189.5Q354 182 363 180ZM380 213Q368 207 360 219Q358 221 359 226Q360 240 373 240Q381 240 385 234Q389 229 387 222Q386 216 380 213ZM240 301Q235 298 229 300Q225 301 165 354L112 401L112 416Q112 431 115 436Q120 447 130 451L134 454L259 454L327 386L285 344Q242 302 240 301ZM411 361Q407 359 401 360Q397 361 339 419L304 454L379 454Q440 454 450 453.5Q460 453 465 450Q474 444 478 435Q480 430 480 416L447 389Q415 362 411 361Z",
+  "images":
+    "M50 40Q56 38 224 38Q392 38 398 40Q419 44 434 62Q443 74 445 83L446 86L279 86Q113 86 107 87Q86 91 71 105.5Q56 120 50 140L48 147L48 420L46 419Q16 410 5 381Q0 365 0 227L0 90L2 84Q15 47 50 40ZM135 119Q140 118 300 118L460 118L466 120Q498 129 509 161L512 168L512 437L509 444Q504 458 493 469Q485 477 474 481Q465 485 446 485.5Q427 486 295 486L133 486L125 484Q90 473 82 439Q80 432 80 302Q80 178 86 153Q101 123 135 119ZM381 180Q366 178 353 184Q337 192 330.5 209Q324 226 330 243Q340 265 363 270Q386 275 404 258.5Q422 242 418 219Q416 204 405.5 193Q395 182 381 180ZM247 270Q241 268 233 268Q219 268 210 274L112 360L112 432L115 438Q122 452 136 455L215 456L328 343L262 278.5Q254 272 247 270ZM419 330Q400 324 382 335L259 456L455 455L460 453Q473 448 478 436Q480 431 479 376L419 330Z",
+  "qrcode-scan":
+    "M85 85L213 85L213 213L85 213ZM427 85L427 213L299 213L299 85ZM299 320L341 320L341 277L299 277L299 235L341 235L341 277L384 277L384 235L427 235L427 277L384 277L384 320L427 320L427 384L384 384L384 427L341 427L341 384L277 384L277 427L235 427L235 341L299 341ZM341 320L341 384L384 384L384 320ZM85 427L85 299L213 299L213 427ZM128 128L128 171L171 171L171 128ZM341 128L341 171L384 171L384 128ZM128 341L128 384L171 384L171 341ZM85 235L128 235L128 277L85 277ZM192 235L277 235L277 320L235 320L235 277L192 277ZM235 128L277 128L277 213L235 213ZM43 43L43 128L0 128L0 43Q0 25 12.5 12.5Q25 0 43 0L128 0L128 43ZM469 0Q487 0 499.5 12.5Q512 25 512 43L512 128L469 128L469 43L384 43L384 0ZM43 384L43 469L128 469L128 512L43 512Q25 512 12.5 499.5Q0 487 0 469L0 384ZM469 469L469 384L512 384L512 469Q512 487 499.5 499.5Q487 512 469 512L384 512L384 469Z",
+  "qrcode":
+    "M64 235L107 235L107 277L64 277ZM235 107L277 107L277 192L235 192ZM192 235L277 235L277 320L235 320L235 277L192 277ZM320 235L363 235L363 277L405 277L405 235L448 235L448 277L405 277L405 320L448 320L448 405L405 405L405 448L363 448L363 405L277 405L277 448L235 448L235 363L320 363L320 320L363 320L363 277L320 277ZM405 405L405 320L363 320L363 405ZM320 64L448 64L448 192L320 192ZM363 107L363 149L405 149L405 107ZM64 64L192 64L192 192L64 192ZM107 107L107 149L149 149L149 107ZM64 320L192 320L192 448L64 448ZM107 363L107 405L149 405L149 363Z",
+  "qr-code-outline":
+    "M54 40Q57 39 137 39L217 39L221 41Q232 46 237 56L239 62L239 142L239 222L237 227Q232 238 221 243L216 245L136 245L56 245L51 243Q35 236 32 218Q32 213 32 142.5Q32 72 32 66Q35 47 54 40ZM294 39Q297 39 377 39L457 39L462 41Q477 49 480 66Q480 72 480 142.5Q480 213 480 218Q477 235 462 243L456 245L376 245L296 245L291 243Q280 238 275 227L273 222L273 142L273 62L275 57Q277 52 280 49Q286 42 294 39ZM208 142L208 70L136 70L64 70L64 142L64 214L136 214L208 214ZM448 142L448 70L376 70L304 70L304 142L304 214L376 214L448 214ZM100 103Q101 102 136 102L172 102L174 105L176 107L176 142L176 177L173 179L171 182L136 182Q101 182 100 181Q96 179 96 142.5Q96 106 100 103ZM338 105L340 102L375 102Q411 102 412 103Q416 106 416 142.5Q416 179 412 181Q411 182 376 182L341 182L339 179L336 177L336 142L336 107ZM55 279Q58 278 137 278L216 279L221 281Q232 286 237 297L239 302L239 382L239 462L237 468Q231 478 222 483Q214 487 132 486L58 486L52 484Q40 478 34 466L32 460L32 386Q31 304 35 296Q41 284 55 279ZM275 280L277 278L304 278L331 278L333 280L336 282L336 310L336 337L333 339L331 342L304 342L276 342L274 339L272 337L272 310L272 283ZM435 280Q437 278 456 278Q475 278 477 280Q481 283 480 305L480 321L477 324L474 326L457 326Q439 326 437 325Q432 323 432 301L432 282ZM208 382L208 310L136 310L64 310L64 382L64 454L136 454L208 454ZM100 343Q101 342 136 342L171 342L173 344L176 347L176 382Q176 417 175 418Q173 422 136 422Q101 422 100 421Q96 419 96 382Q96 346 100 343ZM339 344L341 342L376 342Q411 342 412 343Q416 345 416 382Q416 415 411 421Q408 422 376 422Q339 422 337 418Q336 417 336 382L336 347ZM420 423Q421 422 448 422Q475 422 476 423Q480 426 480 454Q480 481 473 485.5Q468 486 448 486Q428 486 423 485.5Q416 481 416 454Q416 426 420 423ZM276 439Q279 438 295 438Q317 438 319 442Q320 445 320 480L318 483L315 486L299 486Q278 487 275 484.5Q272 482 272 463Q272 441 276 439Z",
+  "qr-code":
+    "M53 40Q58 38 137 39L217 39L223 42Q232 47 237 57L239 62L239 142L239 222L237 227Q232 238 222 243L216 245L136 245L56 245L51 243Q41 239 36 230Q33 224 32.5 212Q32 200 32 139Q32 64 34 59Q40 45 53 40ZM294 40Q297 39 375.5 38.5Q454 38 459 40Q472 45 478 59Q480 64 480 139Q480 200 479.5 212Q479 224 476 230Q471 239 461 243L456 245L376 245L296 245L290 243Q280 238 275 227L273 222L273 142L273 62L275 57Q281 44 294 40ZM174 105L172 102L136 102L101 102L99 105L96 107L96 142L96 178L99 180L101 182L136 182L171 182L174 179L176 177L176 142L176 107ZM413 105L411 102L376 102L340 102L338 105L336 107L336 142L336 177L338 179L341 182L376 182L411 182L413 180L416 178L416 142L416 107ZM55 279Q58 278 137 278L216 279L221 281Q232 286 237 296L239 302L239 382L239 462L237 467Q233 477 224 482Q218 485 206 485.5Q194 486 133 486Q58 486 53 484Q39 479 34 465Q32 460 32 385.5Q32 311 32 305Q36 285 55 279ZM275 280L277 278L304 278L331 278L333 280L336 282L336 310L336 337L333 339L331 342L304 342L276 342L274 339L272 337L272 310L272 283ZM435 280Q437 278 456 278Q475 278 477 280Q481 283 480 305L480 321L477 324L474 326L457 326Q439 326 437 325Q432 323 432 301L432 282ZM173 345L171 342L136 342L101 342L99 344L96 346L96 381Q96 417 97 418Q100 422 136.5 422Q173 422 175 418Q176 417 176 382L176 347ZM339 344L341 342L376 342Q411 342 412 343Q416 345 416 382Q416 409 415.5 414.5Q415 420 411 421Q408 422 376 422Q339 422 337 418Q336 417 336 382L336 347ZM420 423Q421 422 448 422Q475 422 476 423Q480 426 480 454Q480 478 479 481Q478 485 473 485.5Q468 486 448 486Q428 486 423 485.5Q418 485 417 481Q416 478 416 454Q416 426 420 423ZM276 439Q279 438 295 438Q317 438 319 442Q320 445 320 480L318 483L315 486L299 486Q278 487 275 484.5Q272 482 272 463Q272 444 273 442Q274 440 276 439Z",
+  "scan":
+    "M110 53Q116 52 146 52.5Q176 53 179 54Q192 61 192 74Q192 87 179 94L175 96L145 96L115 97L110 99Q99 105 93 116L91 121L90 151L90 181L88 185Q82 196 71 197.5Q60 199 52 191Q47 186 46.5 180Q46 174 46 148Q47 117 49 109Q59 75 90 60Q99 55 110 53ZM336 53Q338 52 369.5 52.5Q401 53 407 54Q450 66 463 109Q465 117 466 148Q466 174 465.5 180Q465 186 460 191Q452 199 441 197.5Q430 196 424 185L422 181L422 151L421 121L419 116Q413 105 402 99L397 97L367 96L337 96L333 94Q319 87 320.5 72Q322 57 336 53ZM62 327Q67 325 74.5 327.5Q82 330 85 334Q89 339 89.5 344Q90 349 90 373L91 403L93 408Q101 425 120 428Q125 428 150 428Q172 428 176.5 429Q181 430 186 435Q192 442 191.5 451Q191 460 185 466Q180 471 174 471.5Q168 472 142 472Q111 471 103 469Q84 463 70 450Q55 436 49 415Q47 407 46.5 376Q46 345 47 341Q51 330 62 327ZM438 327Q446 324 453.5 328Q461 332 465 341Q466 345 465.5 376Q465 407 463 415Q450 456 409 469Q401 471 370 472Q344 472 338 471.5Q332 471 327 466Q319 458 320.5 447Q322 436 332 431L337 428L362 428Q387 428 392 428Q411 425 419 408L421 403L422 373L422 343L425 338Q429 330 438 327Z",
+};
+
+function renderSvgPath(name: string) {
+  switch (name) {
+    case "chevron-back":
+      return <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />;
+    case "chevron-down":
+      return <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />;
+    case "chevron-up":
+      return <path d="M18 15l-6-6-6 6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />;
+    case "arrow-forward":
+      return <path d="M5 12h14M12 5l7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />;
+    case "close":
+      return <path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />;
+    case "checkmark-circle":
+    case "checkmark-circle-outline":
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M8 12.5l2.8 2.8L16.5 9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "copy-outline":
+      return (
+        <>
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" strokeWidth="2" />
+        </>
+      );
+    case "alert-circle-outline":
+    case "alert-circle":
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+          <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="12" cy="16" r="1" fill="currentColor" />
+        </>
+      );
+    case "arrow-down-circle-outline":
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M12 8v8M8 12l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "call-outline":
+      return (
+        <path
+          d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      );
+    case "camera":
+      return (
+        <>
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" fill="currentColor" />
+          <circle cx="12" cy="13" r="4" fill="#000" fillOpacity="0.4" />
+        </>
+      );
+    case "camera-outline":
+      return (
+        <>
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="13" r="4" fill="none" stroke="currentColor" strokeWidth="2" />
+        </>
+      );
+    case "chatbubble-outline":
+    case "chatbubbles-outline":
+      return (
+        <path
+          d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      );
+    case "ellipsis-horizontal":
+      return (
+        <>
+          <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+          <circle cx="19" cy="12" r="1.8" fill="currentColor" />
+          <circle cx="5" cy="12" r="1.8" fill="currentColor" />
+        </>
+      );
+    case "ellipsis-vertical":
+      return (
+        <>
+          <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+          <circle cx="12" cy="5" r="1.8" fill="currentColor" />
+          <circle cx="12" cy="19" r="1.8" fill="currentColor" />
+        </>
+      );
+    case "eye-off":
+    case "eye-off-outline":
+      return (
+        <>
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </>
+      );
+    case "flag":
+    case "flag-outline":
+      return <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />;
+    case "help-outline":
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </>
+      );
+    case "log-in":
+    case "log-in-outline":
+      return (
+        <>
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points="10 17 15 12 10 7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="15" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "mail-outline":
+      return (
+        <>
+          <rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M22 7l-10 7L2 7" fill="none" stroke="currentColor" strokeWidth="2" />
+        </>
+      );
+    case "open-outline":
+      return <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />;
+    case "people-outline":
+      return (
+        <>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" strokeWidth="2" />
+          <circle cx="9" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" fill="none" stroke="currentColor" strokeWidth="2" />
+        </>
+      );
+    case "person-circle-outline":
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+          <circle cx="12" cy="10" r="3" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M6.168 18.849a6 6 0 0 1 11.664 0" fill="none" stroke="currentColor" strokeWidth="2" />
+        </>
+      );
+    case "qr-code-outline":
+    case "qrcode":
+      return (
+        <>
+          <rect x="3" y="3" width="7" height="7" rx="1" fill="none" stroke="currentColor" strokeWidth="2" />
+          <rect x="14" y="3" width="7" height="7" rx="1" fill="none" stroke="currentColor" strokeWidth="2" />
+          <rect x="3" y="14" width="7" height="7" rx="1" fill="none" stroke="currentColor" strokeWidth="2" />
+          <rect x="5.5" y="5.5" width="2" height="2" fill="currentColor" />
+          <rect x="16.5" y="5.5" width="2" height="2" fill="currentColor" />
+          <rect x="5.5" y="16.5" width="2" height="2" fill="currentColor" />
+          <path d="M14 14h3v3h-3zM18 18h3v3h-3zM18 14h3M14 18v3" stroke="currentColor" strokeWidth="2" />
+        </>
+      );
+    case "qrcode-scan":
+      return (
+        <>
+          <path d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="8" y="8" width="8" height="8" rx="1" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <rect x="10.5" y="10.5" width="3" height="3" fill="currentColor" />
+        </>
+      );
+    case "refresh-outline":
+      return (
+        <>
+          <path d="M23 4v6h-6M1 20v-6h6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "return-down-forward-outline":
+      return (
+        <>
+          <polyline points="15 14 20 19 15 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" transform="translate(0, -5)" />
+          <path d="M4 4v5a4 4 0 0 0 4 4h12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "scan":
+    case "scan-outline":
+      return <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />;
+    case "search-outline":
+      return (
+        <>
+          <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" strokeWidth="2" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </>
+      );
+    case "send":
+      return (
+        <>
+          <line x1="22" y1="2" x2="11" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <polygon points="22 2 15 22 11 13 2 9 22 2" fill="currentColor" fillOpacity="0.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "settings-outline":
+      return (
+        <>
+          <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="currentColor" strokeWidth="2" />
+        </>
+      );
+    case "share-outline":
+      return <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />;
+    case "share-social-outline":
+      return (
+        <>
+          <circle cx="18" cy="5" r="3" fill="none" stroke="currentColor" strokeWidth="2" />
+          <circle cx="6" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="2" />
+          <circle cx="18" cy="19" r="3" fill="none" stroke="currentColor" strokeWidth="2" />
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" />
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="2" />
+        </>
+      );
+    case "time-outline":
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+          <polyline points="12 6 12 12 16 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </>
+      );
+    case "trash-outline":
+      return (
+        <>
+          <polyline points="3 6 5 6 21 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </>
+      );
+    case "arrow-back":
+      return <path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />;
+    case "lock-closed-outline":
+      return (
+        <>
+          <rect x="4" y="11" width="16" height="10" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "person":
+    case "person-outline":
+      return (
+        <>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "eye-outline":
+    case "eye":
+      return (
+        <>
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "mail-open-outline":
+      return (
+        <>
+          <path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l9.2-6.9a1 1 0 0 1 1.2 0l8 5.9z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points="22 10 12 17 2 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "checkmark-done-outline":
+      return (
+        <path d="M18 6L7 17l-5-5m10-5l6 6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      );
+    case "person-add-outline":
+      return (
+        <>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="8.5" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="20" y1="8" x2="20" y2="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="23" y1="11" x2="17" y2="11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </>
+      );
+    case "arrow-forward-circle-outline":
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M12 8l4 4-4 4M8 12h8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "log-out-outline":
+      return (
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      );
+    case "key-outline":
+      return (
+        <>
+          <path d="M21 2l-2 2m-1.5 1.5L16 7l-2-2 1.5-1.5M7 14a5 5 0 1 1 7.07-7.07l6.43 6.43a2 2 0 0 1 .59 1.41V19a2 2 0 0 1-2 2h-2.17a2 2 0 0 1-1.42-.59L14 18l-2 2-3-3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "chevron-forward":
+      return <path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />;
+    case "book-outline":
+      return (
+        <>
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "document-text-outline":
+      return (
+        <>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points="10 9 9 9 8 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "pencil":
+      return <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />;
+    case "sunny-outline":
+      return (
+        <>
+          <circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" strokeWidth="2" />
+          <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </>
+      );
+    case "moon-outline":
+      return <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />;
+    case "phone-portrait-outline":
+      return (
+        <>
+          <rect x="5" y="2" width="14" height="20" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="12" y1="18" x2="12.01" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    case "home":
+    case "home-outline":
+      return (
+        <>
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      );
+    default:
+      return <circle cx="12" cy="12" r="6" fill="currentColor" fillOpacity="0.4" />;
+  }
+}
+
+export function Ionicons({
+  name,
+  size = 22,
+  color = "currentColor",
+  style,
+}: IconProps) {
+  if (!name) return null;
+  const path512 = IONICON_512_PATHS[name];
+  const safeSize = typeof size === "number" && !isNaN(size) && size > 0 ? size : 22;
+  const safeColor = color || "currentColor";
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={safeSize}
+      height={safeSize}
+      viewBox={path512 ? "0 0 512 512" : "0 0 24 24"}
+      fill="none"
+      aria-hidden="true"
+      style={{
+        display: "inline-block",
+        verticalAlign: "middle",
+        flexShrink: 0,
+        color: safeColor,
+        ...style,
+      }}
+    >
+      {path512 ? <path d={path512} fill="currentColor" /> : renderSvgPath(name)}
+    </svg>
+  );
+}
+
+export function MaterialCommunityIcons({
+  name,
+  size = 22,
+  color = "currentColor",
+  style,
+}: IconProps) {
+  if (!name) return null;
+  const path512 = IONICON_512_PATHS[name];
+  const safeSize = typeof size === "number" && !isNaN(size) && size > 0 ? size : 22;
+  const safeColor = color || "currentColor";
+
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={safeSize}
+      height={safeSize}
+      viewBox={path512 ? "0 0 512 512" : "0 0 24 24"}
+      fill="none"
+      aria-hidden="true"
+      style={{
+        display: "inline-block",
+        verticalAlign: "middle",
+        flexShrink: 0,
+        color: safeColor,
+        ...style,
+      }}
+    >
+      {path512 ? <path d={path512} fill="currentColor" /> : renderSvgPath(name)}
+    </svg>
+  );
+}

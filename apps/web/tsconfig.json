@@ -1,0 +1,98 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "typeRoots": [
+      "./node_modules/@types",
+      "../../node_modules/@types"
+    ],
+    "paths": {
+      "@/*": [
+        "./*",
+        "../../*"
+      ],
+      "@shared/*": [
+        "../../shared/*"
+      ],
+      "@services/*": [
+        "../../services/*"
+      ],
+      "@features/*": [
+        "../../features/*"
+      ],
+      "@lib/*": [
+        "../../lib/*"
+      ],
+      "@config": [
+        "../../config/index"
+      ],
+      "@config/*": [
+        "../../config/*"
+      ],
+      "@/shared/*": [
+        "../../shared/*"
+      ],
+      "@/services/*": [
+        "../../services/*"
+      ],
+      "@/features/*": [
+        "../../features/*"
+      ],
+      "@/lib/*": [
+        "./lib/*",
+        "../../lib/*"
+      ],
+      "@/components": [
+        "./components/index.ts"
+      ],
+      "@components": [
+        "./components/index.ts"
+      ],
+      "@/components/*": [
+        "./components/*",
+        "../../components/*"
+      ],
+      "@components/*": [
+        "./components/*",
+        "../../components/*"
+      ],
+      "@/config": [
+        "../../config/index"
+      ],
+      "@/config/*": [
+        "../../config/*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

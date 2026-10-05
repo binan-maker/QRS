@@ -1,0 +1,333 @@
+:root,
+html[data-theme="light"] {
+  color-scheme: light;
+  --background: #F5F8FF;
+  --surface: #FFFFFF;
+  --surface-light: #EBF1FF;
+  --surface-border: #D4E0F5;
+  --surface-overlay: rgba(245, 248, 255, 0.97);
+  --modal-overlay: rgba(8, 15, 28, 0.55);
+
+  --primary: #0052CC;
+  --primary-shade: #003A99;
+  --primary-dim: rgba(0, 82, 204, 0.07);
+  --primary-text: #FFFFFF;
+
+  --accent: #0052CC;
+  --accent-dim: rgba(0, 82, 204, 0.07);
+
+  --danger: #DC2626;
+  --danger-shade: #991B1B;
+  --danger-dim: rgba(220, 38, 38, 0.07);
+
+  --warning: #D97706;
+  --warning-shade: #B45309;
+  --warning-dim: rgba(217, 119, 6, 0.09);
+
+  --safe: #059669;
+  --safe-shade: #065F46;
+  --safe-dim: rgba(5, 150, 105, 0.07);
+
+  --text: #0C1525;
+  --text-secondary: #3A5278;
+  --text-muted: #7A99BC;
+
+  --tab-icon-default: #4A6E94;
+  --tab-icon-selected: #0052CC;
+  --tint: #0052CC;
+  --scan-line: #0052CC;
+  --card-glow: rgba(0, 82, 204, 0.04);
+
+  --input-background: #EEF4FF;
+  --skeleton-base: #D4E0F5;
+  --skeleton-highlight: #E4EDF8;
+  --surface-blue: #EBF1FF;
+  --surface-blue-strong: #D4E0F5;
+  --line: #D4E0F5;
+  --muted: #7A99BC;
+  --primary-dark: #003A99;
+  --primary-soft: #EBF1FF;
+  --amber: #D97706;
+  --amber-soft: rgba(217, 119, 6, 0.09);
+  --green: #059669;
+
+  /* Fluid Responsive Typography Scale (Width vw + Height/Resolution vmin -> Exact Desktop Max) */
+  --fs-2xs: clamp(8.5px, calc(7.8px + 0.14vw + 0.1vmin), 10px);
+  --fs-xs: clamp(9.5px, calc(8.6px + 0.16vw + 0.12vmin), 11px);
+  --fs-sm: clamp(10.5px, calc(9.4px + 0.2vw + 0.14vmin), 12px);
+  --fs-base: clamp(11.5px, calc(10.1px + 0.22vw + 0.16vmin), 13px);
+  --fs-md: clamp(12.2px, calc(10.8px + 0.25vw + 0.18vmin), 14px);
+  --fs-lg: clamp(13.5px, calc(11.6px + 0.34vw + 0.22vmin), 16px);
+  --fs-xl: clamp(15px, calc(12.5px + 0.42vw + 0.3vmin), 18px);
+  --fs-2xl: clamp(16.5px, calc(13.2px + 0.55vw + 0.38vmin), 22px);
+  --fs-3xl: clamp(18px, calc(13.8px + 0.72vw + 0.48vmin), 26px);
+  --fs-display: clamp(22px, calc(16px + 1vw + 0.65vmin), 32px);
+}
+
+html[data-theme="dark"],
+html.dark {
+  color-scheme: dark;
+  --background: #0A0A0A;
+  --surface: #141414;
+  --surface-light: #1C1C1C;
+  --surface-border: #272727;
+  --surface-overlay: rgba(10, 10, 10, 0.97);
+  --modal-overlay: rgba(0, 0, 0, 0.80);
+
+  --primary: #3B82F6;
+  --primary-shade: #2563EB;
+  --primary-dim: rgba(59, 130, 246, 0.12);
+  --primary-text: #FFFFFF;
+
+  --accent: #3B82F6;
+  --accent-dim: rgba(59, 130, 246, 0.12);
+
+  --danger: #F87171;
+  --danger-shade: #DC2626;
+  --danger-dim: rgba(248, 113, 113, 0.10);
+
+  --warning: #FBBF24;
+  --warning-shade: #D97706;
+  --warning-dim: rgba(251, 191, 36, 0.10);
+
+  --safe: #34D399;
+  --safe-shade: #059669;
+  --safe-dim: rgba(52, 211, 153, 0.10);
+
+  --text: #E8E8E8;
+  --text-secondary: #9CA3AF;
+  --text-muted: #4B5563;
+
+  --tab-icon-default: #4B5563;
+  --tab-icon-selected: #3B82F6;
+  --tint: #3B82F6;
+  --scan-line: #3B82F6;
+  --card-glow: rgba(59, 130, 246, 0.04);
+
+  --input-background: #0F0F0F;
+  --skeleton-base: #181818;
+  --skeleton-highlight: #222222;
+  --surface-blue: #1C1C1C;
+  --surface-blue-strong: #272727;
+  --line: #272727;
+  --muted: #4B5563;
+  --primary-dark: #2563EB;
+  --primary-soft: #1C1C1C;
+  --amber: #FBBF24;
+  --amber-soft: rgba(251, 191, 36, 0.10);
+  --green: #34D399;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    --background: #0A0A0A;
+    --surface: #141414;
+    --surface-light: #1C1C1C;
+    --surface-border: #272727;
+    --surface-overlay: rgba(10, 10, 10, 0.97);
+    --modal-overlay: rgba(0, 0, 0, 0.80);
+
+    --primary: #3B82F6;
+    --primary-shade: #2563EB;
+    --primary-dim: rgba(59, 130, 246, 0.12);
+    --primary-text: #FFFFFF;
+
+    --accent: #3B82F6;
+    --accent-dim: rgba(59, 130, 246, 0.12);
+
+    --danger: #F87171;
+    --danger-shade: #DC2626;
+    --danger-dim: rgba(248, 113, 113, 0.10);
+
+    --warning: #FBBF24;
+    --warning-shade: #D97706;
+    --warning-dim: rgba(251, 191, 36, 0.10);
+
+    --safe: #34D399;
+    --safe-shade: #059669;
+    --safe-dim: rgba(52, 211, 153, 0.10);
+
+    --text: #E8E8E8;
+    --text-secondary: #9CA3AF;
+    --text-muted: #4B5563;
+
+    --tab-icon-default: #4B5563;
+    --tab-icon-selected: #3B82F6;
+    --tint: #3B82F6;
+    --scan-line: #3B82F6;
+    --card-glow: rgba(59, 130, 246, 0.04);
+
+    --input-background: #0F0F0F;
+    --skeleton-base: #181818;
+    --skeleton-highlight: #222222;
+    --surface-blue: #1C1C1C;
+    --surface-blue-strong: #272727;
+    --line: #272727;
+    --muted: #4B5563;
+    --primary-dark: #2563EB;
+    --primary-soft: #1C1C1C;
+    --amber: #FBBF24;
+    --amber-soft: rgba(251, 191, 36, 0.10);
+    --green: #34D399;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+*:hover,
+*:focus {
+  outline: none;
+}
+
+html {
+  min-width: 320px;
+  background: var(--background);
+  font-size: clamp(13.5px, calc(11.8px + 0.3vw + 0.2vmin), 16px);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  background: var(--background);
+  font-family: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: var(--fs-md);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (min-width: 601px) {
+  body {
+    background:
+      radial-gradient(circle at 18% 12%, var(--primary-dim), transparent 42%),
+      radial-gradient(circle at 82% 88%, var(--card-glow), transparent 42%),
+      var(--background);
+  }
+}
+
+a,
+button,
+div,
+span {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+a:hover,
+button:hover,
+div:hover,
+a:focus,
+button:focus,
+button:focus-visible,
+a:focus-visible {
+  outline: none !important;
+}
+
+a {
+  color: inherit;
+}
+
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+::selection {
+  color: var(--primary-text);
+  background: var(--primary);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scanner-line {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateY(-42%);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(42%);
+  }
+}
+
+.page-enter {
+  animation: rise-in 420ms ease both;
+}
+
+.delay-1 {
+  animation-delay: 60ms;
+}
+
+.delay-2 {
+  animation-delay: 120ms;
+}
+
+.delay-3 {
+  animation-delay: 180ms;
+}
+
+/* ── Global YouTube Shining Shimmer Skeletons ── */
+@keyframes ytShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.ytSkeleton {
+  border-radius: 8px;
+  background-color: var(--skeleton-base);
+  background-image: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 35%,
+    rgba(255, 255, 255, 0.45) 50%,
+    var(--skeleton-highlight) 65%,
+    var(--skeleton-base) 100%
+  );
+  background-size: 200% 100%;
+  animation: ytShimmer 1.3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+html[data-theme="dark"] .ytSkeleton,
+html.dark .ytSkeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 35%,
+    rgba(255, 255, 255, 0.12) 50%,
+    var(--skeleton-highlight) 65%,
+    var(--skeleton-base) 100%
+  );
+}
+

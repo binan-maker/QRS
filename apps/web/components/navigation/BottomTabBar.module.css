@@ -1,0 +1,101 @@
+.tabBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(64px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background-color: var(--surface-overlay);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-top: 1px solid var(--surface-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, width 0.2s ease;
+}
+
+.tabBarInner {
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.tabItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 100%;
+  text-decoration: none;
+  color: var(--tab-icon-default);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.tabItem:hover {
+  color: var(--primary);
+}
+
+.tabItemActive {
+  color: var(--primary);
+}
+
+.iconWrap {
+  width: 32px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.tabItem:hover .iconWrap {
+  background-color: var(--primary-dim);
+  transform: translateY(-1px);
+}
+
+.activeIconWrap {
+  width: 32px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background-color: var(--primary-dim);
+}
+
+.label {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(9.5px, calc(8.5px + 0.2vw + 0.14vmin), 11px);
+  font-weight: 500;
+  margin-top: 2px;
+  letter-spacing: 0.1px;
+  transition: font-weight 0.15s ease;
+}
+
+.tabItemActive .label {
+  font-weight: 700;
+}
+
+/* ── Hide bottom tab bar completely on tablet & desktop (>= 640px) ─────── */
+@media (min-width: 640px) {
+  .tabBar {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}

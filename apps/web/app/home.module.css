@@ -1,0 +1,842 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BINRO WEB: HOME PAGE STYLES (1:1 with features/home/HomeScreen.tsx)
+   All colors are sourced from @shared/constants/colors.ts (Colors.light).
+   Typography uses mobile Inter_400Regular / Inter_600SemiBold / Inter_700Bold.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.appFrame {
+  min-height: 100dvh;
+  background: var(--background);
+}
+
+.page {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 18px calc(100px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+/* ── HomeHeader (features/home/components/HomeHeader.tsx) ────────────────── */
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 0;
+}
+
+.greeting,
+.header h1 {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(17.5px, calc(13.5px + 0.65vw + 0.45vmin), 22px);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+}
+
+.greetingHighlight {
+  color: var(--primary);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.userActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatarRing {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  border: 2px solid var(--primary);
+  background: transparent;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.avatarInner {
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background-color: var(--surface-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.avatarInitial {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(13.5px, calc(11.5px + 0.3vw + 0.2vmin), 16px);
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.signOutBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  border: 1px solid var(--danger-dim);
+  background: var(--danger-dim);
+  color: var(--danger);
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.12s ease;
+}
+
+.signOutBtn:hover {
+  opacity: 0.88;
+}
+
+.signOutBtn:active {
+  transform: scale(0.96);
+}
+
+.signIn,
+.signInPill {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  border-radius: 22px;
+  border: 1px solid var(--primary);
+  background: var(--primary-dim);
+  color: var(--primary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(11.5px, calc(10.2px + 0.22vw + 0.15vmin), 13px);
+  font-weight: 600;
+  line-height: 1.35;
+  text-decoration: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.signIn:hover,
+.signInPill:hover {
+  opacity: 0.88;
+}
+
+.signIn:active,
+.signInPill:active {
+  transform: scale(0.98);
+}
+
+/* ── HeroScanCard (features/home/components/HeroScanCard.tsx) ────────────── */
+.scanHero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 20px;
+  margin-bottom: 0;
+  border-radius: 26px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease;
+}
+
+.scanHero:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px var(--card-glow);
+}
+
+.scanHero:active {
+  opacity: 0.93;
+  transform: scale(0.985);
+}
+
+.heroOrbOne,
+.heroOrbTwo {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.heroOrbOne {
+  width: 130px;
+  height: 130px;
+  right: -30px;
+  top: -30px;
+}
+
+.heroOrbTwo {
+  width: 80px;
+  height: 80px;
+  right: 60px;
+  bottom: -20px;
+}
+
+.heroCornerArc {
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  border-radius: 55px;
+  right: -55px;
+  bottom: -55px;
+  border-width: 1.5px;
+  border-style: solid;
+  pointer-events: none;
+}
+
+.heroTopRow {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+@keyframes hero-icon-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+.heroIcon,
+.heroIconRing {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  border-width: 1.5px;
+  border-style: solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  animation: hero-icon-pulse 2.4s ease-in-out infinite;
+}
+
+.heroCopy,
+.heroTextBlock {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.heroHeading {
+  color: var(--primary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(17.5px, calc(13.5px + 0.65vw + 0.45vmin), 22px);
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.22;
+}
+
+.heroTitle {
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(11.5px, calc(10px + 0.24vw + 0.16vmin), 13px);
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  line-height: 1.35;
+}
+
+.heroArrow,
+.heroArrowBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 21px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--primary);
+  color: #ffffff;
+  transition: transform 0.15s ease;
+}
+
+.scanHero:hover .heroArrow {
+  transform: translateX(3px);
+}
+
+.heroTagline,
+.heroFooterText {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-top: 14px;
+  color: var(--text-secondary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(10px, calc(9px + 0.18vw + 0.12vmin), 11.5px);
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+}
+
+/* ── Recent Scans Section (features/home/components/RecentScansList.tsx) ─── */
+.recentSection {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sectionTitle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(13.5px, calc(11.6px + 0.32vw + 0.22vmin), 16px);
+  font-weight: 700;
+}
+
+.sectionDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  background-color: var(--primary);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.seeAllBtn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 11px;
+  border-radius: 12px;
+  background-color: var(--primary-dim);
+  color: var(--primary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(10.5px, calc(9.5px + 0.18vw + 0.12vmin), 12px);
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.seeAllBtn:hover {
+  opacity: 0.85;
+}
+
+.recentListFadeIn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  animation: recentFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes recentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fullHistoryBtn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  color: var(--primary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(12px, calc(10.6px + 0.25vw + 0.18vmin), 14px);
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 4px;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s ease,
+    opacity 0.15s ease;
+}
+
+.fullHistoryBtn:hover {
+  opacity: 0.96;
+  outline: none;
+  border-color: var(--surface-border);
+  transform: translateY(-2px) scale(1.015);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.fullHistoryBtn:active {
+  transform: scale(0.985);
+  opacity: 0.82;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition-duration: 0.08s;
+}
+
+/* ── EmptyScans (features/home/components/EmptyScans.tsx) ─────────────────── */
+.emptyCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px;
+  gap: 8px;
+  border-radius: 22px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  box-shadow: 0 2px 12px var(--card-glow);
+}
+
+.emptyIconArea {
+  position: relative;
+  display: flex;
+  width: 68px;
+  height: 68px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.emptyIconRing {
+  position: absolute;
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  border-width: 1.5px;
+  border-style: solid;
+  pointer-events: none;
+}
+
+.emptyIcon {
+  display: flex;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyTitle {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(13.5px, calc(11.8px + 0.3vw + 0.2vmin), 16px);
+  font-weight: 700;
+  text-align: center;
+}
+
+.emptySubtitle {
+  margin: 0 0 4px;
+  color: var(--text-muted);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(11.5px, calc(10px + 0.22vw + 0.16vmin), 13px);
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: center;
+  max-width: 260px;
+}
+
+.scanButton {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border-radius: 14px;
+  margin-top: 4px;
+  background-color: var(--primary-dim);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(11.5px, calc(10.2px + 0.22vw + 0.15vmin), 13px);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scanButton:hover {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.scanButton:active {
+  transform: scale(0.98);
+}
+
+/* ── Responsive Layout Grid ─────────────────────────────────────────────── */
+.homeGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.heroCardCol {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.recentScansCol {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ── Tablet Presentation (640px - 1023px) ─────────────────────────────────── */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .appFrame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: calc(100dvh - 60px);
+    padding: 20px 24px 32px;
+    background:
+      radial-gradient(circle at 18% 10%, var(--primary-dim), transparent 45%),
+      radial-gradient(circle at 82% 90%, var(--card-glow), transparent 45%),
+      var(--background);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 720px;
+    min-height: auto;
+    padding: 0;
+    margin: 0 auto;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    box-sizing: border-box;
+  }
+
+  .header {
+    margin-bottom: 20px;
+    width: 100%;
+  }
+
+  .greeting {
+    font-size: clamp(19px, calc(14px + 0.65vw + 0.45vmin), 23px);
+    line-height: 1.25;
+  }
+
+  .homeGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .scanHero {
+    margin-bottom: 0;
+    padding: 24px 24px 20px;
+    height: auto;
+    min-height: auto;
+    box-sizing: border-box;
+    justify-content: flex-start;
+  }
+
+  .heroIcon {
+    width: 74px;
+    height: 74px;
+  }
+
+  .heroHeading {
+    font-size: clamp(18.5px, calc(14px + 0.6vw + 0.4vmin), 22px);
+    line-height: 1.25;
+  }
+}
+
+/* ── Desktop Presentation (>= 1024px) ─────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .appFrame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: calc(100dvh - 60px);
+    padding: 20px 24px 32px;
+    background:
+      radial-gradient(circle at 12% 10%, var(--primary-dim), transparent 45%),
+      radial-gradient(circle at 88% 85%, var(--card-glow), transparent 45%),
+      var(--background);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 1200px;
+    min-height: auto;
+    padding: 0;
+    margin: 0 auto;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    box-sizing: border-box;
+  }
+
+  .header {
+    margin-bottom: 18px;
+    width: 100%;
+  }
+
+  .headerRight {
+    display: none;
+  }
+
+  .greeting {
+    font-size: 26px;
+    line-height: 32px;
+    letter-spacing: -0.4px;
+  }
+
+  /* Two-column stretchable layout for desktop */
+  .homeGrid {
+    display: grid;
+    grid-template-columns: minmax(360px, 440px) 1fr;
+    gap: 28px;
+    align-items: start;
+    width: 100%;
+  }
+
+  .heroCardCol {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .scanHero {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-bottom: 0;
+    padding: 28px 26px 22px;
+    min-height: 220px;
+    box-sizing: border-box;
+    border-radius: 26px;
+  }
+
+  .heroIcon {
+    width: 78px;
+    height: 78px;
+    border-radius: 22px;
+  }
+
+  .heroHeading {
+    font-size: 25px;
+    line-height: 30px;
+    letter-spacing: -0.5px;
+  }
+
+  .heroTitle {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .heroArrow {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+  }
+
+  .heroTagline {
+    font-size: 12px;
+    line-height: 18px;
+    margin-top: 18px;
+  }
+
+  .recentScansCol {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sectionHeader {
+    margin-bottom: 14px;
+  }
+
+  .sectionTitle {
+    font-size: 17px;
+  }
+
+  .emptyCard {
+    padding: 32px 24px;
+    min-height: 220px;
+    box-sizing: border-box;
+    justify-content: center;
+  }
+}
+
+/* ── Mobile Layout (< 640px) ─────────────────────────────────────────────── */
+@media (max-width: 639px) {
+  .appFrame {
+    background: var(--background);
+  }
+
+  .page {
+    max-width: 480px;
+    padding: 20px 16px calc(100px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── YouTube Shining Shimmer Skeletons for Home & Recent Cards ───────────── */
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.skeletonCard {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-radius: 18px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  padding: 13px 14px;
+  gap: 13px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.skeletonIconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  background-color: var(--skeleton-base);
+  background-image: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 35%,
+    rgba(255, 255, 255, 0.45) 50%,
+    var(--skeleton-highlight) 65%,
+    var(--skeleton-base) 100%
+  );
+  background-size: 200% 100%;
+  animation: homeYoutubeShimmer 1.3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+html[data-theme="dark"] .skeletonIconBox,
+html.dark .skeletonIconBox {
+  background-image: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 35%,
+    rgba(255, 255, 255, 0.12) 50%,
+    var(--skeleton-highlight) 65%,
+    var(--skeleton-base) 100%
+  );
+}
+
+.skeletonBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.skeletonBone {
+  border-radius: 8px;
+  background-color: var(--skeleton-base);
+  background-image: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 35%,
+    rgba(255, 255, 255, 0.45) 50%,
+    var(--skeleton-highlight) 65%,
+    var(--skeleton-base) 100%
+  );
+  background-size: 200% 100%;
+  animation: homeYoutubeShimmer 1.3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+html[data-theme="dark"] .skeletonBone,
+html.dark .skeletonBone {
+  background-image: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--skeleton-highlight) 35%,
+    rgba(255, 255, 255, 0.12) 50%,
+    var(--skeleton-highlight) 65%,
+    var(--skeleton-base) 100%
+  );
+}
+
+.skeletonRight {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Home Page Hero Skeleton */
+.heroSkeleton {
+  width: 100%;
+  min-height: 180px;
+  border-radius: 26px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes homeYoutubeShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+

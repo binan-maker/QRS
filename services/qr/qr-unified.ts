@@ -1,0 +1,180 @@
+import { db } from "@/lib/db/client";
+import { tsToString } from "../utils";
+import type { UnifiedQr, UnifiedQrStatus, QrType } from "../types";
+
+export type { UnifiedQr, UnifiedQrStatus };
+
+function computeStatus(data: any): UnifiedQrStatus {
+  if (data.status === "inactive") return "inactive";
+  if (data.expiryDate && new Date(data.expiryDate).getTime() < Date.now()) return "expired";
+  if (data.scanLimit != null && (data.scanCount ?? 0) >= data.scanLimit) return "limit_reached";
+  return "active";
+}
+
+function mapDocToUnifiedQr(id: string, data: any): UnifiedQr {
+  return {
+    id,
+    qrType: (data.qrType as QrType) || "individual",
+    template: data.template || null,
+    title: data.title || null,
+    isDynamic: data.isDynamic === true,
+    destination: data.destination || "",
+    rawDestination: data.rawDestination || data.destination || "",
+    contentType: data.contentType || "text",
+    businessName: data.businessName || null,
+    status: computeStatus(data),
+    scanCount: data.scanCount ?? 0,
+    downloads: data.downloads ?? 0,
+    shares: data.shares ?? 0,
+    scanLimit: data.scanLimit ?? null,
+    expiryDate: data.expiryDate || null,
+    expiryPreset: data.expiryPreset || null,
+    design: {
+      fgColor: data.design?.fgColor || "#0A0E17",
+      bgColor: data.design?.bgColor || "#F8FAFC",
+      logoPosition: data.design?.logoPosition || "center",
+      logoUri: data.design?.logoUri || null,
+      label: data.design?.label || null,
+    },
+    formValues: data.formValues || null,
+    createdAt: tsToString(data.createdAt),
+    updatedAt: tsToString(data.updatedAt ?? data.createdAt),
+  };
+}
+
+export async function createUnifiedQr(params: {
+  id: string;
+  qrType: QrType;
+  template: string | null;
+  title: string | null;
+  isDynamic: boolean;
+  destination: string;
+  rawDestination: string;
+  contentType: string;
+  businessName: string | null;
+  scanLimit: number | null;
+  expiryDate: string | null;
+  expiryPreset: string | null;
+  design: {
+    fgColor: string;
+    bgColor: string;
+    logoPosition?: string;
+    logoUri?: string | null;
+    label?: string | null;
+  };
+  formValues?: { value: string; extra: Record<string, string> } | null;
+}): Promise<void> {
+  if (
+    params.qrType !== "individual" ||
+    params.isDynamic ||
+    params.businessName ||
+    params.scanLimit != null ||
+    params.expiryDate != null ||
+    params.expiryPreset != null
+  ) {
+    throw new Error("Only individual QR codes are supported.");
+  }
+
+  await db.set(["qrs", params.id], {
+    qrType: "individual",
+    template: params.template,
+    title: params.title,
+    destination: params.destination,
+    rawDestination: params.rawDestination,
+    contentType: params.contentType,
+    status: "active",
+    scanCount: 0,
+    downloads: 0,
+    shares: 0,
+    design: {
+      fgColor: params.design.fgColor,
+      bgColor: params.design.bgColor,
+      logoPosition: params.design.logoPosition ?? "center",
+      logoUri: params.design.logoUri ?? null,
+      label: params.design.label ?? null,
+    },
+    formValues: params.formValues ?? null,
+    createdAt: db.timestamp(),
+    updatedAt: db.timestamp(),
+  });
+}
+
+export async function getUnifiedQr(id: string): Promise<UnifiedQr | null> {
+  try {
+    const data = await db.get(["qrs", id]);
+    if (!data) return null;
+    if (data.isDynamic === true || data.businessName) return null;
+    return mapDocToUnifiedQr(id, data);
+  } catch {
+    return null;
+  }
+}
+
+export async function updateUnifiedQrDesign(
+  id: string,
+  fields: {
+    title?: string | null;
+    design?: Partial<UnifiedQr["design"]>;
+    scanLimit?: number | null;
+    expiryDate?: string | null;
+    expiryPreset?: string | null;
+  }
+): Promise<void> {
+  const data = await db.get(["qrs", id]);
+  if (!data) throw new Error("QR not found");
+
+  const updates: Record<string, any> = { updatedAt: db.timestamp() };
+  if (fields.title !== undefined) updates.title = fields.title;
+  if (fields.scanLimit !== undefined) updates.scanLimit = fields.scanLimit;
+  if (fields.expiryDate !== undefined) updates.expiryDate = fields.expiryDate;
+  if (fields.expiryPreset !== undefined) updates.expiryPreset = fields.expiryPreset;
+  if (fields.design) {
+    const current = data.design ?? {};
+    updates.design = { ...current, ...fields.design };
+  }
+
+  await db.update(["qrs", id], updates);
+}
+
+export async function updateUnifiedQrDestination(
+  id: string,
+  newDestination: string
+): Promise<void> {
+  void id;
+  void newDestination;
+  throw new Error("QR codes cannot change their destination.");
+}
+
+export async function setUnifiedQrStatus(
+  id: string,
+  status: "active" | "inactive"
+): Promise<void> {
+  const data = await db.get(["qrs", id]);
+  if (!data) throw new Error("QR not found");
+  await db.update(["qrs", id], { status, updatedAt: db.timestamp() });
+}
+
+export async function incrementUnifiedQrStat(
+  id: string,
+  field: "downloads" | "shares"
+): Promise<void> {
+  try {
+    await db.increment(["qrs", id], field, 1);
+  } catch {
+    // best-effort
+  }
+}
+
+export async function getUserUnifiedQrs(_userId: string, limitCount = 200): Promise<UnifiedQr[]> {
+  try {
+    const { docs } = await db.query(["qrs"], {
+      orderBy: { field: "createdAt", direction: "desc" },
+      limit: limitCount,
+    });
+    return docs
+      .filter((d) => d.data.isDynamic !== true && !d.data.businessName)
+      .map(d => mapDocToUnifiedQr(d.id, d.data));
+  } catch {
+    return [];
+  }
+}

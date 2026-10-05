@@ -1,0 +1,1334 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   WEB SCANNER STYLES — Exact Mirror of features/scanner/ (Android / Mobile)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.page {
+  min-height: 100dvh;
+  height: 100dvh;
+  color: #ffffff;
+  background: #000000;
+  overflow: hidden;
+}
+
+.header,
+.footer {
+  display: none;
+}
+
+.scannerLayout {
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* ── Root Containers (ScannerScreen.tsx lines 292, 297, 313) ── */
+.scannerRootBlack,
+.permissionRoot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.scannerRootBlack {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.permissionRoot {
+  background-color: var(--background, #F5F8FF);
+  color: var(--text, #0C1525);
+}
+
+.hiddenVideo,
+.decoderCanvas {
+  display: none;
+}
+
+/* ── Black Placeholder & Camera Preview Shield (ScannerScreen.tsx lines 317, 365) ── */
+.blackPlaceholder {
+  position: absolute;
+  inset: 0;
+  background-color: #000000;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.cameraStage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+  background-color: #000000;
+}
+
+.cameraVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center center;
+  transition: transform 0.28s ease, filter 0.25s ease;
+}
+
+.cameraVideoTorch {
+  filter: brightness(1.38) contrast(1.08);
+}
+
+.blackShield {
+  position: absolute;
+  inset: 0;
+  background-color: #000000;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ── Tap-to-Focus Area & Ring (ScannerScreen.tsx lines 375-401, 463-471) ── */
+.tapFocusArea {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  cursor: crosshair;
+}
+
+.focusRing {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.80);
+  z-index: 5;
+  pointer-events: none;
+  animation: focus-ring-anim 1.14s ease forwards;
+}
+
+@keyframes focus-ring-anim {
+  0% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+  14% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* ── PermissionScreen.tsx (features/scanner/components/system/PermissionScreen.tsx) ── */
+.permissionScreenContainer {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 28px 28px;
+  box-sizing: border-box;
+  background-color: var(--background, #F8FAFC);
+}
+
+.permissionCenterContent {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  animation: fade-in 0.18s ease-out;
+}
+
+.permissionIconSection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in-down 0.16s ease-out;
+}
+
+.permissionIconOuterRing {
+  width: 110px;
+  height: 110px;
+  border-radius: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-dim);
+  border: 1px solid var(--primary);
+  box-sizing: border-box;
+}
+
+.permissionIconInnerRing {
+  width: 78px;
+  height: 78px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-dim);
+  border: 1.5px solid var(--primary);
+  box-sizing: border-box;
+}
+
+.permissionTextGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: fade-in-down 0.16s ease-out;
+  width: 100%;
+}
+
+.permissionTitle {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(18.5px, calc(14px + 0.65vw + 0.45vmin), 24px);
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  text-align: center;
+  color: var(--text);
+}
+
+.permissionSubtitle {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(12.5px, calc(11px + 0.28vw + 0.18vmin), 15px);
+  font-weight: 400;
+  text-align: center;
+  line-height: 1.48;
+  max-width: 400px;
+  color: var(--text-muted);
+}
+
+.permissionBtns {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fade-in-down 0.16s ease-out;
+}
+
+/* Matches shared/components/ui/GradientButton.tsx (size="lg") */
+.gradientBtnPrimary {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 17px 20px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-shade) 100%);
+  color: #ffffff;
+  font: inherit;
+  font-size: clamp(13.5px, calc(11.6px + 0.32vw + 0.22vmin), 16px);
+  font-weight: 700;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: opacity 0.15s ease;
+}
+
+.gradientBtnPrimary:active,
+.gradientBtnPrimary:disabled {
+  opacity: 0.72;
+}
+
+.gradientBtnLabel {
+  font-size: clamp(13.5px, calc(11.6px + 0.32vw + 0.22vmin), 16px);
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.buttonActivityIndicator {
+  width: 20px;
+  height: 20px;
+  border: 2.2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin-linear 0.75s linear infinite;
+}
+
+.permissionSecondaryBtn {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  cursor: pointer;
+  font: inherit;
+  box-sizing: border-box;
+  transition: opacity 0.15s ease;
+}
+
+.permissionSecondaryBtn:active {
+  opacity: 0.75;
+}
+
+.permissionSecondaryText {
+  font-size: clamp(12.2px, calc(10.8px + 0.25vw + 0.16vmin), 14px);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* ── ScannerOverlay.tsx (features/scanner/components/overlay/ScannerOverlay.tsx) ── */
+.scannerOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* ── OverlayTopBar.tsx (features/scanner/components/overlay/OverlayTopBar.tsx) ── */
+.overlayTopBar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 20px 14px;
+  pointer-events: auto;
+  animation: fade-in 0.22s ease-out;
+}
+
+.topGlassBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background-color: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+  user-select: none;
+  padding: 0;
+}
+
+.topGlassBtn:hover {
+  background-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.04);
+}
+
+.topGlassBtn:active {
+  transform: scale(0.95);
+}
+
+.topGlassBtnActive {
+  background-color: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 166, 35, 0.45);
+}
+
+.topBrand {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topBrandText {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(15px, calc(12.5px + 0.4vw + 0.28vmin), 18px);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.98);
+  letter-spacing: -0.2px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+}
+
+.topSpacer {
+  width: 44px;
+}
+
+/* ── Non-Interactive Center Layer: Title + FinderFrame + Status ── */
+.overlayNonInteractive {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  box-sizing: border-box;
+  padding: 80px 24px 120px;
+}
+
+.centerScannerStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 600px;
+  margin: auto;
+}
+
+.titleArea {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  animation: fade-in 0.22s ease-out;
+  text-align: center;
+  width: 100%;
+}
+
+.titleText {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(19px, calc(14px + 0.75vw + 0.5vmin), 26px);
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+  letter-spacing: -0.3px;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+}
+
+.subtitleText {
+  margin: 8px 0 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(12px, calc(10.6px + 0.25vw + 0.16vmin), 14px);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.82);
+  text-align: center;
+  max-width: 460px;
+  line-height: 1.45;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+}
+
+.finderFramePosition {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.22s ease-out;
+}
+
+.hintArea {
+  position: relative;
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.hintText {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(11.8px, calc(10.4px + 0.24vw + 0.16vmin), 13.5px);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  padding: 6px 16px;
+  border-radius: 100px;
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* ── FinderFrame.tsx (features/scanner/components/overlay/FinderFrame.tsx) ── */
+.finderFrame {
+  position: relative;
+  width: 270px;
+  height: 270px;
+  overflow: visible;
+  flex-shrink: 0;
+  animation: fade-in 0.22s ease-out;
+}
+
+.cornerBar {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.88);
+  animation: corner-breath 4.8s ease-in-out infinite;
+}
+
+@keyframes corner-breath {
+  0%, 100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Top-left */
+.ctlH {
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 3px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.ctlV {
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 28px;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Top-right */
+.ctrH {
+  top: 0;
+  right: 0;
+  width: 28px;
+  height: 3px;
+  border-top-right-radius: 12px;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.ctrV {
+  top: 0;
+  right: 0;
+  width: 3px;
+  height: 28px;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+/* Bottom-left */
+.cblH {
+  bottom: 0;
+  left: 0;
+  width: 28px;
+  height: 3px;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+.cblV {
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  height: 28px;
+  border-bottom-left-radius: 12px;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+/* Bottom-right */
+.cbrH {
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 3px;
+  border-bottom-right-radius: 12px;
+  border-bottom-left-radius: 4px;
+  border-top-left-radius: 4px;
+}
+
+.cbrV {
+  bottom: 0;
+  right: 0;
+  width: 3px;
+  height: 28px;
+  border-bottom-right-radius: 12px;
+  border-top-right-radius: 4px;
+  border-top-left-radius: 4px;
+}
+
+.hintArea {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.18s ease-out;
+}
+
+.hintText {
+  margin: 0;
+  font-size: clamp(11.5px, calc(10px + 0.22vw + 0.15vmin), 13px);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.60);
+  text-align: center;
+  letter-spacing: 0.1px;
+}
+
+/* ── OverlayBottomBar.tsx (features/scanner/components/overlay/OverlayBottomBar.tsx) ── */
+.overlayBottomBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 72px;
+  pointer-events: auto;
+  animation: fade-in-up 0.22s ease-out;
+}
+
+.pillRow {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+}
+
+.zoomPill {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  background-color: rgba(0, 0, 0, 0.55);
+  border-radius: 20px;
+  padding: 6px 12px;
+  border: 1px solid rgba(59, 130, 246, 0.27);
+  cursor: pointer;
+  font: inherit;
+}
+
+.zoomText {
+  font-size: clamp(10.5px, calc(9.5px + 0.18vw + 0.12vmin), 12px);
+  font-weight: 700;
+  color: #3B82F6;
+  letter-spacing: 0.4px;
+}
+
+.anonPill {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.28);
+}
+
+.anonPillText {
+  font-size: clamp(9.5px, calc(8.6px + 0.16vw + 0.12vmin), 11px);
+  font-weight: 600;
+  color: #F5A623;
+}
+
+.lowLightPill {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  background-color: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.30);
+  animation: fade-in 0.28s ease-out;
+}
+
+.lowLightText {
+  font-size: clamp(10.5px, calc(9.5px + 0.18vw + 0.12vmin), 12px);
+  font-weight: 500;
+  color: #FDE68A;
+  letter-spacing: 0.1px;
+}
+
+.controlRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+}
+
+.btnGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.bottomGlassBtn {
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+  background-color: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-sizing: border-box;
+  transition: all 0.16s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  color: #ffffff;
+}
+
+.bottomGlassBtn:hover {
+  background-color: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.bottomGlassBtn:active {
+  transform: scale(0.95);
+}
+
+.btnLabel {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(11.5px, calc(10px + 0.22vw + 0.15vmin), 13px);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: -0.1px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+.torchGlowRing {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 37px;
+  border: 1.5px solid #FBBF24;
+  pointer-events: none;
+  animation: torch-glow-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes torch-glow-pulse {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.btnLabel {
+  font-size: clamp(9.5px, calc(8.6px + 0.16vw + 0.12vmin), 11px);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.48);
+  letter-spacing: 0.2px;
+}
+
+.btnLabelDim {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ── ProcessingOverlay.tsx (features/scanner/components/system/ProcessingOverlay.tsx) ── */
+.processingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background-color: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.2s ease-out;
+}
+
+.processingBox {
+  background-color: rgba(10, 14, 24, 0.97);
+  border-radius: 28px;
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid rgba(0, 212, 255, 0.18);
+  max-width: 300px;
+  width: 82%;
+  box-sizing: border-box;
+}
+
+.processingIconContainer {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.processingAmbientRing {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 45px;
+  background-color: rgba(0, 212, 255, 0.07);
+  animation: ambient-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes ambient-pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.processingSpinRing {
+  position: absolute;
+  width: 82px;
+  height: 82px;
+  border-radius: 41px;
+  border: 2px dashed #00D4FF;
+  opacity: 0.55;
+  box-sizing: border-box;
+  animation: spin-linear 1.8s linear infinite;
+}
+
+.processingInnerRing {
+  width: 66px;
+  height: 66px;
+  border-radius: 33px;
+  background-color: rgba(0, 212, 255, 0.08);
+  border: 1px solid rgba(0, 212, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.processingTextGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.processingTitle {
+  margin: 0;
+  font-size: clamp(14.5px, calc(12px + 0.38vw + 0.25vmin), 17px);
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+}
+
+.processingSubtitle {
+  margin: 0;
+  font-size: clamp(11.5px, calc(10px + 0.22vw + 0.15vmin), 13px);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+.processingBrandRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+}
+
+.processingBrandText {
+  font-size: clamp(9.5px, calc(8.6px + 0.16vw + 0.12vmin), 11px);
+  font-weight: 500;
+  color: rgba(0, 212, 255, 0.35);
+  letter-spacing: 0.3px;
+}
+
+/* ── CameraUnavailableBanner.tsx (features/scanner/components/system/CameraUnavailableBanner.tsx) ── */
+.unavailableOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background-color: #080c14;
+  display: flex;
+  flex-direction: column;
+}
+
+.unavailableTopBar {
+  padding: 16px 16px 10px;
+}
+
+.unavailableBackBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.unavailableCenter {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unavailableContainer {
+  width: 100%;
+  max-width: 520px;
+  background-color: rgba(18, 24, 38, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 44px 36px;
+  gap: 16px;
+  box-sizing: border-box;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  animation: fade-in 0.25s ease-out;
+}
+
+.unavailableIconWrap {
+  width: 84px;
+  height: 84px;
+  border-radius: 42px;
+  background-color: rgba(245, 158, 11, 0.14);
+  border: 1.5px solid rgba(245, 158, 11, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.unavailableIconWrapBlue {
+  background-color: rgba(0, 212, 255, 0.14);
+  border-color: rgba(0, 212, 255, 0.35);
+}
+
+.unavailableTitle {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(19px, calc(14.5px + 0.65vw + 0.45vmin), 24px);
+  font-weight: 700;
+  color: #f59e0b;
+  text-align: center;
+  letter-spacing: -0.3px;
+}
+
+.unavailableTitleBlue {
+  color: #00d4ff;
+}
+
+.unavailableSubtitle {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(12.5px, calc(11px + 0.28vw + 0.18vmin), 15px);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
+  line-height: 1.5;
+  max-width: 440px;
+}
+
+.unavailableActions {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .unavailableActions {
+    flex-direction: column;
+  }
+}
+
+.unavailableBtn {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(12.2px, calc(10.8px + 0.25vw + 0.16vmin), 14px);
+  font-weight: 700;
+  box-sizing: border-box;
+  border: none;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.unavailableBtn:hover {
+  transform: translateY(-1px);
+}
+
+.unavailableBtn:active {
+  transform: scale(0.98);
+  opacity: 0.85;
+}
+
+.unavailableBtnPrimary {
+  background-color: #00d4ff;
+  color: #000000;
+  box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3);
+}
+
+.unavailableBtnPrimary:hover {
+  background-color: #33ddff;
+  box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+}
+
+.unavailableBtnSecondary {
+  background-color: rgba(0, 212, 255, 0.12);
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  color: #00d4ff;
+}
+
+.unavailableBtnSecondary:hover {
+  background-color: rgba(0, 212, 255, 0.2);
+  border-color: rgba(0, 212, 255, 0.5);
+}
+
+/* ── ScannerToast.tsx & ConversionBanner.tsx ── */
+.toastContainer {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  z-index: 30;
+}
+
+.toastWrapper {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  animation: fade-in 0.22s ease-out;
+}
+
+.toastBody {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 13px 14px;
+  gap: 12px;
+}
+
+.toastIconWrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.toastIcon {
+  font-size: clamp(13px, calc(11.2px + 0.28vw + 0.18vmin), 15px);
+  font-weight: 700;
+}
+
+.toastMsg {
+  margin: 0;
+  flex: 1;
+  font-size: clamp(11.5px, calc(10px + 0.22vw + 0.15vmin), 13px);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.toastTrackBg {
+  height: 3px;
+  width: 100%;
+}
+
+.toastTrackFill {
+  height: 3px;
+  border-radius: 2px;
+  animation: toast-progress 2.8s linear forwards;
+}
+
+@keyframes toast-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.conversionBanner {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 40px;
+  z-index: 25;
+  background-color: rgba(10, 20, 40, 0.96);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fade-in-down 0.26s ease-out;
+}
+
+.conversionBody {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.conversionText {
+  margin: 0;
+  flex: 1;
+  font-size: clamp(11.5px, calc(10px + 0.22vw + 0.15vmin), 13px);
+  font-weight: 500;
+  color: #a5f3ff;
+  line-height: 1.4;
+}
+
+.conversionActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.conversionSignInBtn {
+  background-color: #00d4ff;
+  color: #000000;
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: none;
+  font: inherit;
+  font-size: clamp(11.5px, calc(10px + 0.22vw + 0.15vmin), 13px);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.conversionDismissBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ── Shared Keyframes ── */
+@keyframes spin-linear {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Short Screen / Landscape Responsive Scaling ── */
+@media (max-height: 580px) {
+  .overlayTopBar {
+    padding: 8px 16px 6px;
+  }
+
+  .titleText {
+    font-size: 18px;
+  }
+
+  .subtitleText {
+    display: none;
+  }
+
+  .titleArea {
+    margin-bottom: 12px;
+  }
+
+  .hintArea {
+    margin-top: 12px;
+  }
+
+  .overlayBottomBar {
+    gap: 8px;
+    padding-bottom: 12px;
+  }
+
+  .permissionScreenContainer {
+    padding: 12px 20px;
+  }
+
+  .permissionCenterContent {
+    gap: 14px;
+    padding: 24px 20px;
+  }
+
+  .permissionIconOuterRing {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+  }
+
+  .permissionIconInnerRing {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+  }
+
+  .permissionTitle {
+    font-size: 20px;
+  }
+
+  .gradientBtnPrimary {
+    padding: 12px 16px;
+  }
+}
+
+/* ── Tablet & Desktop Responsive Layout for Scanner ──────────────────────── */
+@media (min-width: 640px) {
+  .scannerLayout,
+  .scannerRootBlack,
+  .permissionRoot {
+    width: 100%;
+    height: 100dvh;
+  }
+
+  .overlayTopBar {
+    max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px clamp(24px, 4vw, 56px);
+  }
+
+  .overlayBottomBar {
+    max-width: 100%;
+    width: 100%;
+    left: 0;
+    right: 0;
+    transform: none;
+    padding: 0 clamp(24px, 4vw, 56px) 28px;
+  }
+
+  .titleText {
+    font-size: clamp(21px, calc(15px + 0.75vw + 0.5vmin), 26px);
+    letter-spacing: -0.4px;
+  }
+
+  .subtitleText {
+    font-size: clamp(13px, calc(11.2px + 0.28vw + 0.18vmin), 15px);
+  }
+
+  .finderFrame {
+    width: clamp(280px, 24vw, 360px);
+    height: clamp(280px, 24vw, 360px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .overlayTopBar {
+    max-width: 100%;
+    width: 100%;
+    padding: 24px clamp(32px, 5vw, 64px);
+  }
+
+  .overlayBottomBar {
+    max-width: 100%;
+    width: 100%;
+    padding: 0 clamp(32px, 5vw, 64px) 36px;
+  }
+
+  .topGlassBtn {
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+  }
+
+  .topBrandText {
+    font-size: 20px;
+    letter-spacing: -0.3px;
+  }
+
+  .titleText {
+    font-size: 26px;
+    letter-spacing: -0.4px;
+  }
+
+  .finderFrame {
+    width: clamp(280px, 25vw, 360px);
+    height: clamp(280px, 25vw, 360px);
+  }
+
+  .bottomGlassBtn {
+    width: 70px;
+    height: 70px;
+    border-radius: 35px;
+  }
+
+  .btnLabel {
+    font-size: 14px;
+  }
+}
+
+

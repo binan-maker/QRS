@@ -1,0 +1,122 @@
+import { useState, useRef, useMemo, useCallback } from "react";
+import { Linking } from "react-native";
+import * as Clipboard from "expo-clipboard";
+import * as Haptics from "@/shared/utils/haptics";
+import { smartOpenContent } from "@/shared/utils/smart-open";
+import { useAuth } from "@/shared/contexts/AuthContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
+import { useQrData, type QrDetail } from "./useQrData";
+import { useQrReports } from "./useQrReports";
+import { useQrComments, type CommentItem } from "./useQrComments";
+import type { AppColors } from "@/shared/constants/colors";
+import { parseAnyPaymentQr } from "@/services/analysis";
+import {
+  calculateFallbackTrustScore,
+  getTrustColor,
+  normalizeQrDetailContentType,
+} from "@/shared/utils/qr-detail-rules";
+import { detectContentType } from "@/shared/utils/qr-content";
+
+export type { QrDetail, CommentItem };
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
+
+export function useQrDetail(id: string, hint?: { content: string; contentType: string }) {
+  const { user } = useAuth();
+  const { colors } = useTheme();
+  const userId = user?.id ?? null;
+
+  const data = useQrData(id, userId, hint);
+  const content = data.qrCode?.content || data.offlineContent;
+
+  const parsedPayment = useMemo(
+    () => (content ? parseAnyPaymentQr(content) : null),
+    [content],
+  );
+  const isPayment =
+    !!parsedPayment ||
+    (data.qrCode?.contentType || data.offlineContentType)?.toLowerCase() === "payment";
+  const rawContentType = data.qrCode?.contentType || data.offlineContentType;
+  const contentType = isPayment
+    ? "payment"
+    : normalizeQrDetailContentType(rawContentType || (content ? detectContentType(content) : "text"));
+
+  const qrMeta = useMemo(
+    () => (content ? { content, contentType } : undefined),
+    [content, contentType]
+  );
+  const reports = useQrReports(
+    id,
+    userId,
+    data.offlineMode,
+    Boolean(user?.emailVerified),
+    qrMeta
+  );
+  const comments = useQrComments(id, userId, data.offlineMode);
+  const initialDataReady =
+    !data.loading &&
+    reports.reportsReady;
+
+  // ── Trust score ─────────────────────────────────────────────────────────────
+  const trustInfo = useMemo(() => {
+    const { trustScore, reportCounts } = reports;
+    if (trustScore && trustScore.score >= 0) {
+      return {
+        score: trustScore.score,
+        label: trustScore.label,
+        color: getTrustColor(trustScore.label ?? "", colors),
+        manipulationWarning: trustScore.manipulationWarning ?? false,
+      };
+    }
+    const fallback = calculateFallbackTrustScore(reportCounts);
+    if (fallback.score < 0) {
+      return { score: -1, label: "No Reports", color: colors.textMuted, manipulationWarning: false };
+    }
+    return {
+      score: fallback.score,
+      label: fallback.label,
+      color: getTrustColor(fallback.label ?? "", colors),
+      manipulationWarning: false,
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reports.trustScore, reports.reportCounts, colors]);
+
+  // ── Other handlers ───────────────────────────────────────────────────────────
+
+  const handleOpenContent = useCallback(async () => {
+    if (!content) return;
+    if (contentType === "payment" || parsedPayment) {
+      try {
+        const canOpen = await Linking.canOpenURL(content).catch(() => false);
+        if (canOpen) {
+          await Linking.openURL(content);
+          return;
+        }
+      } catch {}
+      const copyValue =
+        parsedPayment?.vpa ||
+        (parsedPayment?.recipientId?.includes("@") ? parsedPayment.recipientId : null) ||
+        content;
+      await Clipboard.setStringAsync(copyValue);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      return;
+    }
+    await smartOpenContent(content, contentType, data.qrCode?.templateKey ?? undefined);
+  }, [content, contentType, parsedPayment, data.qrCode?.templateKey]);
+
+  const handleSubmitComment = useCallback(() => {
+    return comments.handleSubmitComment();
+  }, [comments.handleSubmitComment]);
+
+  return {
+    user,
+    ...data,
+    parsedPayment,
+    ...reports,
+    ...comments,
+    initialDataReady,
+    trustInfo,
+    handleOpenContent,
+    handleSubmitComment,
+  };
+}
