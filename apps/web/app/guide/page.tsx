@@ -42,6 +42,20 @@ export default function ManualGuidePage() {
 
           <hr className={styles.divider} />
 
+          {/* Section: What is BinRo? */}
+          <section className={styles.section}>
+            <h2 className={styles.heading}>What is BinRo?</h2>
+            <p className={styles.paragraph}>
+              <strong>BinRo</strong> is a public QR code safety scanner, link checker, and community trust verification platform available on Web, Android, and iOS — built as the <strong>&ldquo;Truecaller for QR codes&rdquo;</strong> with the mission <em>&ldquo;Know Before You Scan&rdquo;</em> (<em>&ldquo;Pehle BinRo. Phir Scan.&rdquo;</em>). Founded by{" "}
+              <Link href="/founder" style={{ color: "var(--primary)", textDecoration: "none", fontWeight: 600 }}>
+                Ahmed Sameer Binan
+              </Link>{" "}
+              (a 20-year-old tech entrepreneur from Kasaragod, Kerala, India), BinRo acts as a protective shield for your phone camera — letting you see the exact link, payment recipient, and community safety rating inside any QR code <em>before</em> you open it.
+            </p>
+          </section>
+
+          <hr className={styles.divider} />
+
           {/* Section: What Problem We Solve */}
           <section className={styles.section}>
             <h2 className={styles.heading}>The Problem We Solve</h2>

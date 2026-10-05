@@ -11,6 +11,7 @@ export default function robots(): MetadataRoute.Robots {
           "/scanner",
           "/download",
           "/guide",
+          "/founder",
           "/trust-scores",
           "/feedback",
           "/privacy",
