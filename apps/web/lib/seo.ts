@@ -9,9 +9,14 @@ export const DEFAULT_DESCRIPTION =
   "Scan any QR code safely with BinRo — the Truecaller for QR codes. Preview hidden links before opening, check real-time community trust scores, and protect yourself from QR code scams and phishing.";
 
 export const FOUNDER_NAME = "Ahmed Sameer Binan";
+export const FOUNDER_X_HANDLE = "@IAmBinan";
 export const FOUNDER_PROFILES = [
   "https://www.linkedin.com/in/ahmed-sameer-binan/",
   "https://www.instagram.com/iam_binan/",
+  "https://x.com/IAmBinan",
+  "https://twitter.com/IAmBinan",
+  "https://www.threads.com/@iam_binan",
+  "https://www.threads.net/@iam_binan",
   "https://about.me/ahmedsameerbinan",
   "https://github.com/binan-maker",
   "https://www.reddit.com/user/IAmBinan/",
@@ -84,6 +89,8 @@ export function createPageMetadata({
       card: "summary_large_image",
       title: fullTitle,
       description,
+      site: FOUNDER_X_HANDLE,
+      creator: FOUNDER_X_HANDLE,
     },
     ...(noIndex
       ? {

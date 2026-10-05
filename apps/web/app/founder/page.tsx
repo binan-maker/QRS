@@ -139,6 +139,28 @@ export default function FounderPage() {
                 </a>
               </li>
               <li className={styles.listItem}>
+                <strong>X (Twitter):</strong>{" "}
+                <a
+                  href="https://x.com/IAmBinan"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "var(--primary)", textDecoration: "none" }}
+                >
+                  x.com/IAmBinan (@IAmBinan)
+                </a>
+              </li>
+              <li className={styles.listItem}>
+                <strong>Threads:</strong>{" "}
+                <a
+                  href="https://www.threads.com/@iam_binan"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "var(--primary)", textDecoration: "none" }}
+                >
+                  threads.com/@iam_binan (@iam_binan)
+                </a>
+              </li>
+              <li className={styles.listItem}>
                 <strong>About.me:</strong>{" "}
                 <a
                   href="https://about.me/ahmedsameerbinan"

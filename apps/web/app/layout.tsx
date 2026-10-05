@@ -10,6 +10,7 @@ import {
   DEFAULT_TITLE,
   DEFAULT_DESCRIPTION,
   SEO_KEYWORDS,
+  FOUNDER_X_HANDLE,
   buildRootStructuredData,
 } from "@/lib/seo";
 import "./globals.css";
@@ -77,6 +78,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
+    site: FOUNDER_X_HANDLE,
+    creator: FOUNDER_X_HANDLE,
   },
   robots: {
     index: true,
