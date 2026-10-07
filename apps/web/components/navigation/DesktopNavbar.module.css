@@ -158,12 +158,13 @@
   box-shadow: 0 2px 10px var(--card-glow);
 }
 
-/* ── Right: Theme Toggle ── */
+/* ── Right: Theme Toggle & Auth Control ── */
 .navRight {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
+  gap: 10px;
 }
 
 .themeBtn {
@@ -198,4 +199,56 @@
 
 .themeBtn:active {
   transform: scale(0.95);
+}
+
+.signInPill {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 22px;
+  border: 1px solid var(--primary);
+  background: var(--primary-dim);
+  color: var(--primary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(11.5px, calc(10.2px + 0.22vw + 0.15vmin), 13px);
+  font-weight: 600;
+  line-height: 1.35;
+  text-decoration: none;
+  user-select: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.signInPill:hover {
+  opacity: 0.88;
+}
+
+.signInPill:active {
+  transform: scale(0.98);
+}
+
+.avatarLink {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.avatarLink:hover {
+  transform: scale(1.04);
+  opacity: 0.92;
+}
+
+.avatarLink:active {
+  transform: scale(0.96);
+}
+
+.avatarSkeleton {
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background-color: var(--skeleton-base);
 }
