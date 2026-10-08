@@ -1,6 +1,21 @@
-import type { TrustScore } from "../types";
+export interface TrustFactor {
+  name: string;
+  weight: number;
+  score: number;
+  description?: string;
+}
 
-export type { TrustScore };
+export interface TrustScore {
+  score: number;
+  level?: "low" | "medium" | "high" | "verified";
+  label: string;
+  factors?: TrustFactor[];
+  lastUpdated?: string;
+  isVerified?: boolean;
+  verificationMethod?: string;
+  manipulationWarning?: boolean;
+  totalReports: number;
+}
 
 export function calculateTrustScore(
   reportCounts: Record<string, number>,
