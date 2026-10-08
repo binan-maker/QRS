@@ -114,20 +114,6 @@
   flex: 1;
 }
 
-.amountPill {
-  padding: 2px 8px;
-  border-radius: 100px;
-  background-color: var(--warning-dim);
-  flex-shrink: 0;
-}
-
-.amountText {
-  font-family: var(--font-inter), "Inter", sans-serif;
-  font-size: clamp(10.5px, calc(9.5px + 0.18vw + 0.12vmin), 12px);
-  font-weight: 700;
-  color: var(--warning);
-}
-
 .subtitle {
   margin: 0;
   font-family: var(--font-inter), "Inter", sans-serif;

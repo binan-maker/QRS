@@ -3,10 +3,6 @@ import { COLLECTIONS } from "@/shared/constants/collections";
 
 export interface ScanStatsResult {
   total: number;
-  byUrl: number;
-  byText: number;
-  byPayment: number;
-  byOther: number;
 }
 
 export async function getUserScanStats(userId: string): Promise<ScanStatsResult> {
@@ -15,44 +11,14 @@ export async function getUserScanStats(userId: string): Promise<ScanStatsResult>
     const userData = userDoc?.data || userDoc || {};
     const totalScans = userData.scanCount ?? userData.personalScanCount;
 
-    if (totalScans !== undefined && userData.scanCountByUrl !== undefined) {
-      return {
-        total: totalScans || 0,
-        byUrl: userData.scanCountByUrl || 0,
-        byText: userData.scanCountByText || 0,
-        byPayment: userData.scanCountByPayment || 0,
-        byOther: (totalScans || 0) -
-                 ((userData.scanCountByUrl || 0) +
-                  (userData.scanCountByText || 0) +
-                  (userData.scanCountByPayment || 0)),
-      };
+    if (totalScans !== undefined) {
+      return { total: totalScans || 0 };
     }
   } catch (e) {
-    console.warn("Failed to fetch user stats, falling back to query:", e);
+    console.warn("Failed to fetch user stats:", e);
   }
 
-  let total = 0, byUrl = 0, byText = 0, byPayment = 0, byOther = 0;
-  let cursor: any = undefined;
-
-  do {
-    const { docs, cursor: nextCursor } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS], {
-      limit: 1000,
-      cursor,
-    });
-    cursor = nextCursor;
-
-    for (const d of docs) {
-      const data = d.data;
-      total++;
-
-      if (data.contentType === "url") byUrl++;
-      else if (data.contentType === "text") byText++;
-      else if (data.contentType === "payment") byPayment++;
-      else byOther++;
-    }
-  } while (cursor);
-
-  return { total, byUrl, byText, byPayment, byOther };
+  return { total: 0 };
 }
 
 export async function getUserAllScansForStats(

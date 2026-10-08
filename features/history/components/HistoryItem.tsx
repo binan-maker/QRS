@@ -16,16 +16,10 @@ function getPaymentData(content: string) {
   try {
     const parsed = parseAnyPaymentQr(content);
     return {
-      name: parsed?.recipientName || parsed?.vpa || "Payment",
-      amount: parsed?.amount || null,
+      name: parsed?.recipientName || parsed?.vpa || null,
       vpa: parsed?.vpa || null,
     };
   } catch { return null; }
-}
-
-function formatAmount(amount?: number | string) {
-  if (!amount) return null;
-  return `₹${Number(amount).toLocaleString("en-IN")}`;
 }
 
 // Pre-built animation specs — keyed by capped index (0–8) so the spec object
@@ -60,11 +54,6 @@ const HistoryItem = memo(function HistoryItem({
   const paymentData = useMemo(
     () => item.contentType === "payment" ? getPaymentData(item.content) : null,
     [item.contentType, item.content]
-  );
-
-  const formattedAmount = useMemo(
-    () => paymentData?.amount ? formatAmount(paymentData.amount) : null,
-    [paymentData]
   );
 
   const timeAgo = useMemo(() => formatRelativeTime(item.scannedAt), [item.scannedAt]);
@@ -120,15 +109,8 @@ const HistoryItem = memo(function HistoryItem({
           <View style={styles.body}>
             <View style={styles.titleRow}>
               <Text style={[styles.title, { color: colors.text }]} numberOfLines={1} maxFontSizeMultiplier={1}>
-                {paymentData ? paymentData.name : displayLabel}
+                {paymentData?.name || displayLabel}
               </Text>
-              {formattedAmount && (
-                <View style={[styles.amountPill, { backgroundColor: colors.warning + "1E" }]}>
-                  <Text style={[styles.amountText, { color: colors.warning }]} maxFontSizeMultiplier={1}>
-                    {formattedAmount}
-                  </Text>
-                </View>
-              )}
             </View>
 
             {subtitle && (
@@ -196,16 +178,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_400Regular",
     lineHeight: 16,
-  },
-  amountPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 100,
-    flexShrink: 0,
-  },
-  amountText: {
-    fontSize: 12,
-    fontFamily: "Inter_700Bold",
   },
   metaRow: {
     flexDirection: "row",

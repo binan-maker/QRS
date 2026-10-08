@@ -38,24 +38,23 @@ export const QR_CONTENT_TYPES: Record<string, QrTypeDefinition> = {
     bg: "#ECFDF5",
     gradient: ["#047857", "#10B981"],
     category: "payment",
-    openLabel: "Pay via App",
+    openLabel: "Open",
     getDisplayLabel: (content) => {
       const parsed = parseAnyPaymentQr(content);
       if (parsed) {
-        if (parsed.recipientName) return `${parsed.appDisplayName} • ${parsed.recipientName}`;
-        if (parsed.vpa) return `${parsed.appDisplayName} • ${parsed.vpa}`;
-        if (parsed.recipientId) return `${parsed.appDisplayName} • ${truncate(parsed.recipientId, 24)}`;
-        return parsed.appDisplayName;
+        if (parsed.recipientName) return parsed.recipientName;
+        if (parsed.vpa) return parsed.vpa;
+        if (parsed.recipientId) return truncate(parsed.recipientId, 32);
       }
       return "Payment QR";
     },
     getSubtitle: (content) => {
       const parsed = parseAnyPaymentQr(content);
       if (parsed?.amount) {
-        const curr = parsed.currency || (parsed.appCategory === "upi_india" ? "₹" : "");
-        return `Pre-filled: ${curr}${parsed.amount}`;
+        const curr = parsed.currency === "INR" || parsed.appCategory === "upi_india" ? "₹" : parsed.currency ? `${parsed.currency} ` : "";
+        return `${ parsed.vpa ? `${parsed.vpa} • ` : "" }${curr}${parsed.amount}`;
       }
-      return parsed?.vpa || parsed?.recipientId || "Scan to pay";
+      return parsed?.vpa || parsed?.recipientId || truncate(content, 44);
     },
   },
   text: {

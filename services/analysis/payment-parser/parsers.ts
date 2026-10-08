@@ -36,9 +36,5 @@ function parseAnyPaymentQr(content: string): ParsedPaymentQr | null {
 
   if (content.startsWith("BCD\n") || content.startsWith("BCD\r\n")) return parseSepaQr(content);
 
-  if (lower.includes("br.gov.bcb.pix")) {
-    return buildParsedPayment(PAYMENT_APP_REGISTRY.find((a) => a.id === "pix")!, content, lower);
-  }
-
   return detectUniversalPayment(content, lower);
 }

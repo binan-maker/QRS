@@ -11,7 +11,6 @@ import { useHistory }         from "@/features/history/hooks/useHistory";
 import { useSearch }          from "@/features/history/hooks/useSearch";
 import { groupByDate }        from "@/features/history/utils/date-utils";
 import { buildSearchIndex, matchesSearchIndexed } from "@/features/history/utils/search-utils";
-import { getActiveFilters }   from "@/features/history/utils/filter-utils";
 import type { ListRow }       from "@/features/history/types";
 
 import HistoryHeader     from "@/features/history/components/HistoryHeader";
@@ -20,7 +19,6 @@ import EmptyState        from "@/features/history/components/EmptyState";
 import CloudErrorBanner  from "@/features/history/components/CloudErrorBanner";
 import OfflineBanner     from "@/features/history/components/OfflineBanner";
 import SearchResultsRow  from "@/features/history/components/SearchResultsRow";
-import FilterBar         from "@/features/history/components/FilterBar";
 import HistoryItemComponent from "@/features/history/components/HistoryItem";
 import HistoryItemSkeleton  from "@/features/history/components/HistoryItemSkeleton";
 import { useFocusEffect } from "expo-router";
@@ -45,10 +43,7 @@ function HistoryScreen() {
 
   const {
     user,
-    history,
     displayItems,
-    activeFilters,
-    onFilterChange,
     refreshing,
     loadingMore,
     cloudLoading,
@@ -57,7 +52,6 @@ function HistoryScreen() {
     onRefresh,
     handleEndReached,
     deleteItem,
-    scanStats,
   } = useHistory();
 
   const { onTabScroll, resetTabBar } = useTabBarScroll();
@@ -89,11 +83,6 @@ function HistoryScreen() {
   useEffect(() => {
     if (searchVisible) resetHeader();
   }, [searchVisible, resetHeader]);
-
-  const filterOptions = useMemo(
-    () => getActiveFilters(history, scanStats, user),
-    [history, scanStats, user]
-  );
 
   // Precompute a searchable-text index per item (id → lowercased tokens).
   // This ensures parseAnyPaymentQr is called once per displayItems change,
@@ -144,11 +133,10 @@ function HistoryScreen() {
       user={user}
       cloudLoading={cloudLoading}
       searchQuery={searchQuery}
-      activeFilters={activeFilters}
       colors={colors}
       fontSize={rf}
     />
-  ), [user, cloudLoading, searchQuery, activeFilters, colors, rf]);
+  ), [user, cloudLoading, searchQuery, colors, rf]);
 
   const keyExtractor = useCallback((row: ListRow) => row.kind === "header" ? row.id : row.item.id, []);
   const getItemType  = useCallback((row: ListRow) => row.kind === "header" ? "header" : "item", []);
@@ -182,14 +170,6 @@ function HistoryScreen() {
 
           {user && cloudError && !searchVisible && (
             <CloudErrorBanner onRetry={onRefresh} colors={colors} fontSize={rf} />
-          )}
-
-          {!searchVisible && (
-            <FilterBar
-              filters={filterOptions}
-              activeFilters={activeFilters}
-              onFilterChange={onFilterChange}
-            />
           )}
 
           {!isOnline && user && !searchVisible && (

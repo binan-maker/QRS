@@ -12,43 +12,6 @@ export interface ScanItem {
   verdict?: "safe" | "caution" | "flagged" | "unknown";
 }
 
-export interface ScanStats {
-  total: number;
-  payment: number;
-  url: number;
-  contact: number;
-  wifi: number;
-  others: number;
-}
-
-const PAYMENT_TYPES = new Set([
-  "payment",
-  "paymentlink",
-  "paypal",
-  "venmo",
-  "mobilepay",
-  "scantopay",
-  "razorpay",
-  "upi",
-  "crypto",
-]);
-
-const CONTACT_TYPES = new Set([
-  "contact",
-  "phone",
-  "email",
-  "sms",
-  "whatsapp",
-  "telegram",
-]);
-
-const ALL_KNOWN_TYPES = new Set([
-  "url",
-  "wifi",
-  ...PAYMENT_TYPES,
-  ...CONTACT_TYPES,
-]);
-
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Cache timestamp for throttling rapid focus refetches
@@ -434,39 +397,4 @@ export async function clearAllUserScans(userId?: string | null): Promise<void> {
   }
 
   lastCachedScans = [];
-}
-
-/**
- * Computes statistics from scan items matching mobile categories.
- */
-export function computeScanStats(scans: ScanItem[]): ScanStats {
-  let payment = 0;
-  let url = 0;
-  let contact = 0;
-  let wifi = 0;
-  let others = 0;
-
-  for (const s of scans) {
-    const type = (s.contentType || "").toLowerCase();
-    if (type === "url") {
-      url++;
-    } else if (type === "wifi") {
-      wifi++;
-    } else if (PAYMENT_TYPES.has(type) || s.content.toLowerCase().startsWith("upi://")) {
-      payment++;
-    } else if (CONTACT_TYPES.has(type)) {
-      contact++;
-    } else {
-      others++;
-    }
-  }
-
-  return {
-    total: scans.length,
-    payment,
-    url,
-    contact,
-    wifi,
-    others,
-  };
 }

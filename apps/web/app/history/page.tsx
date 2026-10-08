@@ -13,37 +13,9 @@ import {
 import { HistoryItemCard } from "@/components/history";
 import { BottomTabBar } from "@/components/navigation/BottomTabBar";
 import { groupByDate } from "@features/history/utils/date-utils";
-import {
-  FILTERS,
-  PAYMENT_TYPES,
-  CONTACT_TYPES,
-  ALL_KNOWN_TYPES,
-} from "@features/history/utils/constants";
-import { toggleFilter, itemMatchesFilters } from "@features/history/utils/filter-utils";
 import { buildSearchIndex, matchesSearchIndexed } from "@features/history/utils/search-utils";
-import type { FilterKey, ActiveFilters, ListRow } from "@features/history/types";
+import type { ListRow } from "@features/history/types";
 import styles from "./history.module.css";
-
-const FILTER_ICONS: Record<string, string> = {
-  all: "apps-outline",
-  payment: "card-outline",
-  url: "globe-outline",
-  contact: "person-outline",
-  wifi: "wifi-outline",
-  others: "ellipsis-horizontal-circle-outline",
-};
-
-const FILTER_ICONS_ACTIVE: Record<string, string> = {
-  all: "apps",
-  payment: "card",
-  url: "globe",
-  contact: "person",
-  wifi: "wifi",
-  others: "ellipsis-horizontal-circle",
-};
-
-const PAYMENT_SET = new Set<string>(PAYMENT_TYPES);
-const CONTACT_SET = new Set<string>(CONTACT_TYPES);
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -68,9 +40,6 @@ export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-
-  // Filter state
-  const [activeFilters, setActiveFilters] = useState<ActiveFilters>(["all"]);
 
   // Debounce search query
   useEffect(() => {
@@ -158,83 +127,16 @@ export default function HistoryPage() {
     };
   }, [loadData, authLoading]);
 
-  // Compute filter options & counts matching mobile getActiveFilters
-  const filterOptions = useMemo(() => {
-    let paymentCount = 0;
-    let urlCount = 0;
-    let contactCount = 0;
-    let wifiCount = 0;
-    let othersCount = 0;
-
-    for (let i = 0; i < scans.length; i++) {
-      const ct = (scans[i].contentType || "").toLowerCase();
-      if (ct === "url") {
-        urlCount++;
-        continue;
-      }
-      if (ct === "wifi") {
-        wifiCount++;
-        continue;
-      }
-      if (PAYMENT_SET.has(ct) || scans[i].content?.toLowerCase().startsWith("upi://")) {
-        paymentCount++;
-        continue;
-      }
-      if (CONTACT_SET.has(ct)) {
-        contactCount++;
-        continue;
-      }
-      if (!ALL_KNOWN_TYPES.has(ct)) {
-        othersCount++;
-      }
-    }
-
-    const counts: Record<string, number> = {
-      all: scans.length,
-      payment: paymentCount,
-      url: urlCount,
-      contact: contactCount,
-      wifi: wifiCount,
-      others: othersCount,
-    };
-
-    return FILTERS.map((f) => ({
-      ...f,
-      count: counts[f.key] ?? 0,
-    }));
-  }, [scans]);
-
-  const handleFilterChange = (key: FilterKey) => {
-    setActiveFilters((prev) => toggleFilter(prev, key));
-  };
-
-  // Filter scans by active filters (aligning with UPI payment detection)
-  const displayItems = useMemo(() => {
-    const contentFilters = activeFilters.filter((k) => k !== "all");
-    if (contentFilters.length === 0) return scans;
-
-    return scans.filter((item) => {
-      const ct = (item.contentType || "").toLowerCase();
-      const isUpi = item.content?.toLowerCase().startsWith("upi://");
-
-      if (contentFilters.includes("payment") && (PAYMENT_SET.has(ct) || isUpi)) {
-        return true;
-      }
-
-      return itemMatchesFilters(item.contentType, contentFilters);
-    });
-  }, [activeFilters, scans]);
-
   // Search indexing
-  const searchIndex = useMemo(() => buildSearchIndex(displayItems as any), [displayItems]);
+  const searchIndex = useMemo(() => buildSearchIndex(scans as any), [scans]);
 
   const searchedItems = useMemo(() => {
     const q = debouncedQuery.trim();
-    if (!q) return displayItems;
-    return displayItems.filter((item) =>
+    if (!q) return scans;
+    return scans.filter((item) =>
       matchesSearchIndexed(item as any, searchIndex, q)
     );
-  }, [displayItems, searchIndex, debouncedQuery]);
+  }, [scans, searchIndex, debouncedQuery]);
 
   // Group by date matching mobile date-utils
   const listRows: ListRow[] = useMemo(
@@ -258,8 +160,6 @@ export default function HistoryPage() {
     },
     [user?.id, scans]
   );
-
-  const isFiltered = !activeFilters.includes("all") && activeFilters.length > 0;
 
   return (
     <main className={styles.container}>
@@ -286,7 +186,7 @@ export default function HistoryPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search URLs, payments, text…"
+                placeholder="Search history…"
                 className={styles.searchInput}
                 autoComplete="off"
                 autoCorrect="off"
@@ -355,42 +255,6 @@ export default function HistoryPage() {
             </div>
           )}
 
-          {/* Filter Bar */}
-          {!searchVisible && (
-            <div className={styles.filterScroll} role="tablist" aria-label="History categories">
-              {filterOptions.map((f) => {
-                const isActive = activeFilters.includes(f.key);
-                const iconName = (isActive
-                  ? FILTER_ICONS_ACTIVE[f.key]
-                  : FILTER_ICONS[f.key]) as any;
-                const showCount = f.key === "all" && typeof f.count === "number" && f.count > 0;
-
-                return (
-                  <button
-                    key={f.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    onClick={() => handleFilterChange(f.key)}
-                    className={`${styles.chip} ${isActive ? styles.chipActive : ""}`}
-                  >
-                    <Ionicons
-                      name={iconName || "apps-outline"}
-                      size={13}
-                      color={isActive ? "#ffffff" : "var(--text-secondary)"}
-                    />
-                    <span>{f.label}</span>
-                    {showCount && (
-                      <span className={styles.chipBadge}>
-                        {f.count! > 99 ? "99+" : f.count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
           {/* Search Results Count Row */}
           {searchVisible && searchQuery.trim() && searchedItems.length > 0 && (
             <div className={styles.searchResultsRow}>
@@ -446,17 +310,11 @@ export default function HistoryPage() {
             </Link>
           </div>
         ) : searchedItems.length === 0 ? (
-          /* Empty state for search, filter, or zero items */
+          /* Empty state for search or zero items */
           <div className={styles.emptyWrap}>
             <div className={styles.emptyIconWrapMuted}>
               <Ionicons
-                name={
-                  searchQuery.trim()
-                    ? "search-outline"
-                    : isFiltered
-                    ? "filter-outline"
-                    : "time-outline"
-                }
+                name={searchQuery.trim() ? "search-outline" : "time-outline"}
                 size={32}
                 color="var(--text-muted)"
               />
@@ -464,15 +322,11 @@ export default function HistoryPage() {
             <h2 className={styles.emptyTitle}>
               {searchQuery.trim()
                 ? `No results for "${searchQuery}"`
-                : isFiltered
-                ? "No scans match these filters"
                 : "No scans yet"}
             </h2>
             <p className={styles.emptySub}>
               {searchQuery.trim()
-                ? "Try searching by URL, payment name, or QR content"
-                : isFiltered
-                ? "Try removing some filters to see more results"
+                ? "Try searching by domain, name, or QR content"
                 : "Scanned QR codes will appear here"}
             </p>
           </div>

@@ -1,23 +1,16 @@
-import { useState, useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
 import { deleteUserScan } from "@/lib/data-service";
 import { invalidateHistoryCache, invalidateHomeScansCache } from "@/services/cache/qr-cache";
 import { normalizeScanContent } from "@/services/scan-history/dedup";
 import { useHistoryData } from "@/features/history/hooks/useHistoryData";
-import { toggleFilter } from "@/features/history/utils/filter-utils";
-import type { HistoryItem, FilterKey, ActiveFilters } from "@/features/history/types";
+import type { HistoryItem } from "@/features/history/types";
 
-export type { HistoryItem, FilterKey, ActiveFilters };
+export type { HistoryItem };
 
 export function useHistory() {
-  const [activeFilters, setActiveFilters] = useState<ActiveFilters>(["all"]);
-
-  const handleFilterChange = useCallback((key: FilterKey) => {
-    setActiveFilters((prev) => toggleFilter(prev, key));
-  }, []);
-
-  const data = useHistoryData(activeFilters);
+  const data = useHistoryData();
   const {
     user,
     queryClient,
@@ -27,15 +20,8 @@ export function useHistory() {
     loadingMore,
     fetchNextPage,
     refetchCloud,
-    refetchStats,
     setRefreshing,
   } = data;
-
-  // Reset filter state when the signed-in account changes so a new user never
-  // sees filter selections left over from the previous account's session.
-  useEffect(() => {
-    setActiveFilters(["all"]);
-  }, [user?.id]);
 
   // ── Delete a scan item ─────────────────────────────────────────────────────
   const deleteItem = useCallback(async (item: HistoryItem) => {
@@ -85,12 +71,6 @@ export function useHistory() {
       try {
         if (user?.id) await deleteUserScan(user.id, item.id, targetQrId);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        // Invalidate stats so badge counts update
-        queryClient.invalidateQueries({ queryKey: ["scan-stats", user?.id] });
-        // Mark the history + home queries stale (refetchType:'none' = don't
-        // trigger an immediate background fetch, just let the next mount/focus
-        // refetch naturally). The optimistic removal above already gives instant
-        // visual feedback; this ensures the next load is always authoritative.
         queryClient.invalidateQueries({ queryKey: cloudKey,          refetchType: "none" });
         queryClient.invalidateQueries({ queryKey: ["home-recent-scans", user?.id], refetchType: "none" });
         // Bust disk caches so the pre-warm on next launch doesn't re-seed stale data
@@ -111,33 +91,22 @@ export function useHistory() {
       if (user?.id) invalidateHistoryCache(user.id);
       await loadLocalHistory(user?.id ?? null);
       if (user?.id) {
-        // Individual promise rejections (e.g. Firestore offline) are caught
-        // by React Query internally and surfaced via cloudError — we don't
-        // rethrow so the finally block always runs and the spinner stops.
-        await Promise.all([
-          refetchCloud().catch(() => {}),
-          refetchStats().catch(() => {}),
-        ]);
+        await refetchCloud().catch(() => {});
       }
     } finally {
-      // Always stop the spinner — even if a network error occurs.
-      // Previously, an unhandled rejection left RefreshControl stuck spinning.
       setRefreshing(false);
     }
-  }, [user?.id, loadLocalHistory, refetchCloud, refetchStats, setRefreshing]);
+  }, [user?.id, loadLocalHistory, refetchCloud, setRefreshing]);
 
   // ── Load next page ─────────────────────────────────────────────────────────
   const handleEndReached = useCallback(() => {
     // Guard: user may have signed out mid-scroll; skip if no active session.
     if (!user?.id) return;
     if (cloudHasMore && !loadingMore) fetchNextPage();
-  }, [user?.id, activeFilters, cloudHasMore, loadingMore, fetchNextPage]);
+  }, [user?.id, cloudHasMore, loadingMore, fetchNextPage]);
 
   return {
     ...data,
-    activeFilters,
-    setActiveFilters,
-    onFilterChange: handleFilterChange,
     deleteItem,
     onRefresh,
     handleEndReached,

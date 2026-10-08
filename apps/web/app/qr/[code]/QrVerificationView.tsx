@@ -202,48 +202,41 @@ function QrContentCard({
     }
   };
 
-  // ── 0. Payment Card (1:1 styling with mobile QrContentCard Payment) ──
+  // ── 0. Payment Card (clean card + Copy button only) ──
   if (isPayment) {
     const parsed = parseAnyPaymentQr(cleanContent);
-    const appTitle = parsed?.appDisplayName || "Payment QR";
     const recipientAddress = parsed?.vpa || parsed?.recipientId || cleanContent;
-    const isWebLink = /^https?:\/\//i.test(cleanContent);
+    const headerTitle = parsed?.recipientName || recipientAddress || "Content";
 
-    let formattedAmount = "";
+    const stripParts: string[] = [recipientAddress];
     if (parsed?.isAmountPreFilled && parsed.amount) {
       const amt = parseFloat(parsed.amount);
       if (!isNaN(amt)) {
-        if (parsed.appCategory === "upi_india" || parsed.appCategory === "india_wallet") {
-          formattedAmount = `₹${amt.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
-        } else if (parsed.app === "pix") {
-          formattedAmount = `R$ ${amt.toFixed(2)}`;
-        } else if (parsed.currency) {
-          formattedAmount = `${parsed.currency} ${amt.toLocaleString()}`;
-        } else {
-          formattedAmount = `${amt.toLocaleString()}`;
-        }
+        stripParts.push(
+          parsed.currency
+            ? `${parsed.currency} ${amt.toLocaleString()}`
+            : `${amt.toLocaleString()}`
+        );
       } else {
-        formattedAmount = `${parsed.currency ? parsed.currency + " " : ""}${parsed.amount}`;
+        stripParts.push(
+          `${parsed.currency ? parsed.currency + " " : ""}${parsed.amount}`
+        );
       }
     }
+    if (parsed?.note) stripParts.push(parsed.note);
+    const stripText = stripParts.join(" • ");
 
     return (
-      <section
-        className={`${styles.contentCard} ${styles.paymentCard}`}
-        aria-label="Payment QR destination"
-      >
-        {/* Header */}
+      <section className={styles.contentCard} aria-label="QR content">
         <div className={styles.contentCardRow}>
-          <div className={styles.paymentHeaderLeft}>
-            <Ionicons name="card" size={18} color={colors.safe} />
-            <strong className={styles.domainTitle}>Payment QR Code</strong>
-            <span className={styles.paymentTypeBadge}>{appTitle}</span>
-          </div>
+          <strong className={styles.domainTitle} title={headerTitle}>
+            {headerTitle}
+          </strong>
           <button
             type="button"
-            onClick={() => void handleCopy(cleanContent)}
+            onClick={() => void handleCopy(recipientAddress)}
             className={`${styles.copyBtn} ${copied ? styles.copyBtnCopied : ""}`}
-            aria-label="Copy payment data"
+            aria-label="Copy ID"
           >
             <Ionicons
               name={copied ? "checkmark-circle" : "copy-outline"}
@@ -254,141 +247,23 @@ function QrContentCard({
           </button>
         </div>
 
-        {/* Network & App Identity Banner */}
-        <div className={styles.paymentBanner}>
-          <div className={styles.paymentIconRing}>
-            <Ionicons name="card" size={22} color={colors.safe} />
-          </div>
-          <div className={styles.paymentBannerTextCol}>
-            <span className={styles.paymentBannerTitle}>{appTitle}</span>
-            <span className={styles.paymentBannerSub}>
-              {parsed?.region ? `${parsed.region} • ` : ""}
-              {parsed?.appCategory === "upi_india"
-                ? "UPI Instant Payment"
-                : parsed?.appCategory === "crypto"
-                  ? "Cryptocurrency Transfer"
-                  : isWebLink
-                    ? "Online Payment Gateway"
-                    : "Digital Payment Network"}
-            </span>
-          </div>
-        </div>
-
-        {/* Amount Box */}
-        {parsed?.isAmountPreFilled && formattedAmount ? (
-          <div className={styles.paymentAmountBox}>
-            <div className={styles.paymentAmountRow}>
-              <span className={styles.paymentAmountLabel}>Pre-Filled Amount</span>
-              <span className={styles.paymentAmountAlert}>
-                <Ionicons name="alert-circle" size={12} color="#b45309" />
-                Fixed Amount
-              </span>
-            </div>
-            <span className={styles.paymentAmountValue}>{formattedAmount}</span>
-            <p className={styles.paymentAmountHint}>
-              Verify this requested amount carefully before authorising payment.
-            </p>
-          </div>
-        ) : (
-          <div className={styles.paymentOpenAmountBox}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.primary} />
-            <span>Amount not pre-filled. You specify the amount in your payment app.</span>
-          </div>
-        )}
-
-        {/* Structured Details */}
-        <div className={styles.paymentDetailsCard}>
-          {parsed?.recipientName && (
-            <div className={styles.paymentDetailRow}>
-              <span className={styles.paymentDetailLabel}>Payee / Merchant</span>
-              <span className={styles.paymentDetailValue}>{parsed.recipientName}</span>
-            </div>
-          )}
-
-          <div className={styles.paymentDetailRow}>
-            <span className={styles.paymentDetailLabel}>
-              {parsed?.vpa ? "UPI ID / VPA" : "Payment Address"}
-            </span>
-            <div className={styles.paymentAddressWrap}>
-              <span className={styles.paymentAddressText}>{recipientAddress}</span>
-              <button
-                type="button"
-                onClick={() => void handleCopy(recipientAddress)}
-                className={`${styles.paymentMiniCopyBtn} ${copied ? styles.paymentMiniCopyBtnCopied : ""}`}
-                title="Copy payment address"
-                aria-label="Copy payment address"
-              >
-                <Ionicons
-                  name={copied ? "checkmark" : "copy-outline"}
-                  size={12}
-                  color={copied ? colors.safe : colors.textMuted}
-                />
-              </button>
-            </div>
-          </div>
-
-          {parsed?.note && (
-            <div className={styles.paymentDetailRow}>
-              <span className={styles.paymentDetailLabel}>Note / Remarks</span>
-              <span className={styles.paymentDetailValue}>{parsed.note}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Security Warning Box */}
-        <div className={styles.paymentAdvisoryBox}>
-          <Ionicons
-            name="shield-checkmark"
-            size={16}
-            color={colors.primary}
-            style={{ flexShrink: 0, marginTop: 1 }}
-          />
-          <span>
-            Never enter your UPI PIN or password to receive money. Transfers are immediate and
-            irreversible once sent.
-          </span>
-        </div>
-
-        {/* Action Buttons */}
-        <div className={styles.paymentActionGroup}>
-          <a
-            href={cleanContent}
-            target={isWebLink ? "_blank" : undefined}
-            rel={isWebLink ? "noopener noreferrer" : undefined}
-            className={styles.payPrimaryBtn}
-          >
-            <Ionicons name="card-outline" size={16} color="#FFFFFF" />
-            <span>{isWebLink ? "Open Payment Link" : `Pay with ${appTitle}`}</span>
-          </a>
-
-          <button
-            type="button"
-            onClick={() => void handleCopy(cleanContent)}
-            className={styles.paySecondaryBtn}
-          >
-            <Ionicons
-              name={copied ? "checkmark-circle" : "copy-outline"}
-              size={14}
-              color={copied ? colors.safe : colors.text}
-            />
-            <span>{copied ? "Details Copied!" : "Copy Payment Details"}</span>
-          </button>
+        <div className={styles.urlStrip} title={stripText}>
+          <span>{stripText}</span>
         </div>
       </section>
     );
   }
 
-  // ── 1. Phone Card (1:1 styling with mobile QrContentCard) ──
+  // ── 1. Phone Card (clean card + Copy button only) ──
   if (isPhone) {
     const rawNumber = cleanContent.replace(/^tel:/i, "").trim();
     const displayNumber = rawNumber || cleanContent;
-    const callUrl = `tel:${rawNumber || cleanContent}`;
 
     return (
-      <section className={styles.contentCard} aria-label="Phone number destination">
+      <section className={styles.contentCard} aria-label="Phone number">
         <div className={styles.contentCardRow}>
-          <strong className={styles.domainTitle}>
-            Phone Number
+          <strong className={styles.domainTitle} title={displayNumber}>
+            {displayNumber}
           </strong>
           <button
             type="button"
@@ -408,19 +283,11 @@ function QrContentCard({
         <div className={styles.urlStrip} title={displayNumber}>
           <span>{displayNumber}</span>
         </div>
-
-        <a
-          href={callUrl}
-          className={styles.openBtn}
-        >
-          <span>Call Number</span>
-          <Ionicons name="call-outline" size={14} color={colors.primary} />
-        </a>
       </section>
     );
   }
 
-  // ── 2. Website Card ──
+  // ── 2. Website Card (ONLY Website QRs have the Open button) ──
   if (isUrl) {
     const fullUrl = /^https?:\/\//i.test(cleanContent)
       ? cleanContent
@@ -471,14 +338,14 @@ function QrContentCard({
     );
   }
 
-  // ── 3. Email Card ──
+  // ── 3. Email Card (clean card + Copy button only) ──
   if (isEmail) {
-    const emailAddress = cleanContent.replace(/^mailto:/i, "").split("?")[0].trim();
+    const emailAddress = cleanContent.replace(/^mailto:/i, "").split("?")[0].trim() || cleanContent;
     return (
-      <section className={styles.contentCard} aria-label="Email destination">
+      <section className={styles.contentCard} aria-label="Email address">
         <div className={styles.contentCardRow}>
-          <strong className={styles.domainTitle}>
-            Email Address
+          <strong className={styles.domainTitle} title={emailAddress}>
+            {emailAddress}
           </strong>
           <button
             type="button"
@@ -498,32 +365,24 @@ function QrContentCard({
         <div className={styles.urlStrip} title={emailAddress}>
           <span>{emailAddress}</span>
         </div>
-
-        <a
-          href={cleanContent.startsWith("mailto:") ? cleanContent : `mailto:${cleanContent}`}
-          className={styles.openBtn}
-        >
-          <span>Send Email</span>
-          <Ionicons name="mail-outline" size={14} color={colors.primary} />
-        </a>
       </section>
     );
   }
 
-  // ── 4. SMS Card ──
+  // ── 4. SMS Card (clean card + Copy button only) ──
   if (isSms) {
-    const smsTarget = cleanContent.replace(/^smsto?:/i, "").trim();
+    const smsTarget = cleanContent.replace(/^smsto?:/i, "").trim() || cleanContent;
     return (
-      <section className={styles.contentCard} aria-label="SMS destination">
+      <section className={styles.contentCard} aria-label="SMS content">
         <div className={styles.contentCardRow}>
-          <strong className={styles.domainTitle}>
-            SMS Message
+          <strong className={styles.domainTitle} title={smsTarget}>
+            {smsTarget}
           </strong>
           <button
             type="button"
             onClick={() => void handleCopy(smsTarget)}
             className={`${styles.copyBtn} ${copied ? styles.copyBtnCopied : ""}`}
-            aria-label="Copy SMS details"
+            aria-label="Copy SMS content"
           >
             <Ionicons
               name={copied ? "checkmark-circle" : "copy-outline"}
@@ -537,14 +396,6 @@ function QrContentCard({
         <div className={styles.urlStrip} title={smsTarget}>
           <span>{smsTarget}</span>
         </div>
-
-        <a
-          href={cleanContent.startsWith("sms:") || cleanContent.startsWith("smsto:") ? cleanContent : `sms:${cleanContent}`}
-          className={styles.openBtn}
-        >
-          <span>Send SMS</span>
-          <Ionicons name="chatbubble-outline" size={14} color={colors.primary} />
-        </a>
       </section>
     );
   }

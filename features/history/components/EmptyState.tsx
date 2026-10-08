@@ -1,10 +1,9 @@
-import React, { memo, type ComponentProps } from "react";
+import React, { memo } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
-import type { ActiveFilters } from "@/features/history/types";
 
 // Static indices array — avoids Array.from() allocation on every render.
 // Length matches SKELETON_COUNT (8) from constants.
@@ -14,7 +13,6 @@ interface Props {
   user:          any;
   cloudLoading:  boolean;
   searchQuery:   string;
-  activeFilters: ActiveFilters;
   colors:        any;
   fontSize:      (n: number) => number;
 }
@@ -23,7 +21,6 @@ const EmptyState = memo(function EmptyState({
   user,
   cloudLoading,
   searchQuery,
-  activeFilters,
   colors,
   fontSize,
 }: Props) {
@@ -83,24 +80,11 @@ const EmptyState = memo(function EmptyState({
           No results for "{searchQuery}"
         </Text>
         <Text style={[styles.sub, { color: colors.textMuted, fontSize: fontSize(13) }]}>
-          Try searching by URL, payment name, or QR content
+          Try searching by domain, name, or QR content
         </Text>
       </View>
     );
   }
-
-  const isFiltered  = !activeFilters.includes("all") && activeFilters.length > 0;
-
-  const emptyIcon: ComponentProps<typeof Ionicons>["name"] =
-    isFiltered ? "filter-outline" : "time-outline";
-
-  const emptyTitle = isFiltered
-    ? "No scans match these filters"
-    : "No scans yet";
-
-  const emptySub = isFiltered
-    ? "Try removing some filters to see more results"
-    : "Scanned QR codes will appear here";
 
   return (
     <View style={styles.wrap}>
@@ -108,13 +92,13 @@ const EmptyState = memo(function EmptyState({
         colors={[colors.surfaceBorder + "80", colors.surfaceBorder + "30"]}
         style={styles.iconWrap}
       >
-        <Ionicons name={emptyIcon} size={32} color={colors.textMuted} />
+        <Ionicons name="time-outline" size={32} color={colors.textMuted} />
       </LinearGradient>
       <Text style={[styles.title, { color: colors.textSecondary, fontSize: fontSize(17) }]}>
-        {emptyTitle}
+        No scans yet
       </Text>
       <Text style={[styles.sub, { color: colors.textMuted, fontSize: fontSize(13) }]}>
-        {emptySub}
+        Scanned QR codes will appear here
       </Text>
     </View>
   );

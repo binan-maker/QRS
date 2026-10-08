@@ -62,10 +62,8 @@ export function analyzeAnyPaymentQr(parsed: ParsedPaymentQr): PaymentSafetyResul
     const amt = parseFloat(parsed.amount);
     if (amt > 0) {
       let formattedAmt: string;
-      if (parsed.appCategory === "upi_india" || parsed.appCategory === "india_wallet") {
+      if (parsed.appCategory === "upi_india") {
         formattedAmt = `₹${amt.toLocaleString("en-IN")}`;
-      } else if (parsed.app === "pix") {
-        formattedAmt = `R$${amt.toFixed(2)}`;
       } else if (parsed.app === "sepa_transfer") {
         formattedAmt = `€${amt.toFixed(2)}`;
       } else {

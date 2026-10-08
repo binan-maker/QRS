@@ -1,5 +1,4 @@
-import { useState, useRef, useMemo, useCallback } from "react";
-import { Linking } from "react-native";
+import { useMemo, useCallback } from "react";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/shared/utils/haptics";
 import { smartOpenContent } from "@/shared/utils/smart-open";
@@ -8,7 +7,6 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useQrData, type QrDetail } from "./useQrData";
 import { useQrReports } from "./useQrReports";
 import { useQrComments, type CommentItem } from "./useQrComments";
-import type { AppColors } from "@/shared/constants/colors";
 import { parseAnyPaymentQr } from "@/services/analysis";
 import {
   calculateFallbackTrustScore,
@@ -86,16 +84,10 @@ export function useQrDetail(id: string, hint?: { content: string; contentType: s
   const handleOpenContent = useCallback(async () => {
     if (!content) return;
     if (contentType === "payment" || parsedPayment) {
-      try {
-        const canOpen = await Linking.canOpenURL(content).catch(() => false);
-        if (canOpen) {
-          await Linking.openURL(content);
-          return;
-        }
-      } catch {}
       const copyValue =
         parsedPayment?.vpa ||
         (parsedPayment?.recipientId?.includes("@") ? parsedPayment.recipientId : null) ||
+        parsedPayment?.recipientId ||
         content;
       await Clipboard.setStringAsync(copyValue);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

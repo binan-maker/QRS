@@ -22,18 +22,12 @@ function getPaymentData(content: string) {
   try {
     const parsed = parseAnyPaymentQr(content);
     return {
-      name: parsed?.recipientName || parsed?.vpa || "Payment",
-      amount: parsed?.amount || null,
+      name: parsed?.recipientName || parsed?.vpa || null,
       vpa: parsed?.vpa || null,
     };
   } catch {
     return null;
   }
-}
-
-function formatAmount(amount?: number | string | null) {
-  if (!amount) return null;
-  return `₹${Number(amount).toLocaleString("en-IN")}`;
 }
 
 export function HistoryItemCard({
@@ -58,11 +52,6 @@ export function HistoryItemCard({
         ? getPaymentData(item.content)
         : null,
     [item.contentType, item.content]
-  );
-
-  const formattedAmount = useMemo(
-    () => (paymentData?.amount ? formatAmount(paymentData.amount) : null),
-    [paymentData]
   );
 
   const [tick, setTick] = useState(0);
@@ -185,13 +174,8 @@ export function HistoryItemCard({
         <div className={styles.body}>
           <div className={styles.titleRow}>
             <span className={styles.title}>
-              {paymentData ? paymentData.name : displayLabel}
+              {paymentData?.name || displayLabel}
             </span>
-            {formattedAmount && (
-              <div className={styles.amountPill}>
-                <span className={styles.amountText}>{formattedAmount}</span>
-              </div>
-            )}
           </div>
 
           {subtitle && <p className={styles.subtitle}>{subtitle}</p>}

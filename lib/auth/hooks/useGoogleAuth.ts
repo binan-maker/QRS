@@ -32,7 +32,7 @@ if (Platform.OS !== "web") {
     GoogleSignin.configure({
       webClientId: ENV.GOOGLE_WEB_CLIENT_ID,
       iosClientId: ENV.GOOGLE_IOS_CLIENT_ID,
-      forceCodeForRefreshToken: true,
+      forceCodeForRefreshToken: false,
       offlineAccess: false,
     });
   } catch {

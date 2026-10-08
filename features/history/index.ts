@@ -10,7 +10,6 @@ export { useSearch }                     from "./hooks/useSearch";
 // Components
 export { default as HistoryItem }        from "./components/HistoryItem";
 export { default as HistoryItemSkeleton } from "./components/HistoryItemSkeleton";
-export { default as FilterBar }          from "./components/FilterBar";
 export { default as HistoryHeader }      from "./components/HistoryHeader";
 export { SectionHeader }                 from "@/shared/components/ui/SectionHeader";
 export { default as EmptyState }         from "./components/EmptyState";
@@ -24,5 +23,4 @@ export type { HistoryItem as HistoryItemType, ListRow } from "./types";
 // Utils
 export { groupByDate }                                    from "./utils/date-utils";
 export { buildSearchIndex, matchesSearchIndexed }         from "./utils/search-utils";
-export { getActiveFilters }              from "./utils/filter-utils";
-export { SKELETON_COUNT, PAGE_SIZE, STALE_MS, FILTERS } from "./utils/constants";
+export { SKELETON_COUNT, PAGE_SIZE, STALE_MS }            from "./utils/constants";
