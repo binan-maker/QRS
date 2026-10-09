@@ -1,4 +1,4 @@
-import React, { useCallback, memo } from "react";
+import React, { useCallback, memo, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
+  StyleSheet,
 } from "react-native";
 import { Image } from "expo-image";
 import { safePush } from "@/shared/utils/navigation";
@@ -16,6 +17,7 @@ import Animated, {
   FadeInDown,
   FadeIn,
 } from "react-native-reanimated";
+import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useProfile } from "@/features/profile/hooks/useProfile";
@@ -25,6 +27,8 @@ import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import ImageCropModal from "@/features/profile/components/ImageCropModal";
 import GuestView from "@/features/profile/components/GuestView";
+import ReferralModal from "@/features/profile/components/ReferralModal";
+import { getUserRewardWallet, type RewardWallet } from "@/services/rewards";
 import { styles } from "@/features/profile/styles";
 
 // ── Module-level animation presets (created once, not per render) ──────────────
@@ -83,6 +87,29 @@ function ProfileScreen() {
   const onCamera        = useCallback(() => handlePickPhoto("camera"),  [handlePickPhoto]);
   const onGallery       = useCallback(() => handlePickPhoto("gallery"), [handlePickPhoto]);
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [referralModalOpen, setReferralModalOpen] = useState(false);
+  const [rewardWallet, setRewardWallet] = useState<RewardWallet | null>(null);
+
+  const loadWallet = useCallback(async () => {
+    if (user?.id) {
+      try {
+        const w = await getUserRewardWallet(user.id);
+        setRewardWallet(w);
+      } catch {}
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    void loadWallet();
+  }, [loadWallet]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadWallet();
+    }, [loadWallet])
+  );
+
   // While Supabase is resolving the auth state on cold start, show a plain
   // background instead of GuestView.  This prevents the mount/unmount cycle
   // of GuestView → full profile that causes every Animated.View entering
@@ -122,6 +149,22 @@ function ProfileScreen() {
         <Animated.View entering={ENTER_TOP_BAR} style={styles.topBar}>
           <Text style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
           <View style={styles.topBarActions}>
+            {/* Google Pay Style Three Dots (⋮) Menu Button */}
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setMenuOpen((prev) => !prev);
+              }}
+              style={[
+                styles.iconBtn,
+                { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+              ]}
+              hitSlop={8}
+              accessibilityLabel="More options"
+            >
+              <Ionicons name="ellipsis-vertical" size={17} color={colors.textSecondary} />
+            </Pressable>
+
             <Animated.View entering={ENTER_SETTINGS_BTN}>
               <Pressable
                 onPress={goToSettings}
@@ -133,6 +176,102 @@ function ProfileScreen() {
             </Animated.View>
           </View>
         </Animated.View>
+
+        {/* Google Pay Style Dropdown Popover */}
+        {menuOpen && (
+          <View
+            style={{
+              position: "absolute",
+              top: topInset + 46,
+              right: 18,
+              backgroundColor: colors.surface,
+              borderColor: colors.surfaceBorder,
+              borderWidth: 1,
+              borderRadius: 16,
+              padding: 6,
+              minWidth: 200,
+              zIndex: 9999,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.25,
+              shadowRadius: 12,
+              elevation: 10,
+            }}
+          >
+            <Pressable
+              onPress={() => {
+                setMenuOpen(false);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setReferralModalOpen(true);
+              }}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                paddingVertical: 10,
+                paddingHorizontal: 12,
+                borderRadius: 10,
+                backgroundColor: pressed ? `${colors.primary}15` : "transparent",
+              })}
+            >
+              <Ionicons name="gift-outline" size={18} color={colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, fontWeight: "700", color: colors.text }}>
+                  Referral code
+                </Text>
+                <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                  {rewardWallet?.isReferralEligible
+                    ? "Enter code"
+                    : rewardWallet?.referredByCode
+                      ? "Applied"
+                      : "Window closed"}
+                </Text>
+              </View>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                setMenuOpen(false);
+                safePush("/(tabs)/rewards");
+              }}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                paddingVertical: 10,
+                paddingHorizontal: 12,
+                borderRadius: 10,
+                backgroundColor: pressed ? `${colors.primary}15` : "transparent",
+              })}
+            >
+              <Ionicons name="sparkles-outline" size={18} color="#F59E0B" />
+              <Text style={{ fontSize: 13, fontWeight: "600", color: colors.text }}>
+                Rewards &amp; Offers
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                setMenuOpen(false);
+                goToSettings();
+              }}
+              style={({ pressed }) => ({
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                paddingVertical: 10,
+                paddingHorizontal: 12,
+                borderRadius: 10,
+                backgroundColor: pressed ? `${colors.primary}15` : "transparent",
+              })}
+            >
+              <Ionicons name="settings-outline" size={18} color={colors.textSecondary} />
+              <Text style={{ fontSize: 13, fontWeight: "600", color: colors.text }}>
+                Settings
+              </Text>
+            </Pressable>
+          </View>
+        )}
 
         {/* ── AVATAR + IDENTITY ─────────────────────────────────── */}
         <Animated.View entering={ENTER_AVATAR_SEC} style={styles.avatarSection}>
@@ -253,6 +392,16 @@ function ProfileScreen() {
         imageUri={pendingImageUri}
         onConfirm={handleCropConfirm}
         onCancel={handleCropCancel}
+      />
+      <ReferralModal
+        visible={referralModalOpen}
+        onClose={() => setReferralModalOpen(false)}
+        userId={user.id}
+        wallet={rewardWallet}
+        onApplied={() => {
+          void loadWallet();
+        }}
+        colors={colors}
       />
     </View>
   );

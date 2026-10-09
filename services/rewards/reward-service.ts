@@ -6,6 +6,7 @@ import {
   selectOfferForTier,
 } from "./offers-catalog";
 import type {
+  ReferralRecord,
   RewardActionOutcome,
   RewardLimitsConfig,
   RewardOffer,
@@ -13,13 +14,94 @@ import type {
   ScratchCardItem,
   ScratchCardSource,
   ScratchCardTier,
+  UserReferralsDashboard,
 } from "./types";
 
 const LOCAL_WALLET_PREFIX = "binro_reward_wallet_v1_";
 const LOCAL_CARDS_PREFIX = "binro_scratch_cards_v1_";
 const LOCAL_SCAN_SET_PREFIX = "binro_reward_scans_v1_";
 const LOCAL_CONTRIB_SET_PREFIX = "binro_reward_contribs_v1_";
+const LOCAL_REFERRALS_PREFIX = "binro_referrals_v1_";
 const PENDING_REFERRAL_CODE_KEY = "binro_pending_referral_code_v1";
+
+const REF_CODE_LETTERS = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+const REF_CODE_DIGITS = "23456789";
+const REF_CODE_CHARS = REF_CODE_LETTERS + REF_CODE_DIGITS;
+
+/**
+ * Generates an immutable, unique 7-character mix of letters and numbers (e.g. yn5i82v, lJ36U2m).
+ */
+export function generate7CharReferralCode(): string {
+  for (let attempt = 0; attempt < 30; attempt++) {
+    let result = "";
+    for (let i = 0; i < 7; i++) {
+      result += REF_CODE_CHARS.charAt(Math.floor(Math.random() * REF_CODE_CHARS.length));
+    }
+    // Strict requirement: must contain both letters and digits
+    if (/[a-zA-Z]/.test(result) && /[0-9]/.test(result)) {
+      return result;
+    }
+  }
+  return "yn5i82v";
+}
+
+/**
+ * Retrieves the user's permanent, immutable 7-character referral code or generates one.
+ * Once assigned, the referral code is permanently locked and CANNOT be changed or replaced.
+ */
+export async function getOrCreateUserReferralCode(userId: string): Promise<string> {
+  const localKey = `binro_user_ref_code_v1_${userId}`;
+  try {
+    const cached = await AsyncStorage.getItem(localKey);
+    if (cached && cached.trim().length > 0) return cached.trim();
+  } catch {}
+
+  try {
+    const { data: userRow } = await supabase
+      .from("users")
+      .select("referral_code")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (userRow?.referral_code && String(userRow.referral_code).trim().length > 0) {
+      const code = String(userRow.referral_code).trim();
+      await AsyncStorage.setItem(localKey, code).catch(() => {});
+      return code;
+    }
+  } catch {}
+
+  // Generate unique 7-character candidate with zero collision guarantee
+  let candidate = generate7CharReferralCode();
+  for (let attempt = 0; attempt < 10; attempt++) {
+    try {
+      const { data: clash } = await supabase
+        .from("users")
+        .select("id")
+        .ilike("referral_code", candidate)
+        .maybeSingle();
+      if (!clash) break;
+      candidate = generate7CharReferralCode();
+    } catch {
+      break;
+    }
+  }
+
+  try {
+    const { error: updateErr } = await supabase
+      .from("users")
+      .update({ referral_code: candidate })
+      .eq("id", userId);
+
+    if (updateErr) {
+      await supabase
+        .from("users")
+        .upsert({ id: userId, referral_code: candidate }, { onConflict: "id" });
+    }
+    await AsyncStorage.setItem(localKey, candidate);
+  } catch {}
+
+  return candidate;
+}
 
 function getTodayDateString(): string {
   return new Date().toISOString().slice(0, 10);
@@ -284,11 +366,41 @@ export async function getUserRewardWallet(userId: string): Promise<RewardWallet>
         lastRewardedScanAt: data.last_rewarded_scan_at ?? local.lastRewardedScanAt ?? null,
         ...milestoneInfo,
       };
+      const ownCode = await getOrCreateUserReferralCode(userId);
+      merged.ownReferralCode = ownCode;
+
+      let hasLocalScans = false;
+      try {
+        const rawScans = await AsyncStorage.getItem(`${LOCAL_SCAN_SET_PREFIX}${userId}`);
+        if (rawScans && JSON.parse(rawScans).length > 0) hasLocalScans = true;
+      } catch {}
+
+      merged.isReferralEligible =
+        !merged.referredByCode &&
+        !merged.referredByUserId &&
+        !hasLocalScans &&
+        (merged.lifetimeEligibleScans || 0) === 0 &&
+        (merged.dailyEligibleScans || 0) === 0;
       await saveLocalWallet(merged);
       return merged;
     }
   } catch {}
 
+  const ownCode = await getOrCreateUserReferralCode(userId);
+  local.ownReferralCode = ownCode;
+
+  let localScansExist = false;
+  try {
+    const rawScans = await AsyncStorage.getItem(`${LOCAL_SCAN_SET_PREFIX}${userId}`);
+    if (rawScans && JSON.parse(rawScans).length > 0) localScansExist = true;
+  } catch {}
+
+  local.isReferralEligible =
+    !local.referredByCode &&
+    !local.referredByUserId &&
+    !localScansExist &&
+    (local.lifetimeEligibleScans || 0) === 0 &&
+    (local.dailyEligibleScans || 0) === 0;
   return local;
 }
 
@@ -800,24 +912,87 @@ export async function applyReferralCodeForUser(
     return { ok: false, message: "A referral code has already been applied to your account." };
   }
 
-  let referrerUserId: string | null = null;
-  try {
-    const { data: userRow } = await supabase
-      .from("users")
-      .select("id, username")
-      .ilike("username", code)
-      .maybeSingle();
+  // GOOGLE PAY RULE: Referral code must be claimed BEFORE making your very first scan!
+  // Once the user performs their first scan, the referral box is disabled forever.
+  const hasRecordedScans =
+    (wallet.lifetimeEligibleScans || 0) > 0 || (wallet.dailyEligibleScans || 0) > 0;
+  if (hasRecordedScans) {
+    return {
+      ok: false,
+      message:
+        "Referral codes can only be claimed before making your very first scan. Because you have already scanned a QR code, this bonus window is closed.",
+    };
+  }
 
-    if (userRow?.id) {
-      referrerUserId = String(userRow.id);
+  // Check local scan history
+  try {
+    const rawScans = await AsyncStorage.getItem(`${LOCAL_SCAN_SET_PREFIX}${invitedUserId}`);
+    if (rawScans && JSON.parse(rawScans).length > 0) {
+      return {
+        ok: false,
+        message:
+          "Referral codes can only be claimed before making your very first scan. Because you have already scanned a QR code, this bonus window is closed.",
+      };
     }
   } catch {}
 
-  if (referrerUserId && referrerUserId === invitedUserId) {
+  // Check Supabase qr_scans table
+  try {
+    const { count: scanCount } = await supabase
+      .from("qr_scans")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", invitedUserId)
+      .eq("is_deleted", false);
+
+    if (typeof scanCount === "number" && scanCount > 0) {
+      return {
+        ok: false,
+        message:
+          "Referral codes can only be claimed before making your very first scan. Because you have already scanned a QR code, this bonus window is closed.",
+      };
+    }
+  } catch {}
+
+  let referrerUserId: string | null = null;
+  let referrerDisplayCode = code;
+  try {
+    // 1. Look up by unique 7-character referral_code
+    const { data: userByCode } = await supabase
+      .from("users")
+      .select("id, referral_code, username")
+      .ilike("referral_code", code)
+      .maybeSingle();
+
+    if (userByCode?.id) {
+      referrerUserId = String(userByCode.id);
+      referrerDisplayCode = userByCode.referral_code || code;
+    } else {
+      // 2. Fallback: look up by username (if an older link or username was used)
+      const { data: userByUname } = await supabase
+        .from("users")
+        .select("id, referral_code, username")
+        .ilike("username", code)
+        .maybeSingle();
+
+      if (userByUname?.id) {
+        referrerUserId = String(userByUname.id);
+        referrerDisplayCode = userByUname.referral_code || userByUname.username || code;
+      }
+    }
+  } catch {}
+
+  if (!referrerUserId) {
+    return {
+      ok: false,
+      message: "Referral code not found. Please verify your friend's 7-character code (e.g. yn5i82v).",
+    };
+  }
+
+  if (referrerUserId === invitedUserId) {
     return { ok: false, message: "You cannot use your own referral code." };
   }
 
-  wallet.referredByCode = code;
+  wallet.referredByCode = referrerDisplayCode;
   wallet.referredByUserId = referrerUserId;
   await persistWalletToSupabase(wallet);
 
@@ -825,30 +1000,75 @@ export async function applyReferralCodeForUser(
     await AsyncStorage.removeItem(PENDING_REFERRAL_CODE_KEY);
   } catch {}
 
-  const isAlreadyActiveScanner = wallet.lifetimeEligibleScans > 0;
+  const isAlreadyActiveScanner = (wallet.lifetimeEligibleScans || 0) > 0;
   const friendCard = await allocateScratchCard({
     userId: invitedUserId,
     tier: "silver",
     sourceType: "referral_friend",
-    sourceLabel: `Gift from @${code}`,
+    sourceLabel: `Gift from friend (${referrerDisplayCode})`,
     status: isAlreadyActiveScanner ? "unlocked" : "locked",
     unlockRequirementText: isAlreadyActiveScanner
       ? null
-      : `Gift from @${code} — Scan your first QR code to unlock & scratch!`,
+      : `Gift from code ${referrerDisplayCode} — Scan your first QR code to unlock & scratch!`,
     offers,
     idempotencyKey: `referral_friend_${invitedUserId}`,
   });
 
   if (referrerUserId) {
+    let invitedUsername = "friend";
+    let invitedDisplayName = "New Scanner";
+    let invitedPhotoUrl: string | null = null;
+    try {
+      const { data: invUser } = await supabase
+        .from("users")
+        .select("username, display_name, photo_url, avatar_url")
+        .eq("id", invitedUserId)
+        .maybeSingle();
+      if (invUser) {
+        invitedUsername = invUser.username ? String(invUser.username).replace(/^@/, "") : "friend";
+        invitedDisplayName = String(invUser.display_name || `@${invitedUsername}`);
+        invitedPhotoUrl = invUser.photo_url || invUser.avatar_url || null;
+      }
+    } catch {}
+
+    const nowIso = new Date().toISOString();
+    const newRefRecord: ReferralRecord = {
+      id: generateId(),
+      referrerUserId,
+      referrerCode: code,
+      invitedUserId,
+      invitedUserUsername: invitedUsername,
+      invitedUserDisplayName: invitedDisplayName,
+      invitedUserPhotoUrl: invitedPhotoUrl,
+      status: isAlreadyActiveScanner ? "qualified" : "pending_first_scan",
+      friendCardId: friendCard.id,
+      referrerCardId: null,
+      qualifiedAt: isAlreadyActiveScanner ? nowIso : null,
+      createdAt: nowIso,
+    };
+
     try {
       await supabase.from("referrals").insert({
+        id: newRefRecord.id,
         referrer_user_id: referrerUserId,
         referrer_code: code,
         invited_user_id: invitedUserId,
-        status: isAlreadyActiveScanner ? "qualified" : "pending_first_scan",
+        status: newRefRecord.status,
         friend_card_id: friendCard.id,
-        qualified_at: isAlreadyActiveScanner ? new Date().toISOString() : null,
+        qualified_at: newRefRecord.qualifiedAt,
+        created_at: nowIso,
+        updated_at: nowIso,
       });
+    } catch {}
+
+    // Save to referrer's local referrals cache for instant zero-latency view
+    try {
+      const raw = await AsyncStorage.getItem(`${LOCAL_REFERRALS_PREFIX}${referrerUserId}`);
+      const list: ReferralRecord[] = raw ? JSON.parse(raw) : [];
+      await AsyncStorage.setItem(
+        `${LOCAL_REFERRALS_PREFIX}${referrerUserId}`,
+        JSON.stringify([newRefRecord, ...list.filter((r) => r.invitedUserId !== invitedUserId)])
+      );
     } catch {}
 
     if (isAlreadyActiveScanner) {
@@ -859,8 +1079,8 @@ export async function applyReferralCodeForUser(
   return {
     ok: true,
     message: isAlreadyActiveScanner
-      ? `Unlocked your Silver Welcome Card from @${code}!`
-      : `Saved gift from @${code}! Scan 1 QR code to unlock your Silver Scratch Card.`,
+      ? `Unlocked your Silver Welcome Card from code ${referrerDisplayCode}!`
+      : `Saved gift from referral code ${referrerDisplayCode}! Scan 1 QR code to unlock your Silver Scratch Card.`,
     card: friendCard,
   };
 }
@@ -902,5 +1122,156 @@ async function qualifyReferralOnFirstScan(
         updated_at: now,
       })
       .eq("id", refRow.id);
+
+    // Increment referrer's wallet referralCount
+    try {
+      const refWallet = await getUserRewardWallet(referrerId);
+      refWallet.referralCount = (refWallet.referralCount || 0) + 1;
+      await persistWalletToSupabase(refWallet);
+    } catch {}
+
+    // Update referrer's local referrals cache
+    try {
+      const raw = await AsyncStorage.getItem(`${LOCAL_REFERRALS_PREFIX}${referrerId}`);
+      if (raw) {
+        const list: ReferralRecord[] = JSON.parse(raw);
+        const updated = list.map((item) =>
+          item.invitedUserId === invitedUserId
+            ? { ...item, status: "qualified" as const, qualifiedAt: now, referrerCardId: referrerCard.id }
+            : item
+        );
+        await AsyncStorage.setItem(`${LOCAL_REFERRALS_PREFIX}${referrerId}`, JSON.stringify(updated));
+      }
+    } catch {}
   } catch {}
 }
+
+/**
+ * Returns full Zerodha/Upstox-grade referral performance metrics and list of invited friends.
+ */
+export async function getUserReferralsDashboard(
+  userId: string,
+  usernameFallback?: string
+): Promise<UserReferralsDashboard> {
+  const code = await getOrCreateUserReferralCode(userId);
+  const referralLink = `https://www.binro.in/invite/${code}`;
+  const shortLink = `https://www.binro.in/r/${code}`;
+
+  let referrals: ReferralRecord[] = [];
+  try {
+    const raw = await AsyncStorage.getItem(`${LOCAL_REFERRALS_PREFIX}${userId}`);
+    if (raw) referrals = JSON.parse(raw);
+  } catch {}
+
+  try {
+    const { data, error } = await supabase
+      .from("referrals")
+      .select(`
+        id,
+        referrer_user_id,
+        referrer_code,
+        invited_user_id,
+        status,
+        qualifying_qr_code_id,
+        friend_card_id,
+        referrer_card_id,
+        qualified_at,
+        created_at
+      `)
+      .eq("referrer_user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      const invitedIds = data.map((r: any) => String(r.invited_user_id)).filter(Boolean);
+      const userMap = new Map<string, { username?: string; displayName?: string; photoUrl?: string | null }>();
+
+      if (invitedIds.length > 0) {
+        try {
+          const { data: userRows } = await supabase
+            .from("users")
+            .select("id, username, display_name, photo_url, avatar_url")
+            .in("id", invitedIds);
+
+          if (userRows) {
+            for (const u of userRows) {
+              userMap.set(String(u.id), {
+                username: u.username ? String(u.username).replace(/^@/, "") : undefined,
+                displayName: u.display_name ? String(u.display_name) : undefined,
+                photoUrl: u.photo_url || u.avatar_url || null,
+              });
+            }
+          }
+        } catch {}
+      }
+
+      const dbReferrals: ReferralRecord[] = data.map((r: any) => {
+        const uInfo = userMap.get(String(r.invited_user_id));
+        return {
+          id: String(r.id),
+          referrerUserId: String(r.referrer_user_id),
+          referrerCode: String(r.referrer_code || code),
+          invitedUserId: String(r.invited_user_id),
+          invitedUserUsername: uInfo?.username || "friend",
+          invitedUserDisplayName: uInfo?.displayName || `@${uInfo?.username || "friend"}`,
+          invitedUserPhotoUrl: uInfo?.photoUrl || null,
+          status: r.status || "pending_first_scan",
+          qualifyingQrCodeId: r.qualifying_qr_code_id ?? null,
+          friendCardId: r.friend_card_id ?? null,
+          referrerCardId: r.referrer_card_id ?? null,
+          qualifiedAt: r.qualified_at ?? null,
+          createdAt: String(r.created_at || new Date().toISOString()),
+        };
+      });
+
+      const mapById = new Map<string, ReferralRecord>();
+      for (const ref of referrals) mapById.set(ref.id, ref);
+      for (const ref of dbReferrals) mapById.set(ref.id, ref);
+      referrals = Array.from(mapById.values()).sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+
+      await AsyncStorage.setItem(`${LOCAL_REFERRALS_PREFIX}${userId}`, JSON.stringify(referrals)).catch(() => {});
+    }
+  } catch {}
+
+  const totalInvited = referrals.length;
+  const totalQualified = referrals.filter((r) => r.status === "qualified").length;
+  const totalPending = referrals.filter((r) => r.status === "pending_first_scan").length;
+  const goldCardsEarned = totalQualified;
+
+  return {
+    referralCode: code,
+    referralLink,
+    shortLink,
+    totalInvited,
+    totalQualified,
+    totalPending,
+    goldCardsEarned,
+    referrals,
+  };
+}
+
+export function buildReferralShareMessage(code: string): string {
+  const clean = code.trim();
+  return `🛡️ Scan any QR code safely with BinRo! Preview hidden links, inspect payment recipients, and check real-time trust scores before you open or pay.\n\nEnter my referral code "${clean}" before your first scan to unlock an exclusive Silver Welcome Scratch Card:\nhttps://www.binro.in/invite/${clean}`;
+}
+
+export function getWhatsAppShareUrl(code: string): string {
+  const msg = buildReferralShareMessage(code);
+  return `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+}
+
+export function getTelegramShareUrl(code: string): string {
+  const clean = code.replace(/^@/, "").toLowerCase();
+  const url = `https://www.binro.in/invite/${clean}`;
+  const text = `Join BinRo with my invite to get a Silver Welcome Scratch Card and scan QR codes safely!`;
+  return `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+}
+
+export function getTwitterShareUrl(code: string): string {
+  const clean = code.replace(/^@/, "").toLowerCase();
+  const url = `https://www.binro.in/invite/${clean}`;
+  const text = `Check QR codes before you scan with @BinRoApp. Use my link to claim your Silver Welcome Scratch Card:`;
+  return `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+}
+

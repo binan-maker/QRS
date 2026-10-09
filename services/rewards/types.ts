@@ -50,6 +50,8 @@ export interface RewardWallet {
   lifetimeCardsUnlocked: number;
   lifetimeCardsScratched: number;
   referralCount: number;
+  ownReferralCode?: string;
+  isReferralEligible?: boolean;
   referredByUserId?: string | null;
   referredByCode?: string | null;
   lastRewardedScanAt?: string | null;
@@ -97,6 +99,9 @@ export interface ReferralRecord {
   referrerUserId: string;
   referrerCode: string;
   invitedUserId: string;
+  invitedUserUsername?: string;
+  invitedUserDisplayName?: string;
+  invitedUserPhotoUrl?: string | null;
   status: "pending_first_scan" | "qualified" | "flagged_fraud";
   qualifyingQrCodeId?: string | null;
   friendCardId?: string | null;
@@ -105,9 +110,21 @@ export interface ReferralRecord {
   createdAt: string;
 }
 
+export interface UserReferralsDashboard {
+  referralCode: string;
+  referralLink: string;
+  shortLink: string;
+  totalInvited: number;
+  totalQualified: number;
+  totalPending: number;
+  goldCardsEarned: number;
+  referrals: ReferralRecord[];
+}
+
 export interface RewardActionOutcome {
   accepted: boolean;
   reason?: string;
   unlockedCards: ScratchCardItem[];
   wallet: RewardWallet;
 }
+

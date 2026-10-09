@@ -251,7 +251,33 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
                     </Text>
                   </View>
                 ) : (
-                  <ReportGrid
+                  <>
+                    <Pressable
+                      onPress={() => router.push("/(tabs)/rewards")}
+                      style={({ pressed }) => ({
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        backgroundColor: `${colors.primary}12`,
+                        borderColor: `${colors.primary}35`,
+                        borderWidth: 1,
+                        borderRadius: 14,
+                        paddingHorizontal: 14,
+                        paddingVertical: 10,
+                        marginBottom: 12,
+                        opacity: pressed ? 0.85 : 1,
+                      })}
+                    >
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                        <Ionicons name="gift-outline" size={18} color={colors.primary} />
+                        <Text style={{ fontSize: 13, color: colors.text, fontWeight: "600", flex: 1, lineHeight: 18 }}>
+                          Rate safety or leave a review to earn progress toward your daily Scratch Card!
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+                    </Pressable>
+
+                    <ReportGrid
                     reportCounts={q.reportCounts}
                     userReport={q.userReport}
                     isLoggedIn={true}
@@ -268,6 +294,7 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
                       }
                     }}
                   />
+                  </>
                 )}
               </View>
             )}

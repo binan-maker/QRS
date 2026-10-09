@@ -262,6 +262,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           user_id: u.id,
           claimed_at: now,
         });
+
+        // Auto-apply pending referral code from invite link or attribution query
+        import("@services/rewards")
+          .then(async ({ getPendingReferralCode, applyReferralCodeForUser }) => {
+            const pending = await getPendingReferralCode();
+            if (pending) {
+              await applyReferralCodeForUser(u.id, pending);
+            }
+          })
+          .catch(() => {});
       } else {
         const updates: Record<string, any> = {};
         if (!existing.username || existing.username !== effectiveUsername) {

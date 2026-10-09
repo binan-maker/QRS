@@ -11,6 +11,7 @@ import {
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import * as Linking from "expo-linking";
 import * as SystemUI from "expo-system-ui";
 import * as NavigationBar from "expo-navigation-bar";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -249,6 +250,33 @@ export default function RootLayout() {
       const v = getStartupPref(STARTUP_PREF_KEYS.HAPTICS_ENABLED);
       if (v !== null) setHapticsEnabled(v !== "false");
     });
+
+    // Capture referral code from incoming deep links / app schemes (Zerodha/Upstox standard)
+    const handleDeepUrl = (url: string | null) => {
+      if (!url) return;
+      try {
+        const parsed = Linking.parse(url);
+        const qRef = (parsed.queryParams?.ref || parsed.queryParams?.r || parsed.queryParams?.invite) as string;
+        let pathCode: string | null = null;
+        if (parsed.path) {
+          const cleanPath = parsed.path.replace(/^\/+/, "");
+          if (cleanPath.startsWith("invite/")) pathCode = cleanPath.replace("invite/", "");
+          else if (cleanPath.startsWith("r/")) pathCode = cleanPath.replace("r/", "");
+        }
+        const finalCode = (qRef || pathCode || "").trim().replace(/^@/, "").toLowerCase();
+        if (finalCode) {
+          import("@/services/rewards")
+            .then(({ savePendingReferralCode }) => {
+              savePendingReferralCode(finalCode).catch(() => {});
+            })
+            .catch(() => {});
+        }
+      } catch {}
+    };
+
+    Linking.getInitialURL().then(handleDeepUrl).catch(() => {});
+    const sub = Linking.addEventListener("url", (e) => handleDeepUrl(e.url));
+    return () => sub.remove();
   }, []);
 
   if (!fontsReady) return null;

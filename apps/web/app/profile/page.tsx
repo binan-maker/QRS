@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Ionicons } from "@/lib/mobile-icons";
@@ -23,6 +23,11 @@ import {
 } from "@/lib/username-service";
 import { syncStructuredUserProfile } from "@/lib/user-account";
 import { BottomTabBar } from "@/components/navigation/BottomTabBar";
+import {
+  getUserRewardWallet,
+  applyReferralCodeForUser,
+  type RewardWallet,
+} from "@services/rewards";
 import ProfileLoading from "./loading";
 import styles from "./profile.module.css";
 
@@ -79,6 +84,65 @@ export default function ProfilePage() {
   }>({ scanCount: 0, commentCount: 0, memberSince: null });
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Google Pay Referral states
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [referralModalOpen, setReferralModalOpen] = useState(false);
+  const [rewardWallet, setRewardWallet] = useState<RewardWallet | null>(null);
+  const [referralCodeInput, setReferralCodeInput] = useState("");
+  const [referralApplying, setReferralApplying] = useState(false);
+  const [referralFeedback, setReferralFeedback] = useState<{ text: string; isError: boolean } | null>(null);
+  const [referralSuccess, setReferralSuccess] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const loadWallet = useCallback(async () => {
+    if (user?.id) {
+      try {
+        const w = await getUserRewardWallet(user.id);
+        setRewardWallet(w);
+      } catch {}
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    void loadWallet();
+  }, [loadWallet]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuOpen]);
+
+  const handleApplyReferral = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = referralCodeInput.trim();
+    if (!trimmed || !user?.id) return;
+    setReferralApplying(true);
+    setReferralFeedback(null);
+    try {
+      const res = await applyReferralCodeForUser(user.id, trimmed);
+      if (res.ok) {
+        setReferralSuccess(true);
+        await loadWallet();
+      } else {
+        setReferralFeedback({ text: res.message, isError: true });
+      }
+    } catch {
+      setReferralFeedback({ text: "Could not apply referral code. Please try again.", isError: true });
+    } finally {
+      setReferralApplying(false);
+    }
+  };
 
   const cooldownDays = getRemainingUsernameCooldownDays(usernameLastChangedAt);
   const canChangeUsername = cooldownDays === 0;
@@ -526,10 +590,116 @@ export default function ProfilePage() {
       />
 
       <div className={styles.inner}>
-        {/* Top Bar with Settings access */}
-        <header className={styles.topBar}>
+        {/* Top Bar with Settings and Google Pay Three-Dot Menu */}
+        <header className={styles.topBar} style={{ position: "relative" }}>
           <h1 className={styles.pageTitle}>Profile</h1>
-          <div className={styles.topBarActions}>
+          <div className={styles.topBarActions} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {/* Google Pay Style Three Dots (⋮) Menu Button */}
+            <div ref={menuRef} style={{ position: "relative" }}>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((prev) => !prev)}
+                className={styles.iconBtn}
+                title="More options"
+                aria-label="More options"
+              >
+                <Ionicons name="ellipsis-vertical" size={17} />
+              </button>
+
+              {/* Google Pay Style Dropdown Popover */}
+              {menuOpen && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "42px",
+                    right: "0px",
+                    backgroundColor: "var(--surface, #ffffff)",
+                    border: "1px solid var(--surface-border, #e2e8f0)",
+                    borderRadius: "16px",
+                    padding: "6px",
+                    minWidth: "220px",
+                    zIndex: 1000,
+                    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.25)",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setReferralModalOpen(true);
+                    }}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      color: "inherit",
+                    }}
+                  >
+                    <Ionicons name="gift-outline" size={18} color="var(--primary, #2563EB)" />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text, #0f172a)" }}>
+                        Referral code
+                      </div>
+                      <div style={{ fontSize: "11px", color: "var(--text-muted, #94a3b8)" }}>
+                        {rewardWallet?.isReferralEligible
+                          ? "Enter friend's code"
+                          : rewardWallet?.referredByCode
+                            ? `Applied: ${rewardWallet.referredByCode}`
+                            : "Ineligible (First scan completed)"}
+                      </div>
+                    </div>
+                  </button>
+
+                  <Link
+                    href="/rewards"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      textDecoration: "none",
+                      color: "inherit",
+                    }}
+                  >
+                    <Ionicons name="sparkles-outline" size={18} color="#F59E0B" />
+                    <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text, #0f172a)" }}>
+                      Rewards &amp; Offers
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/settings"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      textDecoration: "none",
+                      color: "inherit",
+                    }}
+                  >
+                    <Ionicons name="settings-outline" size={18} color="var(--text-muted, #64748b)" />
+                    <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text, #0f172a)" }}>
+                      Settings
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
+
             <Link
               href="/settings"
               className={styles.iconBtn}
@@ -1176,6 +1346,229 @@ export default function ProfilePage() {
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Google Pay Style Referral Code Modal */}
+      {referralModalOpen && (
+        <div
+          className={styles.modalBackdrop}
+          onClick={() => {
+            setReferralModalOpen(false);
+            setReferralCodeInput("");
+            setReferralFeedback(null);
+            setReferralSuccess(false);
+          }}
+          style={{ zIndex: 11000 }}
+        >
+          <div
+            className={styles.modalSheet}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            style={{ maxWidth: "420px", padding: "24px" }}
+          >
+            {/* Modal Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "10px",
+                    backgroundColor: "rgba(37, 99, 235, 0.12)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "var(--primary, #2563EB)",
+                  }}
+                >
+                  <Ionicons name="gift" size={20} />
+                </div>
+                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "var(--text, #0f172a)" }}>
+                  Referral code
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setReferralModalOpen(false);
+                  setReferralCodeInput("");
+                  setReferralFeedback(null);
+                  setReferralSuccess(false);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--text-muted, #94a3b8)",
+                  padding: "4px",
+                  display: "flex",
+                }}
+                aria-label="Close"
+              >
+                <Ionicons name="close" size={22} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            {referralSuccess ? (
+              <div style={{ textAlign: "center", padding: "16px 0" }}>
+                <div
+                  style={{
+                    width: "64px",
+                    height: "64px",
+                    borderRadius: "50%",
+                    backgroundColor: "rgba(16, 185, 129, 0.15)",
+                    color: "#10B981",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 14px",
+                  }}
+                >
+                  <Ionicons name="checkmark-circle" size={44} />
+                </div>
+                <h4 style={{ margin: "0 0 8px", fontSize: "17px", fontWeight: 700, color: "var(--text, #0f172a)" }}>
+                  Referral code applied!
+                </h4>
+                <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary, #64748b)", lineHeight: 1.5 }}>
+                  Your Silver Welcome Scratch Card is now linked. Scan your very first QR code to unlock and scratch your reward!
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReferralModalOpen(false);
+                    setReferralSuccess(false);
+                    setReferralCodeInput("");
+                  }}
+                  className={styles.modalOptionBtn}
+                  style={{ marginTop: "20px", justifyContent: "center", fontWeight: 700 }}
+                >
+                  Done
+                </button>
+              </div>
+            ) : !rewardWallet?.isReferralEligible ? (
+              <div style={{ textAlign: "center", padding: "12px 0" }}>
+                <div
+                  style={{
+                    width: "56px",
+                    height: "56px",
+                    borderRadius: "50%",
+                    backgroundColor: "rgba(245, 158, 11, 0.15)",
+                    color: "#F59E0B",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 12px",
+                  }}
+                >
+                  <Ionicons name="lock-closed" size={32} />
+                </div>
+                <h4 style={{ margin: "0 0 8px", fontSize: "16px", fontWeight: 700, color: "var(--text, #0f172a)" }}>
+                  {rewardWallet?.referredByCode
+                    ? "Referral already applied"
+                    : "No longer eligible for bonus"}
+                </h4>
+                <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary, #64748b)", lineHeight: 1.5 }}>
+                  {rewardWallet?.referredByCode
+                    ? `Your account is already linked to referral code "${rewardWallet.referredByCode}". Each user can only claim one referral code.`
+                    : "In accordance with Google Pay referral rules, referral codes can only be entered before making your very first scan. Because you have already scanned a QR code with BinRo, this option is now permanently closed."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setReferralModalOpen(false)}
+                  className={styles.modalCancelBtn}
+                  style={{ marginTop: "20px" }}
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleApplyReferral}>
+                <p style={{ margin: "0 0 16px", fontSize: "13px", color: "var(--text-secondary, #64748b)", lineHeight: 1.5 }}>
+                  Type your friend&apos;s 7-character referral code into the box before your very first scan to claim your Silver Welcome Scratch Card.
+                </p>
+
+                <div style={{ position: "relative", marginBottom: "12px" }}>
+                  <input
+                    type="text"
+                    value={referralCodeInput}
+                    onChange={(e) => {
+                      setReferralCodeInput(e.target.value.trim());
+                      setReferralFeedback(null);
+                    }}
+                    placeholder="e.g. yn5i82v"
+                    maxLength={10}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    style={{
+                      width: "100%",
+                      height: "48px",
+                      padding: "0 54px 0 14px",
+                      borderRadius: "12px",
+                      border: "1px solid var(--surface-border, #e2e8f0)",
+                      backgroundColor: "var(--background, #f8fafc)",
+                      color: "var(--text, #0f172a)",
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      right: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "11px",
+                      color: "var(--text-muted, #94a3b8)",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    {referralCodeInput.length}/7
+                  </span>
+                </div>
+
+                {referralFeedback && (
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: referralFeedback.isError ? "var(--danger, #ef4444)" : "var(--safe, #10B981)",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {referralFeedback.text}
+                  </div>
+                )}
+
+                <p style={{ margin: "0 0 16px", fontSize: "11px", color: "var(--text-muted, #94a3b8)", lineHeight: 1.4 }}>
+                  ⚠️ Note: This input will be permanently disabled as soon as you scan your first QR code.
+                </p>
+
+                <button
+                  type="submit"
+                  disabled={referralApplying || !referralCodeInput.trim()}
+                  className={styles.modalOptionBtn}
+                  style={{
+                    width: "100%",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                    backgroundColor: "var(--primary, #2563EB)",
+                    color: "#ffffff",
+                    opacity: referralApplying || !referralCodeInput.trim() ? 0.5 : 1,
+                    cursor: referralApplying || !referralCodeInput.trim() ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {referralApplying ? "Applying..." : "Apply"}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}

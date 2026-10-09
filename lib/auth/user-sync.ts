@@ -77,6 +77,16 @@ export async function syncUserToDb(
       if (initialPhoto) {
         syncAvatarFromOutside(initialPhoto);
       }
+
+      // Auto-apply pending referral code from invite link or deep link
+      import("@/services/rewards")
+        .then(async ({ getPendingReferralCode, applyReferralCodeForUser }) => {
+          const pending = await getPendingReferralCode();
+          if (pending) {
+            await applyReferralCodeForUser(uid, pending);
+          }
+        })
+        .catch(() => {});
       return {
         displayName: name,
         username,

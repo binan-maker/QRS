@@ -4,6 +4,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { AvatarProvider } from "@/lib/avatar-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { DesktopNavbar } from "@/components/navigation/DesktopNavbar";
+import { ReferralAttributionTracker } from "@/components/ReferralAttributionTracker";
 import {
   SITE_URL,
   SITE_NAME,
@@ -132,6 +133,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <AvatarProvider>
             <ThemeProvider>
               <DesktopNavbar />
+              <ReferralAttributionTracker />
               {children}
             </ThemeProvider>
           </AvatarProvider>

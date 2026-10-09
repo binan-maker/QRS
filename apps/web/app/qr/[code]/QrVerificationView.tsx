@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import Colors, { type AppColors } from "@shared/constants/colors";
@@ -1631,6 +1632,33 @@ export default function QrVerificationView({
                 className={styles.reportGridContainer}
                 aria-label="Rate this QR"
               >
+                {user && (
+                  <Link
+                    href="/rewards"
+                    style={{
+                      textDecoration: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "10px 14px",
+                      borderRadius: "14px",
+                      backgroundColor: `${colors.primary}12`,
+                      border: `1px solid ${colors.primary}30`,
+                      marginBottom: "12px",
+                      color: colors.text,
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      gap: "8px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Ionicons name="gift-outline" size={16} color={colors.primary} />
+                      <span>Rate safety or review to progress your daily Scratch Card!</span>
+                    </div>
+                    <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+                  </Link>
+                )}
+
                 <div className={styles.reportGridHeader}>
                   <h2 className={styles.reportGridTitle}>Rate this QR</h2>
                   {activeVoteType ? (
