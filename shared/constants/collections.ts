@@ -38,6 +38,18 @@ export const TABLES = {
   AUDIT_LOGS: "audit_logs",
   /** Community feature-flag votes */
   FEATURE_VOTES: "feature_votes",
+  /** Unified vCommission & Cuelinks reward offers */
+  REWARD_OFFERS: "reward_offers",
+  /** Configurable daily caps and milestone rules */
+  REWARD_LIMITS: "reward_limits",
+  /** User reward wallet, daily milestones, and lifetime counters */
+  REWARD_WALLET: "reward_wallet",
+  /** Auditable reward event ledger */
+  REWARD_EVENTS: "reward_events",
+  /** User scratch cards (Bronze, Silver, Gold) */
+  SCRATCH_CARDS: "scratch_cards",
+  /** Two-sided verified user referrals */
+  REFERRALS: "referrals",
 } as const;
 
 /**
@@ -47,15 +59,12 @@ export const COLLECTIONS = {
   USERS: TABLES.USERS,
   PUBLIC_PROFILES: "public_profiles",
   USERNAMES: TABLES.USERNAMES,
-  STANDARD_LINKS: "standard_links",
   QR_CODES: TABLES.QR_CODES,
   QRS: TABLES.QR_CODES,
   COMMENTS: TABLES.QR_COMMENTS,
   LIKES: TABLES.COMMENT_LIKES,
   SCANS: TABLES.QR_SCANS,
   EVENTS: TABLES.QR_SCANS,
-  SCAN_VELOCITY: "scan_velocity",
-  GENERATED_QRS: "generated_qrs",
   NOTIFICATIONS: TABLES.NOTIFICATIONS,
   REPORTS: TABLES.QR_REPORTS,
   COMMENT_REPORTS: TABLES.COMMENT_REPORTS,
@@ -65,6 +74,12 @@ export const COLLECTIONS = {
   FEEDBACK: TABLES.FEEDBACK,
   AUDIT_LOGS: TABLES.AUDIT_LOGS,
   COUNTERS: "counters",
+  REWARD_OFFERS: TABLES.REWARD_OFFERS,
+  REWARD_LIMITS: TABLES.REWARD_LIMITS,
+  REWARD_WALLET: TABLES.REWARD_WALLET,
+  REWARD_EVENTS: TABLES.REWARD_EVENTS,
+  SCRATCH_CARDS: TABLES.SCRATCH_CARDS,
+  REFERRALS: TABLES.REFERRALS,
 } as const;
 
 export type TableName = (typeof TABLES)[keyof typeof TABLES];

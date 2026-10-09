@@ -141,7 +141,6 @@ export function invalidateHistoryCache(userId: string): void {
 }
 
 const TTL_COMMENTS    = 5  * 60 * 1000;
-const TTL_GENERATED_QRS = 2 * 60 * 1000;
 
 export async function getCachedComments<T>(userId: string): Promise<T | null> {
   return getCache<T>(`comments_${userId}`);
@@ -151,13 +150,6 @@ export async function setCachedComments<T>(userId: string, value: T): Promise<vo
 }
 export function invalidateCommentsCache(userId: string): void {
   invalidateCache(`comments_${userId}`);
-}
-
-export async function getCachedGeneratedQrs<T>(userId: string): Promise<T | null> {
-  return getCache<T>(`generated_qrs_${userId}`);
-}
-export async function setCachedGeneratedQrs<T>(userId: string, value: T): Promise<void> {
-  return setCache<T>(`generated_qrs_${userId}`, value, TTL_GENERATED_QRS);
 }
 
 const TTL_PRIVACY = 5 * 60 * 1000; // 5 minutes

@@ -35,7 +35,7 @@ qrRouter.get("/:qrId", standardLimit, async (req: Request, res: Response) => {
   try {
     const { data: qr, error } = await client
       .from("qr_codes")
-      .select("id,content,content_type,qr_type,display_destination,scan_count,comment_count,created_at,updated_at")
+      .select("id,content,content_type,scan_count,comment_count,created_at,updated_at")
       .eq("id", qrId)
       .maybeSingle();
 
@@ -53,8 +53,6 @@ qrRouter.get("/:qrId", standardLimit, async (req: Request, res: Response) => {
         id: qr.id,
         content: qr.content,
         contentType: qr.content_type,
-        qrType: qr.qr_type,
-        displayDestination: qr.display_destination,
         scanCount: qr.scan_count ?? 0,
         commentCount: qr.comment_count ?? 0,
         createdAt: qr.created_at,

@@ -5,6 +5,7 @@ import { tsToMs } from "../integrity/time-utils";
 import { incrementSmartCounter } from "@/lib/db/distributed-counter";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import { logger } from "@/lib/logger";
+import { processEligibleScanReward } from "../rewards/reward-service";
 
 const SCAN_SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -20,11 +21,6 @@ export async function recordScan(
   isAnonymous: boolean
 ): Promise<void> {
   if (userId && isAnonymous) return;
-
-  // Write velocity event to Supabase.
-  try {
-    await db.add([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.SCAN_VELOCITY], { ts: Date.now() });
-  } catch {}
 
   try {
     const qrData = await db.get([COLLECTIONS.QR_CODES, qrId]);
@@ -51,23 +47,9 @@ export async function recordScan(
       batch.increment([COLLECTIONS.USERS, userId], "personalScanCount", 1);
       await batch.commit();
     } catch {}
-  }
 
-  // FIX (scanVelocity unbounded growth): the scanVelocity sub-collection collects
-  // one document per scan and is queried with a 24h window filter. Without cleanup
-  // it grows forever. Probabilistically prune entries older than 48h after ~5% of
-  // scans so cleanup is distributed across all scans without adding latency to most.
-  if (Math.random() < 0.05) {
-    const cutoff = Date.now() - 48 * 60 * 60 * 1000;
-    db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.SCAN_VELOCITY], {
-      where: [{ field: "ts", op: "<", value: cutoff }],
-      limit: 100,
-    }).then(({ docs }) => {
-      if (docs.length === 0) return;
-      Promise.all(
-        docs.map((d) => db.delete([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.SCAN_VELOCITY, d.id]).catch(() => {}))
-      ).catch(() => {});
-    }).catch(() => {});
+    // Evaluate eligible scan reward (Welcome Card + 3/8/15 daily milestones + referral unlock)
+    processEligibleScanReward(userId, qrId, isAnonymous).catch(() => {});
   }
 }
 

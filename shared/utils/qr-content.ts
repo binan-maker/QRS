@@ -109,7 +109,7 @@ export function detectContentType(content: string): QrContentType {
   }
 }
 
-export function getQrTypeMeta(contentType: string, _templateKey?: string): QrTypeDefinition {
+export function getQrTypeMeta(contentType: string): QrTypeDefinition {
   return QR_CONTENT_TYPES[contentType] ?? QR_CONTENT_TYPES.text;
 }
 
@@ -122,8 +122,8 @@ export function getSubtitle(content: string, contentType?: string) {
   return getQrTypeMeta(contentType || detectContentType(content)).getSubtitle(content);
 }
 
-export function resolveEffectiveType(contentType: string, templateKey?: string) {
-  const candidate = (templateKey || contentType)?.toLowerCase();
+export function resolveEffectiveType(contentType: string) {
+  const candidate = contentType?.toLowerCase();
   if (
     candidate === "payment" ||
     candidate === "upi" ||
@@ -140,8 +140,8 @@ export function resolveEffectiveType(contentType: string, templateKey?: string) 
   return "text";
 }
 
-export function useQrMeta(content: string, contentType: string, templateKey?: string) {
-  const effectiveType = resolveEffectiveType(contentType, templateKey);
+export function useQrMeta(content: string, contentType: string) {
+  const effectiveType = resolveEffectiveType(contentType);
   const typeMeta = getQrTypeMeta(effectiveType);
   return {
     typeMeta,

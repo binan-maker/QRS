@@ -58,7 +58,7 @@ export async function generateMetadata({
 
   const record = await getPublicQrRecord(qrId, content);
 
-  let targetDisplay = record?.displayDestination || record?.content || content || "QR Code";
+  let targetDisplay = record?.content || content || "QR Code";
   if (targetDisplay.length > 60) {
     targetDisplay = `${targetDisplay.slice(0, 57)}...`;
   }
@@ -136,7 +136,6 @@ export default async function QrDetailsPage({
       createdAt: null,
       scanCount: 1,
       commentCount: 0,
-      displayDestination: rawContent || null,
       trust: { score: -1, label: "Unrated", totalReports: 0 },
       reportCounts: {},
       weightedCounts: {},

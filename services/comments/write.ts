@@ -211,6 +211,18 @@ export async function addComment(
   adjustCommentCount(qrId, userId, 1).catch(() => {});
   await recordComment(userId);
 
+  // Quality-checked community contribution (15+ chars, profanity-checked)
+  import("../rewards/reward-service")
+    .then(({ processCommunityContributionReward }) =>
+      processCommunityContributionReward({
+        userId,
+        qrId,
+        contributionType: "helpful_comment",
+        commentText: sanitizedText,
+      })
+    )
+    .catch(() => {});
+
   return {
     id: commentId,
     qrCodeId: qrId,

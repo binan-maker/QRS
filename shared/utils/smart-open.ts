@@ -29,12 +29,11 @@ function openAuthenticatorStore() {
 
 export async function smartOpenContent(
   content: string,
-  contentType: string,
-  templateKey?: string
+  contentType: string
 ): Promise<void> {
   if (!content) return;
   const lower = content.toLowerCase();
-  const style = getQrTypeStyle(contentType, templateKey);
+  const style = getQrTypeStyle(contentType);
 
   // ── Phone ────────────────────────────────────────────────────────────────
   if (contentType === "phone") {

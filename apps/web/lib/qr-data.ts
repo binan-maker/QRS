@@ -48,7 +48,6 @@ export type PublicQrRecord = {
   createdAt: string | null;
   scanCount: number;
   commentCount: number;
-  displayDestination: string | null;
   trust: PublicTrust;
   reportCounts: Record<string, number>;
   weightedCounts: Record<string, number>;
@@ -102,7 +101,6 @@ export async function getPublicQrRecord(
       createdAt: null,
       scanCount: 1,
       commentCount: 0,
-      displayDestination: content,
       trust: { score: -1, label: "Unrated", totalReports: 0 },
       reportCounts: {},
       weightedCounts: {},
@@ -273,7 +271,6 @@ export async function getPublicQrRecord(
       createdAt: asString(qrData?.created_at ?? qrData?.createdAt),
       scanCount: Math.max(1, asNumber(qrData?.scan_count ?? qrData?.scanCount, 1)),
       commentCount: comments.length,
-      displayDestination: asString(qrData?.display_destination ?? qrData?.displayDestination ?? content),
       trust,
       reportCounts,
       weightedCounts,

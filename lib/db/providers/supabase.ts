@@ -113,8 +113,6 @@ const COLLECTION_TABLE: Record<string, string> = {
   // Use for reads about OTHER users; use "users" only for own-row reads.
   publicProfiles: "public_profiles",
   public_profiles: "public_profiles",
-  standardLinks: "qr_codes",
-  standard_links: "qr_codes",
   qrCodes: "qr_codes",
   qr_codes: "qr_codes",
   qrs: "qr_codes",
@@ -127,8 +125,6 @@ const COLLECTION_TABLE: Record<string, string> = {
   scans: "qr_scans",
   events: "qr_scans",
   qr_scans: "qr_scans",
-  scanVelocity: "rtdb_store",
-  scan_velocity: "rtdb_store",
   notifications: "notifications",
   featureVotes: "feature_votes",
   feature_votes: "feature_votes",

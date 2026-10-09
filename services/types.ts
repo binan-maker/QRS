@@ -1,5 +1,3 @@
-export type QrType = "individual" | "business" | "government";
-
 export interface QrCodeData {
   id: string;
   content: string;
@@ -7,16 +5,6 @@ export interface QrCodeData {
   createdAt: string;
   scanCount: number;
   commentCount: number;
-  qrType?: QrType;
-  uuid?: string;
-  businessName?: string;
-  customLogoUri?: string;
-  logoPosition?: string;
-  templateKey?: string;
-  formValues?: { value: string; extra: Record<string, string> } | null;
-  displayDestination?: string | null;
-  isActive?: boolean;
-  deactivationMessage?: string | null;
   // Fraud-guard fields
   scanCountFrozen?: boolean;
   scanCountFreezeReason?: string;
@@ -120,84 +108,6 @@ export interface UsernameData {
   isVerified?: boolean;
 }
 
-// ── Unified QR model (new architecture) ──────────────────────────────────────
-// Every QR generated from here on is backed by one document in qrs/{id}.
-// Legacy QRs (guardLinks / standardLinks) remain on their old collections.
-export type UnifiedQrStatus = "active" | "inactive" | "expired" | "limit_reached";
-
-export interface UnifiedQrDesign {
-  fgColor: string;
-  bgColor: string;
-  logoPosition: string;
-  logoUri: string | null;
-  label: string | null;
-}
-
-export interface UnifiedQr {
-  id: string;
-  qrType: QrType;
-  template: string | null;
-  title: string | null;
-  isDynamic: boolean;
-  destination: string;
-  rawDestination: string;
-  contentType: string;
-  businessName: string | null;
-  status: UnifiedQrStatus;
-  scanCount: number;
-  downloads: number;
-  shares: number;
-  scanLimit: number | null;
-  expiryDate: string | null;
-  expiryPreset: string | null;
-  design: UnifiedQrDesign;
-  formValues: { value: string; extra: Record<string, string> } | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Generator Service types
-export interface GeneratedQrItem {
-  id: string;
-  content: string;
-  format: 'png' | 'svg' | 'webp';
-  size: number;
-  createdAt: string;
-  expiresAt?: string;
-  downloadUrl?: string;
-  docId?: string;
-  qrCodeId?: string;
-  uuid?: string;
-  scanCount?: number;
-  commentCount?: number;
-  isActive?: boolean;
-  qrType?: string;
-  label?: string | null;
-  scanLimit?: number | null;
-  expiryDate?: string | null;
-  expiryPreset?: string | null;
-  guardUuid?: string;
-  deactivationMessage?: string | null;
-  fgColor?: string;
-  bgColor?: string;
-  logoPosition?: string;
-  logoUri?: string | null;
-  businessName?: string;
-  username?: string;
-  templateKey?: string;
-  formValues?: { value: string; extra: Record<string, string> };
-  displayDestination?: string | null;
-}
-
-export interface ScanVelocityBucket {
-  bucket?: string;
-  count: number;
-  windowStart?: string;
-  windowEnd?: string;
-  label?: string;
-  hour?: number;
-}
-
 // Comment Service types
 export interface CommentItem {
   id: string;
@@ -220,24 +130,6 @@ export interface CommentItem {
   [key: string]: any;
 }
 
-// Message Service types
-export interface QrMessage {
-  id: string;
-  qrCodeId?: string;
-  senderId?: string;
-  senderName?: string;
-  content?: string;
-  messageType?: 'text' | 'warning' | 'info' | 'alert';
-  createdAt: string;
-  read?: boolean;
-  priority?: 'low' | 'normal' | 'high' | 'urgent';
-  fromDisplayName?: string;
-  fromUserId?: string;
-  toUserId?: string;
-  message?: string;
-  [key: string]: any;
-}
-
 // Additional utility types
 export interface PaginatedResult<T> {
   items: T[];
@@ -257,8 +149,4 @@ export interface CacheEntry<T> {
   cachedAt: string;
   expiresAt: string;
   hitCount: number;
-}
-
-export function getSignatureSalt(year: number = new Date().getFullYear()): string {
-  return `binro-qr-sig-${year}`;
 }

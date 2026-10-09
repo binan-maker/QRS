@@ -15,6 +15,8 @@ export const SUPABASE_TABLES = {
   QR_COMMENTS: "qr_comments",
   COMMENT_LIKES: "comment_likes",
   QR_REPORTS: "qr_reports",
+  REWARDS_DEALS: "rewards_deals",
+  USER_SCRATCH_CARDS: "user_scratch_cards",
 } as const;
 
 export const SUPABASE_VIEWS = {

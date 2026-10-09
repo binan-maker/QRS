@@ -1214,6 +1214,16 @@ export async function reportQrCode(
 
   if (!isChangingReport) {
     await recordReport(userId, qrId);
+    // Verdict-independent community contribution check
+    import("../rewards/reward-service")
+      .then(({ processCommunityContributionReward }) =>
+        processCommunityContributionReward({
+          userId,
+          qrId,
+          contributionType: "safety_report",
+        })
+      )
+      .catch(() => {});
   }
 
   return { action: isChangingReport ? "updated" : "created" };

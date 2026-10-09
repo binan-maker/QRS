@@ -74,20 +74,9 @@ export async function getQrCodeById(qrId: string): Promise<QrCodeData | null> {
       createdAt: tsToString(data.createdAt),
       scanCount,
       commentCount: data.commentCount || 0,
-      qrType: data.qrType,
-      uuid: data.uuid,
-      businessName: data.businessName,
-      customLogoUri: data.customLogoUri,
-      logoPosition: data.logoPosition,
-      templateKey: data.templateKey ?? null,
-      formValues: data.formValues ?? null,
-      displayDestination: data.displayDestination ?? null,
       // Fraud-guard fields
       scanCountFrozen: data.scanCountFrozen,
       scanCountFreezeReason: data.scanCountFreezeReason,
-      // Deactivation state
-      isActive: data.isActive !== false,
-      deactivationMessage: data.deactivationMessage ?? null,
     };
   } catch (e) {
     console.warn("[db] getQrCodeById failed:", e);
