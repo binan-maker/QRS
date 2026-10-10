@@ -1224,8 +1224,8 @@ export async function getUserReferralsDashboard(
   usernameFallback?: string
 ): Promise<UserReferralsDashboard> {
   const code = await getOrCreateUserReferralCode(userId);
-  const referralLink = `https://www.binro.in/invite/${code}`;
-  const shortLink = `https://www.binro.in/r/${code}`;
+  const referralLink = `https://www.binro.in/register?ref=${code}`;
+  const shortLink = `https://www.binro.in/register?ref=${code}`;
 
   let referrals: ReferralRecord[] = [];
   try {
@@ -1338,8 +1338,8 @@ export async function getUserReferralsDashboard(
 }
 
 export function buildReferralShareMessage(code: string): string {
-  const clean = code.trim();
-  return `🛡️ Scan any QR code safely with BinRo! Preview hidden links, inspect payment recipients, and check real-time trust scores before you open or pay.\n\nEnter my referral code "${clean}" before your first scan to unlock an exclusive Silver Welcome Scratch Card:\nhttps://www.binro.in/invite/${clean}`;
+  const clean = code.trim().toLowerCase();
+  return `🛡️ Scan any QR code safely with BinRo! Preview hidden links, inspect payment recipients, and check real-time trust scores before you open or pay.\n\nSign up with my invite link to unlock an exclusive Silver Welcome Scratch Card:\nhttps://www.binro.in/register?ref=${clean}\n\nReferral Code: ${clean.toUpperCase()}`;
 }
 
 export function getWhatsAppShareUrl(code: string): string {
@@ -1349,14 +1349,14 @@ export function getWhatsAppShareUrl(code: string): string {
 
 export function getTelegramShareUrl(code: string): string {
   const clean = code.replace(/^@/, "").toLowerCase();
-  const url = `https://www.binro.in/invite/${clean}`;
+  const url = `https://www.binro.in/register?ref=${clean}`;
   const text = `Join BinRo with my invite to get a Silver Welcome Scratch Card and scan QR codes safely!`;
   return `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
 }
 
 export function getTwitterShareUrl(code: string): string {
   const clean = code.replace(/^@/, "").toLowerCase();
-  const url = `https://www.binro.in/invite/${clean}`;
+  const url = `https://www.binro.in/register?ref=${clean}`;
   const text = `Check QR codes before you scan with @BinRoApp. Use my link to claim your Silver Welcome Scratch Card:`;
   return `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
 }

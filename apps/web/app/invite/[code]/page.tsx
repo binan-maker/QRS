@@ -1,5 +1,5 @@
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import InviteLandingClient from "./InviteLandingClient";
 
 export const dynamic = "force-dynamic";
 
@@ -33,5 +33,8 @@ export async function generateMetadata({ params }: InvitePageProps): Promise<Met
 
 export default async function InvitePage({ params }: InvitePageProps) {
   const { code } = await params;
-  return <InviteLandingClient code={code} />;
+  const cleanCode = (code || "").trim().replace(/^@/, "").toLowerCase();
+
+  // Instant redirect to registration with referral attribution
+  redirect(`/register?ref=${cleanCode}`);
 }

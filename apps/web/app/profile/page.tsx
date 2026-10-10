@@ -636,12 +636,12 @@ export default function ProfilePage() {
                       color: "inherit",
                     }}
                   >
-                    <Ionicons name="gift-outline" size={18} color="var(--primary, #2563EB)" />
+                    <Ionicons name="gift-outline" size={18} color="var(--primary)" />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text, #0f172a)" }}>
+                      <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>
                         Scratch Cards
                       </div>
-                      <div style={{ fontSize: "11px", color: "var(--text-muted, #94a3b8)" }}>
+                      <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
                         Milestone vouchers &amp; coupons
                       </div>
                     </div>
@@ -661,12 +661,12 @@ export default function ProfilePage() {
                       color: "inherit",
                     }}
                   >
-                    <Ionicons name="people-outline" size={18} color="#F59E0B" />
+                    <Ionicons name="people-outline" size={18} color="var(--primary)" />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text, #0f172a)" }}>
+                      <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>
                         Refer &amp; Earn
                       </div>
-                      <div style={{ fontSize: "11px", color: "var(--text-muted, #94a3b8)" }}>
+                      <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
                         Gold VIP cards &amp; invite tracking
                       </div>
                     </div>
@@ -686,9 +686,12 @@ export default function ProfilePage() {
                       color: "inherit",
                     }}
                   >
-                    <Ionicons name="settings-outline" size={18} color="var(--text-muted, #64748b)" />
-                    <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text, #0f172a)" }}>
+                    <Ionicons name="settings-outline" size={18} color="var(--primary)" />
+                    <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>
                       Settings
+                    </div>
+                    <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                      Preferences &amp; policies
                     </div>
                   </Link>
                 </div>
@@ -1182,113 +1185,123 @@ export default function ProfilePage() {
             </div>
 
             {/* Mobile External Section Label */}
-            <div className={styles.mobileSectionHeading}>Preferences & Shortcuts</div>
+            <div className={styles.mobileSectionHeading}>Preferences &amp; Shortcuts</div>
 
-            {/* Quick Actions + Mobile Inline Theme Group */}
-            <div className={styles.actionsGroup}>
-              {/* Mobile-Only Inline Segmented Theme Control Row */}
-              <div className={styles.mobileThemeRow}>
-                <div className={styles.mobileThemeLeft}>
-                  <div className={styles.actionIcon}>
-                    <Ionicons name="color-palette-outline" size={18} />
-                  </div>
-                  <span className={styles.actionLabel}>Theme</span>
-                </div>
-                <div className={styles.segmentedThemeControl} role="group" aria-label="Theme selection">
-                  <button
-                    type="button"
-                    onClick={() => setThemeMode("light")}
-                    className={`${styles.segmentedThemeBtn} ${
-                      themeMode === "light" ? styles.segmentedThemeBtnActive : ""
-                    }`}
-                    aria-pressed={themeMode === "light"}
-                  >
-                    <Ionicons name="sunny-outline" size={13} />
-                    <span>Light</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setThemeMode("dark")}
-                    className={`${styles.segmentedThemeBtn} ${
-                      themeMode === "dark" ? styles.segmentedThemeBtnActive : ""
-                    }`}
-                    aria-pressed={themeMode === "dark"}
-                  >
-                    <Ionicons name="moon-outline" size={13} />
-                    <span>Dark</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setThemeMode("system")}
-                    className={`${styles.segmentedThemeBtn} ${
-                      themeMode === "system" ? styles.segmentedThemeBtnActive : ""
-                    }`}
-                    aria-pressed={themeMode === "system"}
-                  >
-                    <Ionicons name="phone-portrait-outline" size={13} />
-                    <span>Auto</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Scan History */}
-              <Link href="/history" className={styles.actionItem}>
+            {/* Mobile-Only Inline Segmented Theme Control Card */}
+            <div className={styles.mobileThemeCard}>
+              <div className={styles.mobileThemeLeft}>
                 <div className={styles.actionIcon}>
-                  <Ionicons name="time-outline" size={18} />
+                  <Ionicons name="color-palette-outline" size={18} />
+                </div>
+                <span className={styles.actionLabel}>Theme</span>
+              </div>
+              <div className={styles.segmentedThemeControl} role="group" aria-label="Theme selection">
+                <button
+                  type="button"
+                  onClick={() => setThemeMode("light")}
+                  className={`${styles.segmentedThemeBtn} ${
+                    themeMode === "light" ? styles.segmentedThemeBtnActive : ""
+                  }`}
+                  aria-pressed={themeMode === "light"}
+                >
+                  <Ionicons name="sunny-outline" size={13} />
+                  <span>Light</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setThemeMode("dark")}
+                  className={`${styles.segmentedThemeBtn} ${
+                    themeMode === "dark" ? styles.segmentedThemeBtnActive : ""
+                  }`}
+                  aria-pressed={themeMode === "dark"}
+                >
+                  <Ionicons name="moon-outline" size={13} />
+                  <span>Dark</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setThemeMode("system")}
+                  className={`${styles.segmentedThemeBtn} ${
+                    themeMode === "system" ? styles.segmentedThemeBtnActive : ""
+                  }`}
+                  aria-pressed={themeMode === "system"}
+                >
+                  <Ionicons name="phone-portrait-outline" size={13} />
+                  <span>Auto</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Action Cards with Distance across Mobile, Tablet, and Desktop */}
+            <div className={styles.actionsGrid}>
+              {/* Scan History */}
+              <Link href="/history" className={styles.actionCard}>
+                <div className={styles.actionIcon}>
+                  <Ionicons name="time-outline" size={19} />
                 </div>
                 <div className={styles.actionTextCol}>
                   <span className={styles.actionLabel}>Scan History</span>
                   <span className={styles.actionSub}>Review, search or delete your scans</span>
                 </div>
-                <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
+                <div className={styles.actionArrow}>
+                  <Ionicons name="chevron-forward" size={16} />
+                </div>
               </Link>
 
               {/* Scratch Cards */}
-              <Link href="/rewards" className={styles.actionItem}>
+              <Link href="/rewards" className={styles.actionCard}>
                 <div className={styles.actionIcon}>
-                  <Ionicons name="gift-outline" size={18} />
+                  <Ionicons name="gift-outline" size={19} />
                 </div>
                 <div className={styles.actionTextCol}>
                   <span className={styles.actionLabel}>Scratch Cards</span>
                   <span className={styles.actionSub}>Daily scan milestone vouchers &amp; coupons</span>
                 </div>
-                <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
+                <div className={styles.actionArrow}>
+                  <Ionicons name="chevron-forward" size={16} />
+                </div>
               </Link>
 
               {/* Refer & Earn */}
-              <Link href="/referrals" className={styles.actionItem}>
+              <Link href="/referrals" className={styles.actionCard}>
                 <div className={styles.actionIcon}>
-                  <Ionicons name="people-outline" size={18} />
+                  <Ionicons name="people-outline" size={19} />
                 </div>
                 <div className={styles.actionTextCol}>
                   <span className={styles.actionLabel}>Refer &amp; Earn</span>
                   <span className={styles.actionSub}>Invite friends, give Silver &amp; earn Gold VIP cards</span>
                 </div>
-                <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
+                <div className={styles.actionArrow}>
+                  <Ionicons name="chevron-forward" size={16} />
+                </div>
               </Link>
 
               {/* Settings & Preferences */}
-              <Link href="/settings" className={styles.actionItem}>
+              <Link href="/settings" className={styles.actionCard}>
                 <div className={styles.actionIcon}>
-                  <Ionicons name="settings-outline" size={18} />
+                  <Ionicons name="settings-outline" size={19} />
                 </div>
                 <div className={styles.actionTextCol}>
-                  <span className={styles.actionLabel}>Settings & Preferences</span>
-                  <span className={styles.actionSub}>Account management, legal policies & guide</span>
+                  <span className={styles.actionLabel}>Settings &amp; Preferences</span>
+                  <span className={styles.actionSub}>Account management, legal policies &amp; guide</span>
                 </div>
-                <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
+                <div className={styles.actionArrow}>
+                  <Ionicons name="chevron-forward" size={16} />
+                </div>
               </Link>
 
               {/* Support & Feedback */}
-              <Link href="/feedback" className={styles.actionItem}>
+              <Link href="/feedback" className={styles.actionCard}>
                 <div className={styles.actionIcon}>
-                  <Ionicons name="chatbubble-outline" size={18} />
+                  <Ionicons name="chatbubble-outline" size={19} />
                 </div>
                 <div className={styles.actionTextCol}>
-                  <span className={styles.actionLabel}>Support & Feedback</span>
+                  <span className={styles.actionLabel}>Support &amp; Feedback</span>
                   <span className={styles.actionSub}>Report bugs or request new features</span>
                 </div>
-                <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
+                <div className={styles.actionArrow}>
+                  <Ionicons name="chevron-forward" size={16} />
+                </div>
               </Link>
 
               {/* Clear Local Cache */}
@@ -1296,10 +1309,10 @@ export default function ProfilePage() {
                 type="button"
                 onClick={handleClearData}
                 disabled={clearingData}
-                className={`${styles.actionItem} ${styles.actionItemDanger}`}
+                className={`${styles.actionCard} ${styles.actionCardDanger}`}
               >
                 <div className={`${styles.actionIcon} ${styles.actionIconDanger}`}>
-                  <Ionicons name="trash-outline" size={18} />
+                  <Ionicons name="trash-outline" size={19} />
                 </div>
                 <div className={styles.actionTextCol}>
                   <span className={`${styles.actionLabel} ${styles.actionLabelDanger}`}>
@@ -1307,7 +1320,9 @@ export default function ProfilePage() {
                   </span>
                   <span className={styles.actionSub}>Wipe cached scans from this device</span>
                 </div>
-                <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
+                <div className={styles.actionArrow}>
+                  <Ionicons name="chevron-forward" size={16} />
+                </div>
               </button>
             </div>
 

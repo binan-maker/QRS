@@ -61,6 +61,8 @@ function renderSvgPath(name: string) {
   switch (name) {
     case "chevron-back":
       return <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />;
+    case "chevron-forward":
+      return <path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />;
     case "chevron-down":
       return <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />;
     case "chevron-up":
@@ -69,6 +71,8 @@ function renderSvgPath(name: string) {
       return <path d="M5 12h14M12 5l7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />;
     case "close":
       return <path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />;
+    case "checkmark":
+      return <polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />;
     case "checkmark-circle":
     case "checkmark-circle-outline":
       return (

@@ -16,17 +16,158 @@ function RegisterContent() {
 
   const initialEmail = searchParams.get("email") || "";
   const returnUrl = searchParams.get("returnUrl") || "/";
+  const initialRef = (searchParams.get("ref") || "").trim().toLowerCase();
 
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [referralCode, setReferralCode] = useState(initialRef);
+  const [isReferralEditing, setIsReferralEditing] = useState(false);
+  const [isReferralExpanded, setIsReferralExpanded] = useState(false);
+  const [tempReferralInput, setTempReferralInput] = useState("");
+  const [referralValidating, setReferralValidating] = useState(false);
+  const [referralError, setReferralError] = useState("");
+  const [editReferralInput, setEditReferralInput] = useState("");
+  const [editValidating, setEditValidating] = useState(false);
+  const [editError, setEditError] = useState("");
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState("");
   const [fieldErrors, setFieldErrors] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
+
+  useEffect(() => {
+    if (initialRef) {
+      setReferralCode(initialRef);
+      setTempReferralInput(initialRef);
+      setEditReferralInput(initialRef);
+      try {
+        localStorage.setItem("binro_pending_referral_code", initialRef);
+        localStorage.setItem("binro_pending_referral_code_v1", initialRef);
+      } catch {}
+    } else if (typeof window !== "undefined") {
+      try {
+        const cached =
+          localStorage.getItem("binro_pending_referral_code") ||
+          localStorage.getItem("binro_pending_referral_code_v1");
+        if (cached && !referralCode) {
+          const c = cached.trim().toLowerCase();
+          setReferralCode(c);
+          setTempReferralInput(c);
+          setEditReferralInput(c);
+        }
+      } catch {}
+    }
+  }, [initialRef]);
+
+  const verifyReferralCodeOnServer = async (code: string): Promise<{ valid: boolean; code?: string; error?: string }> => {
+    try {
+      const res = await fetch("/api/referral/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+      return { valid: false, error: "Invalid referral code." };
+    } catch {
+      return { valid: false, error: "Unable to verify code." };
+    }
+  };
+
+  const handleApplyReferral = async (rawInput: string) => {
+    const clean = rawInput.trim().replace(/[^a-zA-Z0-9]/g, "").slice(0, 7).toLowerCase();
+    if (clean.length !== 7) {
+      setReferralError("Referral code must be 7 characters.");
+      return;
+    }
+
+    setReferralValidating(true);
+    setReferralError("");
+
+    try {
+      const result = await verifyReferralCodeOnServer(clean);
+      if (result.valid) {
+        setReferralCode(clean);
+        setEditReferralInput(clean);
+        setIsReferralExpanded(false);
+        setReferralError("");
+        try {
+          localStorage.setItem("binro_pending_referral_code", clean);
+          localStorage.setItem("binro_pending_referral_code_v1", clean);
+        } catch {}
+      } else {
+        setReferralError(result.error || "Invalid referral code.");
+      }
+    } catch {
+      setReferralError("Invalid referral code.");
+    } finally {
+      setReferralValidating(false);
+    }
+  };
+
+  const handleApplyEditReferral = async (rawInput: string) => {
+    const clean = rawInput.trim().replace(/[^a-zA-Z0-9]/g, "").slice(0, 7).toLowerCase();
+
+    // If user cleared the input and taps Apply, remove/clear the referral code cleanly
+    if (!clean) {
+      setReferralCode("");
+      setTempReferralInput("");
+      setEditReferralInput("");
+      setIsReferralEditing(false);
+      setEditError("");
+      try {
+        localStorage.removeItem("binro_pending_referral_code");
+        localStorage.removeItem("binro_pending_referral_code_v1");
+      } catch {}
+      return;
+    }
+
+    if (clean.length !== 7) {
+      setEditError("Referral code must be 7 characters.");
+      return;
+    }
+
+    setEditValidating(true);
+    setEditError("");
+
+    try {
+      const result = await verifyReferralCodeOnServer(clean);
+      if (result.valid) {
+        setReferralCode(clean);
+        setEditReferralInput(clean);
+        setIsReferralEditing(false);
+        setEditError("");
+        try {
+          localStorage.setItem("binro_pending_referral_code", clean);
+          localStorage.setItem("binro_pending_referral_code_v1", clean);
+        } catch {}
+      } else {
+        setEditError(result.error || "Invalid referral code.");
+      }
+    } catch {
+      setEditError("Invalid referral code.");
+    } finally {
+      setEditValidating(false);
+    }
+  };
+
+  const handleRemoveReferral = () => {
+    setReferralCode("");
+    setTempReferralInput("");
+    setEditReferralInput("");
+    setIsReferralEditing(false);
+    setReferralError("");
+    setEditError("");
+    try {
+      localStorage.removeItem("binro_pending_referral_code");
+      localStorage.removeItem("binro_pending_referral_code_v1");
+    } catch {}
+  };
 
   useEffect(() => {
     if (user && !verificationSent) {
@@ -105,6 +246,13 @@ function RegisterContent() {
 
     try {
       const res = await signUp(trimmedEmail, password, displayName.trim());
+      const trimmedRef = referralCode.trim().toLowerCase();
+      if (trimmedRef && res.user?.id) {
+        try {
+          const { applyReferralCodeForUser } = await import("@services/rewards");
+          await applyReferralCodeForUser(res.user.id, trimmedRef);
+        } catch {}
+      }
       if (res.session) {
         router.replace(returnUrl);
         return;
@@ -158,6 +306,13 @@ function RegisterContent() {
     setErrorCode("");
     setGoogleLoading(true);
     try {
+      const trimmedRef = referralCode.trim().toLowerCase();
+      if (trimmedRef) {
+        try {
+          localStorage.setItem("binro_pending_referral_code", trimmedRef);
+          localStorage.setItem("binro_pending_referral_code_v1", trimmedRef);
+        } catch {}
+      }
       const data = await signInWithGoogle();
       if (!data?.url) {
         throw new Error("Unable to initialize Google Sign-in.");
@@ -430,6 +585,169 @@ function RegisterContent() {
                 <span className={styles.fieldError}>{fieldErrors.password}</span>
               )}
             </div>
+
+            {/* ── Referral Section (Repositioned, Professional, Database-Verified & 7-char limit) ── */}
+            {referralCode ? (
+              <div className={styles.referralAppliedCard}>
+                <div className={styles.referralAppliedMeta}>
+                  <div className={styles.referralCodeGroup}>
+                    <span className={styles.referralCodeLabel}>Referral Code:</span>
+                    <span className={styles.referralCodeValue}>{referralCode.toUpperCase()}</span>
+                  </div>
+                  <span className={styles.referralAppliedGreenBadge}>
+                    <svg
+                      className={styles.referralCheckSvg}
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M13.3334 4L6.00008 11.3333L2.66675 8"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span className={styles.referralAppliedBadgeText}>Applied</span>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsReferralEditing(!isReferralEditing);
+                    setEditError("");
+                    setEditReferralInput(referralCode.toUpperCase());
+                  }}
+                  className={styles.referralChangeBtn}
+                  aria-label={isReferralEditing ? "Cancel editing referral code" : "Change referral code"}
+                >
+                  {isReferralEditing ? "Cancel" : "Change"}
+                </button>
+              </div>
+            ) : (
+              <div className={styles.referralAccordionWrapper}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsReferralExpanded(!isReferralExpanded);
+                    setReferralError("");
+                  }}
+                  className={styles.referralExpandTrigger}
+                >
+                  <Ionicons name="pricetag-outline" size={14} color="var(--primary)" />
+                  <span>Have a referral code? (Optional)</span>
+                  <Ionicons
+                    name={isReferralExpanded ? "chevron-up" : "chevron-down"}
+                    size={12}
+                    color="var(--text-muted)"
+                  />
+                </button>
+
+                {isReferralExpanded && (
+                  <div className={styles.referralInputGroup}>
+                    <div
+                      className={`${styles.referralInputPill} ${
+                        referralError ? styles.referralInputPillError : ""
+                      }`}
+                    >
+                      <input
+                        type="text"
+                        placeholder="Enter 7-character code (e.g. KRZRYN4)"
+                        value={tempReferralInput.toUpperCase()}
+                        maxLength={7}
+                        onChange={(e) => {
+                          const sanitized = e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 7);
+                          setTempReferralInput(sanitized);
+                          if (referralError) setReferralError("");
+                        }}
+                        className={styles.referralInputField}
+                        disabled={referralValidating}
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleApplyReferral(tempReferralInput)}
+                        disabled={tempReferralInput.trim().length !== 7 || referralValidating}
+                        className={styles.referralApplyModernBtn}
+                      >
+                        {referralValidating ? (
+                          <>
+                            <span className={styles.referralApplySpinner} />
+                            <span>Checking...</span>
+                          </>
+                        ) : (
+                          <span>Apply</span>
+                        )}
+                      </button>
+                    </div>
+
+                    {referralError ? (
+                      <span className={styles.referralInlineError}>
+                        <Ionicons name="alert-circle" size={13} color="var(--danger)" />
+                        <span>{referralError}</span>
+                      </span>
+                    ) : tempReferralInput.length > 0 && tempReferralInput.length < 7 ? (
+                      <span className={styles.referralCharHint}>
+                        Code must be 7 characters ({tempReferralInput.length}/7)
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* In-place edit block when user clicks "Change" */}
+            {referralCode && isReferralEditing && (
+              <div className={styles.referralInputGroup} style={{ marginTop: "2px" }}>
+                <div
+                  className={`${styles.referralInputPill} ${
+                    editError ? styles.referralInputPillError : ""
+                  }`}
+                >
+                  <input
+                    type="text"
+                    placeholder="New 7-character code"
+                    value={editReferralInput.toUpperCase()}
+                    maxLength={7}
+                    onChange={(e) => {
+                      const sanitized = e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 7);
+                      setEditReferralInput(sanitized);
+                      if (editError) setEditError("");
+                    }}
+                    className={styles.referralInputField}
+                    disabled={editValidating}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleApplyEditReferral(editReferralInput)}
+                    disabled={
+                      (editReferralInput.trim().length > 0 && editReferralInput.trim().length !== 7) ||
+                      editValidating
+                    }
+                    className={styles.referralApplyModernBtn}
+                  >
+                    {editValidating ? (
+                      <>
+                        <span className={styles.referralApplySpinner} />
+                        <span>Checking...</span>
+                      </>
+                    ) : (
+                      <span>Apply</span>
+                    )}
+                  </button>
+                </div>
+
+                {editError && (
+                  <span className={styles.referralInlineError}>
+                    <Ionicons name="alert-circle" size={13} color="var(--danger)" />
+                    <span>{editError}</span>
+                  </span>
+                )}
+              </div>
+            )}
 
             <button
               type="submit"
