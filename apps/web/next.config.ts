@@ -122,6 +122,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/referral",
+        destination: "/referrals",
+        permanent: true,
+      },
+      {
+        source: "/scratch-cards",
+        destination: "/rewards",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

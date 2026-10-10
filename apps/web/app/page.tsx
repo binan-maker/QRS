@@ -60,6 +60,16 @@ export default function HomePage() {
                 </Link>
               </li>
               <li>
+                <Link href="/rewards">
+                  Scratch Cards — Daily Scan Milestones &amp; Merchant Vouchers
+                </Link>
+              </li>
+              <li>
+                <Link href="/referrals">
+                  Refer &amp; Earn — Give Silver, Earn Gold VIP Scratch Cards
+                </Link>
+              </li>
+              <li>
                 <Link href="/trust-scores">
                   About BinRo Community Trust Scores &amp; Safety Ratings
                 </Link>

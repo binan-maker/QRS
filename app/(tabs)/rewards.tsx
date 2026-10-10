@@ -30,7 +30,6 @@ import {
   buildReferralShareMessage,
   getWhatsAppShareUrl,
   getTelegramShareUrl,
-  getTwitterShareUrl,
   type RewardWallet,
   type ScratchCardItem,
   type UserReferralsDashboard,
@@ -407,7 +406,6 @@ export default function RewardsScreen() {
                   {cards.map((card) => {
                     const isLocked = card.status === "locked";
                     const isUnscratched = card.status === "unlocked";
-                    const isRevealed = card.status === "scratched" || card.status === "redeemed";
 
                     return (
                       <View

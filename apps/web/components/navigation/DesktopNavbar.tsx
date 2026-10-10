@@ -9,10 +9,8 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Ionicons } from "@/lib/mobile-icons";
 import { useAuth } from "@/lib/auth-context";
 import { useAvatar, isUserUploadedPhoto } from "@/lib/avatar-context";
-import { useTheme } from "@/lib/theme-context";
 import { UserAvatar } from "@/components/avatar/UserAvatar";
 import styles from "./DesktopNavbar.module.css";
 
@@ -20,7 +18,6 @@ export function DesktopNavbar() {
   const pathname = usePathname();
   const { user, profile, loading: authLoading } = useAuth();
   const { cachedUrl, avatarUrl } = useAvatar();
-  const { isDark, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -98,19 +95,14 @@ export function DesktopNavbar() {
           </span>
         </Link>
 
-        {/* Center: Navigation Links — Home, Scan, Profile */}
+        {/* Center: Flat surface Navigation Links — Home, Scan, Profile (Text Only) */}
         <nav className={styles.navLinks} aria-label="Primary navigation">
           <Link
             href="/"
             className={`${styles.navItem} ${isHome ? styles.navItemActive : ""}`}
             aria-current={isHome ? "page" : undefined}
           >
-            <Ionicons
-              name={isHome ? "home" : "home-outline"}
-              size={16}
-              color="currentColor"
-            />
-            <span>Home</span>
+            Home
           </Link>
 
           <Link
@@ -118,12 +110,7 @@ export function DesktopNavbar() {
             className={`${styles.navItem} ${isScan ? styles.navItemActive : ""}`}
             aria-current={isScan ? "page" : undefined}
           >
-            <Ionicons
-              name={isScan ? "scan" : "scan-outline"}
-              size={16}
-              color="currentColor"
-            />
-            <span>Scan</span>
+            Scan
           </Link>
 
           <Link
@@ -131,32 +118,12 @@ export function DesktopNavbar() {
             className={`${styles.navItem} ${isProfile ? styles.navItemActive : ""}`}
             aria-current={isProfile ? "page" : undefined}
           >
-            <Ionicons
-              name={isProfile ? "person" : "person-outline"}
-              size={16}
-              color="currentColor"
-            />
-            <span>Profile</span>
+            Profile
           </Link>
         </nav>
 
-        {/* Right: Theme Toggle + Sign In Pill / User Avatar */}
+        {/* Right: User Avatar / Sign In */}
         <div className={styles.navRight}>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className={styles.themeBtn}
-            title={mounted ? (isDark ? "Switch to light theme" : "Switch to dark theme") : "Toggle theme"}
-            aria-label={mounted ? (isDark ? "Switch to light theme" : "Switch to dark theme") : "Toggle theme"}
-            suppressHydrationWarning
-          >
-            <Ionicons
-              name={mounted && isDark ? "sunny-outline" : "moon-outline"}
-              size={18}
-              color="currentColor"
-            />
-          </button>
-
           {authLoading ? (
             <div className={styles.avatarSkeleton} aria-hidden="true" />
           ) : user ? (
@@ -173,9 +140,8 @@ export function DesktopNavbar() {
               />
             </Link>
           ) : (
-            <Link href="/login" className={styles.signInPill}>
-              <Ionicons name="log-in-outline" size={16} color="currentColor" />
-              <span>Sign In</span>
+            <Link href="/login" className={styles.signInBtn}>
+              Sign In
             </Link>
           )}
         </div>

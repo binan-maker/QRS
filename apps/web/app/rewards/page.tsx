@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 import { Ionicons } from "@/lib/mobile-icons";
@@ -9,67 +10,251 @@ import { BottomTabBar } from "@/components/navigation/BottomTabBar";
 import {
   getUserRewardWallet,
   getUserScratchCards,
-  getUserReferralsDashboard,
   scratchRewardCard,
   recordOfferRedemption,
-  applyReferralCodeForUser,
-  buildReferralShareMessage,
-  getWhatsAppShareUrl,
-  getTelegramShareUrl,
-  getTwitterShareUrl,
   type RewardWallet,
   type ScratchCardItem,
-  type UserReferralsDashboard,
-  type ReferralRecord,
 } from "@services/rewards";
-import styles from "../home.module.css";
+import styles from "./rewards.module.css";
 
-type WebRewardsTab = "cards" | "referrals";
-type WebRefFilter = "all" | "pending" | "qualified";
+type FilterType = "all" | "unscratched" | "revealed" | "locked";
 
-export default function WebRewardsPage() {
-  const { user, profile } = useAuth();
-  const { colors, isDark } = useTheme();
+// ── Interactive HTML5 Canvas Scratch Overlay Component ────────────────────────
+interface InteractiveScratchProps {
+  card: ScratchCardItem;
+  onScratchComplete: (card: ScratchCardItem) => void;
+}
 
-  const [activeTab, setActiveTab] = useState<WebRewardsTab>("cards");
+function InteractiveScratchCard({ card, onScratchComplete }: InteractiveScratchProps) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [isScratchedLocal, setIsScratchedLocal] = useState(card.status === "scratched" || card.status === "redeemed");
+  const [scratchProgress, setScratchProgress] = useState(0);
+  const isDrawingRef = useRef(false);
+  const completedRef = useRef(card.status === "scratched" || card.status === "redeemed");
+
+  const tier = card.tier;
+
+  // Initialize Canvas with metallic foil gradient
+  useEffect(() => {
+    if (completedRef.current) return;
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    const rect = container.getBoundingClientRect();
+    const width = Math.floor(rect.width) || 320;
+    const height = Math.floor(rect.height) || 200;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Rich metallic foil gradient based on card tier
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    if (tier === "gold") {
+      gradient.addColorStop(0, "#F59E0B");
+      gradient.addColorStop(0.3, "#FDE68A");
+      gradient.addColorStop(0.6, "#D97706");
+      gradient.addColorStop(1, "#B45309");
+    } else if (tier === "silver") {
+      gradient.addColorStop(0, "#94A3B8");
+      gradient.addColorStop(0.3, "#F1F5F9");
+      gradient.addColorStop(0.6, "#64748B");
+      gradient.addColorStop(1, "#475569");
+    } else {
+      gradient.addColorStop(0, "#2563EB");
+      gradient.addColorStop(0.4, "#93C5FD");
+      gradient.addColorStop(0.8, "#1D4ED8");
+      gradient.addColorStop(1, "#1E40AF");
+    }
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    // Subtle holographic sparkles
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    for (let i = 0; i < 40; i++) {
+      const sx = (i * 37) % width;
+      const sy = (i * 29) % height;
+      const r = (i % 3) + 1;
+      ctx.beginPath();
+      ctx.arc(sx, sy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Centered label & icon on foil
+    ctx.fillStyle = tier === "gold" ? "#78350F" : "#FFFFFF";
+    ctx.font = "bold 13px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.letterSpacing = "1px";
+    ctx.fillText("✨ SCRATCH WITH FINGER OR MOUSE ✨", width / 2, height / 2 - 10);
+
+    ctx.font = "11px Inter, sans-serif";
+    ctx.fillStyle = tier === "gold" ? "#92400E" : "rgba(255, 255, 255, 0.85)";
+    ctx.fillText("Scratch to reveal exclusive coupon", width / 2, height / 2 + 14);
+  }, [tier]);
+
+  const checkScratchPercentage = useCallback(() => {
+    if (completedRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    try {
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = imgData.data;
+      let transparentCount = 0;
+      const totalPixels = pixels.length / 4;
+
+      // Sample every 4th pixel for high performance
+      for (let i = 3; i < pixels.length; i += 16) {
+        if (pixels[i] === 0) {
+          transparentCount += 4;
+        }
+      }
+
+      const pct = Math.round((transparentCount / totalPixels) * 100);
+      setScratchProgress(pct);
+
+      if (pct >= 35 && !completedRef.current) {
+        completedRef.current = true;
+        setIsScratchedLocal(true);
+        onScratchComplete(card);
+      }
+    } catch {}
+  }, [card, onScratchComplete]);
+
+  const scratchAtPoint = useCallback((clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.arc(x, y, 28, 0, Math.PI * 2);
+    ctx.fill();
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (completedRef.current) return;
+    isDrawingRef.current = true;
+    scratchAtPoint(e.clientX, e.clientY);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDrawingRef.current || completedRef.current) return;
+    scratchAtPoint(e.clientX, e.clientY);
+  };
+
+  const handlePointerUp = () => {
+    if (!isDrawingRef.current) return;
+    isDrawingRef.current = false;
+    checkScratchPercentage();
+  };
+
+  const handleQuickReveal = () => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    setIsScratchedLocal(true);
+    onScratchComplete(card);
+  };
+
+  if (isScratchedLocal) {
+    return null;
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className={styles.scratchArea}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+    >
+      <div className={styles.scratchUnderlay}>
+        <span className={styles.merchantName}>{card.offer.merchantName}</span>
+        <h4 className={styles.offerTitle}>{card.offer.title}</h4>
+        <p className={styles.offerDesc}>{card.offer.description}</p>
+      </div>
+
+      <canvas ref={canvasRef} className={styles.scratchCanvas} />
+
+      <div className={styles.tapToScratchOverlay}>
+        <span>{scratchProgress > 0 ? `${scratchProgress}% Cleared` : "Scratch Foil"}</span>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleQuickReveal}
+        className={styles.quickRevealBtn}
+        aria-label="Tap to reveal instantly"
+      >
+        <Ionicons name="sparkles" size={14} color="var(--primary)" />
+        <span>Tap to Reveal Instantly</span>
+      </button>
+    </div>
+  );
+}
+
+// ── Main Scratch Cards Only Page ──────────────────────────────────────────────
+export default function ScratchCardsPage() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const { colors } = useTheme();
+
   const [wallet, setWallet] = useState<RewardWallet | null>(null);
   const [cards, setCards] = useState<ScratchCardItem[]>([]);
-  const [refDashboard, setRefDashboard] = useState<UserReferralsDashboard | null>(null);
-  const [refFilter, setRefFilter] = useState<WebRefFilter>("all");
-  const [referralInput, setReferralInput] = useState("");
-  const [referralStatus, setReferralStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [codeCopied, setCodeCopied] = useState(false);
 
-  const inviteCode =
-    wallet?.ownReferralCode || refDashboard?.referralCode || "binro7x";
-
-  const inviteUrl = `https://www.binro.in/invite/${inviteCode}`;
+  const handleBack = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
+    }
+  }, [router]);
 
   const loadData = useCallback(async () => {
     if (!user?.id) {
       setWallet(null);
       setCards([]);
-      setRefDashboard(null);
+      setLoading(false);
       return;
     }
-    const [w, c, rd] = await Promise.all([
-      getUserRewardWallet(user.id),
-      getUserScratchCards(user.id),
-      getUserReferralsDashboard(user.id),
-    ]);
-    setWallet(w);
-    setCards(c);
-    setRefDashboard(rd);
+    try {
+      const [w, c] = await Promise.all([
+        getUserRewardWallet(user.id),
+        getUserScratchCards(user.id),
+      ]);
+      setWallet(w);
+      setCards(c);
+    } catch {
+      // Fallback
+    } finally {
+      setLoading(false);
+    }
   }, [user?.id]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
 
-  const handleScratch = useCallback(
+  const handleScratchComplete = useCallback(
     async (card: ScratchCardItem) => {
-      if (!user?.id || card.status === "locked") return;
+      if (!user?.id) return;
       await scratchRewardCard(user.id, card.id);
       await loadData();
     },
@@ -91,1009 +276,349 @@ export default function WebRewardsPage() {
     [user?.id, loadData]
   );
 
-  const handleApplyReferral = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!user?.id || !referralInput.trim()) return;
-      const res = await applyReferralCodeForUser(user.id, referralInput);
-      setReferralStatus(res.message);
-      if (res.ok) {
-        setReferralInput("");
-        await loadData();
+  const handleCopyCodeOnly = useCallback(
+    async (card: ScratchCardItem) => {
+      if (card.offer.couponCode && typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(card.offer.couponCode).catch(() => {});
+        setCopiedId(card.id);
+        setTimeout(() => setCopiedId(null), 2200);
       }
     },
-    [user?.id, referralInput, loadData]
+    []
   );
 
-  const handleCopyCode = useCallback(async () => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      await navigator.clipboard.writeText(inviteCode.toUpperCase()).catch(() => {});
-      setCodeCopied(true);
-      setTimeout(() => setCodeCopied(false), 2000);
-    }
-  }, [inviteCode]);
-
-  const handleNativeShare = useCallback(async () => {
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({
-          title: "Join BinRo — VIP Invite",
-          text: buildReferralShareMessage(inviteCode),
-          url: inviteUrl,
-        });
-        return;
-      } catch {}
-    }
-    await handleCopyCode();
-  }, [inviteCode, inviteUrl, handleCopyCode]);
-
+  // Milestone Progress calculations
   const dailyScans = wallet?.dailyEligibleScans ?? 0;
   const nextTarget = wallet?.nextMilestoneTarget ?? 3;
   const progressPct = wallet?.dailyCapReached
     ? 100
     : Math.min(100, Math.round((dailyScans / Math.max(1, nextTarget)) * 100));
 
-  const filteredReferrals = useMemo(() => {
-    if (!refDashboard?.referrals) return [];
-    if (refFilter === "pending") return refDashboard.referrals.filter((r) => r.status === "pending_first_scan");
-    if (refFilter === "qualified") return refDashboard.referrals.filter((r) => r.status === "qualified");
-    return refDashboard.referrals;
-  }, [refDashboard, refFilter]);
+  // Filtered Cards
+  const filteredCards = useMemo(() => {
+    if (activeFilter === "unscratched") {
+      return cards.filter((c) => c.status === "unlocked");
+    }
+    if (activeFilter === "revealed") {
+      return cards.filter((c) => c.status === "scratched" || c.status === "redeemed");
+    }
+    if (activeFilter === "locked") {
+      return cards.filter((c) => c.status === "locked");
+    }
+    return cards;
+  }, [cards, activeFilter]);
+
+  const unscratchedCount = cards.filter((c) => c.status === "unlocked").length;
+  const revealedCount = cards.filter((c) => c.status === "scratched" || c.status === "redeemed").length;
+  const lockedCount = cards.filter((c) => c.status === "locked").length;
 
   return (
-    <main className={styles.appFrame}>
-      <div className={styles.page}>
-        <header className={styles.header}>
-          <div className={styles.headerLeft}>
-            <h1 className={styles.greeting}>BinRo Rewards</h1>
-            <p style={{ fontSize: "13px", color: colors.textSecondary, margin: "2px 0 0" }}>
-              Scan safely, unlock coupons &amp; earn VIP cards
-            </p>
+    <div className={styles.pageFrame}>
+      <main className={styles.container}>
+        {/* ── Top Navigation Bar ────────────────────────────────────────────── */}
+        <header className={styles.topBar}>
+          <div className={styles.topBarLeft}>
+            <button
+              type="button"
+              onClick={handleBack}
+              className={styles.backBtn}
+              aria-label="Back"
+              title="Back"
+            >
+              <Ionicons name="chevron-back" size={22} color="currentColor" />
+            </button>
+            <div className={styles.headingBlock}>
+              <h1 className={styles.pageTitle}>Scratch Cards</h1>
+              <p className={styles.pageSubtitle}>
+                Scan QR codes to reach milestones &amp; scratch to reveal vouchers
+              </p>
+            </div>
           </div>
-          <div className={styles.headerRight}>
-            <Link href="/scanner" className={styles.signInPill}>
-              <Ionicons name="scan" size={16} color={colors.primary} />
-              <span>Scan QR</span>
+
+          <div className={styles.topBarRight}>
+            <Link
+              href="/referrals"
+              className={styles.topActionBtn}
+              aria-label="Go to Refer & Earn"
+            >
+              <Ionicons name="people-outline" size={16} />
+              <span>Refer &amp; Earn</span>
             </Link>
           </div>
         </header>
 
-        {/* Tab Segment Controls */}
-        <div
-          style={{
-            display: "flex",
-            borderRadius: "14px",
-            border: `1px solid ${colors.surfaceBorder}`,
-            backgroundColor: colors.surface,
-            padding: "4px",
-            marginBottom: "16px",
-            gap: "4px",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setActiveTab("cards")}
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-              padding: "10px",
-              borderRadius: "10px",
-              border: "none",
-              backgroundColor: activeTab === "cards" ? colors.primary : "transparent",
-              color: activeTab === "cards" ? "#ffffff" : colors.textSecondary,
-              fontSize: "13px",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            <Ionicons name="gift" size={15} color={activeTab === "cards" ? "#ffffff" : colors.textSecondary} />
-            <span>Scratch Cards ({cards.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("referrals")}
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-              padding: "10px",
-              borderRadius: "10px",
-              border: "none",
-              backgroundColor: activeTab === "referrals" ? colors.primary : "transparent",
-              color: activeTab === "referrals" ? "#ffffff" : colors.textSecondary,
-              fontSize: "13px",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            <Ionicons name="people" size={15} color={activeTab === "referrals" ? "#ffffff" : colors.textSecondary} />
-            <span>Refer &amp; Earn ({refDashboard?.totalInvited ?? 0})</span>
-          </button>
-        </div>
-
+        {/* ── Not Signed In State ───────────────────────────────────────────── */}
         {!user ? (
-          <div
-            style={{
-              padding: "36px 20px",
-              borderRadius: "20px",
-              backgroundColor: colors.surface,
-              border: `1px solid ${colors.surfaceBorder}`,
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "12px",
-            }}
-          >
-            <Ionicons name="gift-outline" size={48} color={colors.primary} />
-            <h2 style={{ fontSize: "20px", fontWeight: 700, color: colors.text, margin: 0 }}>
-              Sign In to Unlock Rewards
-            </h2>
-            <p style={{ fontSize: "14px", color: colors.textSecondary, maxWidth: "340px", margin: 0, lineHeight: 1.5 }}>
-              Sign in with Google to earn Welcome scratch cards, collect partner deals, and invite friends.
+          <div className={styles.guestCard}>
+            <div className={styles.guestIconWrap}>
+              <Ionicons name="gift-outline" size={32} color="var(--primary)" />
+            </div>
+            <h2 className={styles.guestTitle}>Sign in to view your scratch cards</h2>
+            <p className={styles.guestDesc}>
+              Earn Silver Welcome scratch cards, collect partner deals from boAt, AJIO &amp; Swiggy, and unlock daily scan milestones.
             </p>
-            <Link
-              href="/profile"
-              style={{
-                marginTop: "12px",
-                padding: "12px 24px",
-                borderRadius: "12px",
-                backgroundColor: colors.primary,
-                color: "#ffffff",
-                fontWeight: 700,
-                fontSize: "14px",
-                textDecoration: "none",
-              }}
-            >
-              Sign In with Google
+            <Link href="/profile" className={styles.guestSignInBtn}>
+              <Ionicons name="logo-google" size={16} />
+              <span>Sign In with Google</span>
             </Link>
           </div>
-        ) : activeTab === "cards" ? (
+        ) : (
           <>
-            {/* Daily Milestone Progress Card */}
-            <div
-              style={{
-                padding: "18px",
-                borderRadius: "20px",
-                backgroundColor: colors.surface,
-                border: `1px solid ${colors.surfaceBorder}`,
-                marginBottom: "14px",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            {/* ── Daily Milestone Progress Card ──────────────────────────────── */}
+            <section className={styles.progressCard} aria-labelledby="milestone-title">
+              <div className={styles.progressHeader}>
                 <div>
-                  <div style={{ fontSize: "16px", fontWeight: 700, color: colors.text }}>
+                  <h2 id="milestone-title" className={styles.progressTitle}>
                     Today&apos;s Scan Progress
-                  </div>
-                  <div style={{ fontSize: "13px", color: colors.textSecondary, marginTop: "2px" }}>
+                  </h2>
+                  <p className={styles.progressSub}>
                     {wallet?.dailyCapReached
-                      ? "Daily reward cap reached (3/3 cards unlocked)"
-                      : `${dailyScans} of ${nextTarget} eligible scans for next card`}
-                  </div>
+                      ? "Daily reward cap reached (3 of 3 cards unlocked today)"
+                      : `${dailyScans} of ${nextTarget} eligible scans for next scratch card`}
+                  </p>
                 </div>
-                <div
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "10px",
-                    backgroundColor: `${colors.primary}18`,
-                    color: colors.primary,
-                    fontSize: "12px",
-                    fontWeight: 700,
-                  }}
-                >
-                  {wallet?.dailyCardsUnlocked || 0} / 3 Cards
-                </div>
+                <span className={styles.progressBadge}>
+                  {wallet?.dailyCardsUnlocked || 0} / 3 Cards Today
+                </span>
               </div>
 
-              {/* Progress Bar */}
               <div
-                style={{
-                  height: "10px",
-                  borderRadius: "6px",
-                  backgroundColor: isDark ? colors.surfaceLight : "#E2E8F0",
-                  marginTop: "14px",
-                  overflow: "hidden",
-                }}
+                className={styles.progressBarTrack}
+                role="progressbar"
+                aria-valuenow={progressPct}
+                aria-valuemin={0}
+                aria-valuemax={100}
               >
                 <div
-                  style={{
-                    height: "100%",
-                    width: `${progressPct}%`,
-                    borderRadius: "6px",
-                    background: "linear-gradient(90deg, #0066FF, #38BDF8)",
-                    transition: "width 0.3s ease",
-                  }}
+                  className={styles.progressBarFill}
+                  style={{ width: `${progressPct}%` }}
                 />
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
-                <span style={{ fontSize: "11px", color: colors.textMuted, fontWeight: 500 }}>
-                  Milestones: 3 scans → 8 scans → 15 scans
+              <div className={styles.progressMetaRow}>
+                <span className={styles.progressMetaMilestones}>
+                  Milestones: 3 scans · 8 scans · 15 scans
                 </span>
-                <span style={{ fontSize: "11px", color: colors.textMuted, fontWeight: 500 }}>
-                  {wallet?.scansUntilNextCard ? `${wallet.scansUntilNextCard} more to go` : "Completed"}
+                <span className={styles.progressMetaStatus}>
+                  {wallet?.dailyCapReached
+                    ? "Max Unlocked"
+                    : wallet?.scansUntilNextCard
+                      ? `${wallet.scansUntilNextCard} more to unlock`
+                      : "Ready"}
                 </span>
               </div>
-            </div>
+            </section>
 
-            {/* Quick Switch to Referrals Banner */}
-            <button
-              type="button"
-              onClick={() => setActiveTab("referrals")}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderRadius: "18px",
-                border: `1px solid ${colors.primary}30`,
-                backgroundColor: isDark ? "rgba(30, 41, 59, 0.7)" : "#EFF6FF",
-                padding: "14px",
-                marginBottom: "16px",
-                cursor: "pointer",
-                textAlign: "left",
-              }}
+            {/* ── Promo Banner Linking to the Separate Referral Page ─────────── */}
+            <Link
+              href="/referrals"
+              className={styles.referralBanner}
+              aria-label="Open Refer and Earn to get Gold VIP Cards"
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1 }}>
-                <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "12px",
-                    backgroundColor: `${colors.primary}20`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Ionicons name="sparkles" size={20} color={colors.primary} />
+              <div className={styles.referralBannerLeft}>
+                <div className={styles.referralBannerIconWrap}>
+                  <Ionicons name="sparkles" size={22} color="#FFFFFF" />
                 </div>
                 <div>
-                  <div style={{ fontSize: "15px", fontWeight: 700, color: colors.text }}>
-                    Want a Gold VIP Card?
-                  </div>
-                  <div style={{ fontSize: "12px", color: colors.textSecondary, marginTop: "2px" }}>
-                    Invite a friend. When they scan 1 QR code, you unlock a Gold VIP Card!
-                  </div>
+                  <h3 className={styles.referralBannerHeading}>
+                    Want a Gold VIP Scratch Card?
+                  </h3>
+                  <p className={styles.referralBannerText}>
+                    Invite a friend. When they complete 1 verified QR scan, you unlock a Gold VIP Card!
+                  </p>
                 </div>
               </div>
-              <Ionicons name="chevron-forward" size={18} color={colors.primary} />
-            </button>
+              <div className={styles.referralBannerCta}>
+                <span>Refer &amp; Earn</span>
+                <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+              </div>
+            </Link>
 
-            {/* Cards Grid */}
-            <div>
-              <h2 style={{ fontSize: "18px", fontWeight: 800, color: colors.text, margin: "0 0 12px" }}>
-                Your Scratch Cards
-              </h2>
+            {/* ── Filter Controls ────────────────────────────────────────────── */}
+            <div className={styles.filterBar} role="group" aria-label="Filter scratch cards">
+              <button
+                type="button"
+                onClick={() => setActiveFilter("all")}
+                className={`${styles.filterBtn} ${activeFilter === "all" ? styles.filterBtnActive : ""}`}
+                aria-pressed={activeFilter === "all"}
+              >
+                <span>All Cards ({cards.length})</span>
+              </button>
 
-              {cards.length === 0 ? (
-                <div
-                  style={{
-                    padding: "36px 20px",
-                    borderRadius: "20px",
-                    backgroundColor: colors.surface,
-                    border: `1px solid ${colors.surfaceBorder}`,
-                    textAlign: "center",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
-                >
-                  <Ionicons name="scan-outline" size={40} color={colors.textMuted} />
-                  <div style={{ fontSize: "16px", fontWeight: 700, color: colors.text }}>
-                    No scratch cards yet
-                  </div>
-                  <div style={{ fontSize: "13px", color: colors.textSecondary, maxWidth: "280px", lineHeight: 1.5 }}>
-                    Scan your 1st verified QR code or invite a friend to unlock your first card!
-                  </div>
-                  <Link
-                    href="/scanner"
-                    style={{
-                      marginTop: "12px",
-                      padding: "10px 20px",
-                      borderRadius: "12px",
-                      backgroundColor: colors.primary,
-                      color: "#ffffff",
-                      fontSize: "14px",
-                      fontWeight: 700,
-                      textDecoration: "none",
-                    }}
-                  >
-                    Open Scanner
-                  </Link>
+              <button
+                type="button"
+                onClick={() => setActiveFilter("unscratched")}
+                className={`${styles.filterBtn} ${activeFilter === "unscratched" ? styles.filterBtnActive : ""}`}
+                aria-pressed={activeFilter === "unscratched"}
+              >
+                <Ionicons name="sparkles-outline" size={13} />
+                <span>Unscratched ({unscratchedCount})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveFilter("revealed")}
+                className={`${styles.filterBtn} ${activeFilter === "revealed" ? styles.filterBtnActive : ""}`}
+                aria-pressed={activeFilter === "revealed"}
+              >
+                <Ionicons name="checkmark-circle-outline" size={13} />
+                <span>Revealed ({revealedCount})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveFilter("locked")}
+                className={`${styles.filterBtn} ${activeFilter === "locked" ? styles.filterBtnActive : ""}`}
+                aria-pressed={activeFilter === "locked"}
+              >
+                <Ionicons name="lock-closed-outline" size={13} />
+                <span>Locked ({lockedCount})</span>
+              </button>
+            </div>
+
+            {/* ── Scratch Cards Deck ─────────────────────────────────────────── */}
+            {cards.length === 0 ? (
+              <div className={styles.emptyState}>
+                <div className={styles.emptyIcon}>
+                  <Ionicons name="gift-outline" size={44} />
                 </div>
-              ) : (
-                <div style={{ display: "grid", gap: "14px" }}>
-                  {cards.map((card) => {
-                    const isLocked = card.status === "locked";
-                    const isUnscratched = card.status === "unlocked";
+                <h3 className={styles.emptyTitle}>No scratch cards yet</h3>
+                <p className={styles.emptyText}>
+                  Scan your 1st verified QR code with the BinRo scanner or invite a friend to unlock your first scratch card!
+                </p>
+                <Link href="/scanner" className={styles.emptyScanBtn}>
+                  <Ionicons name="scan" size={16} color="#FFFFFF" />
+                  <span>Open Scanner</span>
+                </Link>
+              </div>
+            ) : filteredCards.length === 0 ? (
+              <div className={styles.emptyState}>
+                <Ionicons name="funnel-outline" size={36} color="var(--text-muted)" />
+                <h3 className={styles.emptyTitle}>No cards in this filter</h3>
+                <p className={styles.emptyText}>
+                  You don&apos;t have any {activeFilter} scratch cards right now.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter("all")}
+                  className={styles.emptyScanBtn}
+                >
+                  Show All Cards
+                </button>
+              </div>
+            ) : (
+              <div className={styles.cardsGrid}>
+                {filteredCards.map((card) => {
+                  const isLocked = card.status === "locked";
+                  const isUnscratched = card.status === "unlocked";
+                  const isRevealed = card.status === "scratched" || card.status === "redeemed";
 
-                    return (
-                      <div
-                        key={card.id}
-                        style={{
-                          borderRadius: "20px",
-                          border: `1.5px solid ${
-                            card.tier === "gold"
-                              ? "#F59E0B"
-                              : card.tier === "silver"
-                                ? "#94A3B8"
-                                : colors.surfaceBorder
-                          }`,
-                          backgroundColor: colors.surface,
-                          padding: "16px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "12px",
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span
-                            style={{
-                              padding: "3px 8px",
-                              borderRadius: "8px",
-                              fontSize: "11px",
-                              fontWeight: 800,
-                              letterSpacing: "0.5px",
-                              backgroundColor:
-                                card.tier === "gold"
-                                  ? "#F59E0B20"
-                                  : card.tier === "silver"
-                                    ? "#94A3B820"
-                                    : `${colors.primary}18`,
-                              color:
-                                card.tier === "gold"
-                                  ? "#F59E0B"
-                                  : card.tier === "silver"
-                                    ? "#94A3B8"
-                                    : colors.primary,
-                            }}
-                          >
-                            {card.tier.toUpperCase()} TIER
-                          </span>
-                          <span style={{ fontSize: "12px", color: colors.textMuted, fontWeight: 500 }}>
-                            {card.sourceLabel}
-                          </span>
-                        </div>
+                  const tierClass =
+                    card.tier === "gold"
+                      ? styles.cardBoxGold
+                      : card.tier === "silver"
+                        ? styles.cardBoxSilver
+                        : styles.cardBoxBronze;
 
-                        {isLocked ? (
-                          <div
-                            style={{
-                              padding: "24px",
-                              textAlign: "center",
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                              gap: "8px",
-                            }}
-                          >
-                            <Ionicons name="lock-closed" size={28} color={colors.textMuted} />
-                            <div style={{ fontSize: "13px", color: colors.textSecondary, fontWeight: 500 }}>
-                              {card.unlockRequirementText || "Complete 1 scan to unlock"}
-                            </div>
+                  const badgeTierClass =
+                    card.tier === "gold"
+                      ? styles.tierBadgeGold
+                      : card.tier === "silver"
+                        ? styles.tierBadgeSilver
+                        : styles.tierBadgeBronze;
+
+                  return (
+                    <article
+                      key={card.id}
+                      className={`${styles.cardBox} ${tierClass}`}
+                      aria-label={`${card.tier} tier scratch card: ${card.offer.title}`}
+                    >
+                      {/* Card Header */}
+                      <div className={styles.cardHeaderRow}>
+                        <span className={`${styles.tierBadge} ${badgeTierClass}`}>
+                          {card.tier === "gold" && <Ionicons name="trophy" size={11} />}
+                          <span>{card.tier} Tier</span>
+                        </span>
+                        <span className={styles.sourceLabel}>{card.sourceLabel}</span>
+                      </div>
+
+                      {/* State 1: Locked */}
+                      {isLocked && (
+                        <div className={styles.lockedContent}>
+                          <div className={styles.lockedIconRing}>
+                            <Ionicons name="lock-closed" size={24} />
                           </div>
-                        ) : isUnscratched ? (
-                          <button
-                            type="button"
-                            onClick={() => handleScratch(card)}
-                            style={{
-                              border: "none",
-                              borderRadius: "14px",
-                              padding: "28px",
-                              background:
-                                card.tier === "gold"
-                                  ? "linear-gradient(135deg, #F59E0B, #D97706)"
-                                  : card.tier === "silver"
-                                    ? "linear-gradient(135deg, #64748B, #475569)"
-                                    : "linear-gradient(135deg, #2563EB, #1D4ED8)",
-                              color: "#ffffff",
-                              cursor: "pointer",
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                              gap: "8px",
-                            }}
-                          >
-                            <Ionicons name="sparkles" size={28} color="#FFFFFF" />
-                            <span style={{ fontSize: "13px", fontWeight: 800, letterSpacing: "0.8px" }}>
-                              TAP TO SCRATCH &amp; REVEAL
-                            </span>
-                          </button>
-                        ) : (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                            <div style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", color: colors.textMuted }}>
-                              {card.offer.merchantName}
-                            </div>
-                            <div style={{ fontSize: "17px", fontWeight: 800, color: colors.text, lineHeight: 1.3 }}>
-                              {card.offer.title}
-                            </div>
-                            <div style={{ fontSize: "13px", color: colors.textSecondary, lineHeight: 1.4 }}>
-                              {card.offer.description}
-                            </div>
+                          <span className={styles.lockedText}>
+                            {card.unlockRequirementText || "Complete 1 scan to unlock"}
+                          </span>
+                          <Link href="/scanner" className={styles.lockedScanBtn}>
+                            <Ionicons name="scan-outline" size={14} />
+                            <span>Scan QR to Unlock</span>
+                          </Link>
+                        </div>
+                      )}
 
-                            {card.offer.couponCode && (
-                              <div
+                      {/* State 2: Unscratched Interactive Surface */}
+                      {isUnscratched && (
+                        <InteractiveScratchCard
+                          card={card}
+                          onScratchComplete={handleScratchComplete}
+                        />
+                      )}
+
+                      {/* State 3: Scratched / Revealed Offer */}
+                      {isRevealed && (
+                        <div className={styles.revealedContent}>
+                          <span className={styles.merchantName}>
+                            {card.offer.merchantName}
+                          </span>
+                          <h3 className={styles.offerTitle}>{card.offer.title}</h3>
+                          <p className={styles.offerDesc}>{card.offer.description}</p>
+
+                          {card.offer.couponCode && (
+                            <div className={styles.couponBox}>
+                              <span className={styles.couponCodeText}>
+                                {card.offer.couponCode}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyCodeOnly(card)}
+                                className={`${styles.copyBadge} ${
+                                  copiedId === card.id ? styles.copyBadgeActive : ""
+                                }`}
                                 style={{
-                                  padding: "12px",
-                                  borderRadius: "12px",
-                                  backgroundColor: isDark ? colors.surfaceLight : "#F1F5F9",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "space-between",
-                                  marginTop: "4px",
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  padding: 0,
                                 }}
                               >
-                                <span style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "1px", color: colors.text }}>
-                                  {card.offer.couponCode}
-                                </span>
-                                <span style={{ fontSize: "11px", fontWeight: 700, color: colors.primary }}>
-                                  {copiedId === card.id ? "COPIED!" : "TAP REDEEM TO COPY"}
-                                </span>
-                              </div>
-                            )}
-
-                            <button
-                              type="button"
-                              onClick={() => handleRedeem(card)}
-                              style={{
-                                marginTop: "6px",
-                                padding: "13px",
-                                borderRadius: "12px",
-                                backgroundColor: colors.primary,
-                                color: "#ffffff",
-                                border: "none",
-                                fontSize: "14px",
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "8px",
-                              }}
-                            >
-                              <Ionicons name="open-outline" size={15} color="#FFFFFF" />
-                              <span>Copy Code &amp; Redeem</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          /* Refer & Earn — Production Zerodha/Upstox Style Dashboard */
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {/* VIP Referral Hero */}
-            <div
-              style={{
-                borderRadius: "22px",
-                border: `1px solid ${colors.primary}40`,
-                background: isDark
-                  ? "linear-gradient(135deg, #1E293B, #0F172A)"
-                  : "linear-gradient(135deg, #EFF6FF, #DBEAFE)",
-                padding: "22px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <Ionicons name="trophy" size={14} color="#F59E0B" />
-                <span style={{ color: "#F59E0B", fontSize: "11px", fontWeight: 800, letterSpacing: "0.6px" }}>
-                  TWO-SIDED VIP REFERRAL ENGINE
-                </span>
-              </div>
-
-              <h2 style={{ fontSize: "22px", fontWeight: 800, color: colors.text, margin: 0 }}>
-                Give Silver, Get Gold VIP
-              </h2>
-              <p style={{ fontSize: "13px", color: colors.textSecondary, margin: 0, lineHeight: 1.5 }}>
-                Friends get a Silver Welcome Card with AJIO &amp; boAt coupons upon joining. When they complete their first verified QR scan, you unlock a Gold VIP Scratch Card!
-              </p>
-
-              {/* Code Chip & Copy */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "14px",
-                  borderRadius: "14px",
-                  backgroundColor: isDark ? "rgba(0,0,0,0.4)" : "#FFFFFF",
-                  marginTop: "4px",
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: "10px", fontWeight: 700, color: colors.textMuted, letterSpacing: "0.5px" }}>
-                    YOUR REFERRAL CODE
-                  </div>
-                  <div style={{ fontSize: "20px", fontWeight: 900, letterSpacing: "1.5px", color: colors.text, marginTop: "2px" }}>
-                    {inviteCode.toUpperCase()}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCopyCode}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "9px 14px",
-                    borderRadius: "10px",
-                    backgroundColor: colors.primary,
-                    color: "#ffffff",
-                    border: "none",
-                    fontSize: "12px",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                  }}
-                >
-                  <Ionicons name={codeCopied ? "checkmark" : "copy-outline"} size={16} color="#FFFFFF" />
-                  <span>{codeCopied ? "COPIED!" : "COPY"}</span>
-                </button>
-              </div>
-
-              {/* Social Share Buttons */}
-              <div style={{ display: "flex", gap: "10px", marginTop: "4px" }}>
-                <a
-                  href={getWhatsAppShareUrl(inviteCode)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px",
-                    padding: "12px",
-                    borderRadius: "12px",
-                    backgroundColor: "#25D366",
-                    color: "#ffffff",
-                    textDecoration: "none",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                  }}
-                >
-                  <Ionicons name="logo-whatsapp" size={18} color="#FFFFFF" />
-                  <span>WhatsApp</span>
-                </a>
-
-                <a
-                  href={getTelegramShareUrl(inviteCode)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px",
-                    padding: "12px",
-                    borderRadius: "12px",
-                    backgroundColor: "#229ED9",
-                    color: "#ffffff",
-                    textDecoration: "none",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                  }}
-                >
-                  <Ionicons name="paper-plane" size={18} color="#FFFFFF" />
-                  <span>Telegram</span>
-                </a>
-
-                <button
-                  type="button"
-                  onClick={handleNativeShare}
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px",
-                    padding: "12px",
-                    borderRadius: "12px",
-                    backgroundColor: colors.primary,
-                    color: "#ffffff",
-                    border: "none",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  <Ionicons name="share-social" size={18} color="#FFFFFF" />
-                  <span>Share</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Analytics Metric Grid (Zerodha / Upstox Style) */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
-              <div
-                style={{
-                  padding: "16px",
-                  borderRadius: "16px",
-                  backgroundColor: colors.surface,
-                  border: `1px solid ${colors.surfaceBorder}`,
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: "26px", fontWeight: 800, color: colors.primary }}>
-                  {refDashboard?.totalInvited ?? 0}
-                </div>
-                <div style={{ fontSize: "12px", fontWeight: 600, color: colors.textSecondary, marginTop: "2px" }}>
-                  Friends Joined
-                </div>
-              </div>
-
-              <div
-                style={{
-                  padding: "16px",
-                  borderRadius: "16px",
-                  backgroundColor: colors.surface,
-                  border: `1px solid ${colors.surfaceBorder}`,
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: "26px", fontWeight: 800, color: "#F59E0B" }}>
-                  {refDashboard?.totalPending ?? 0}
-                </div>
-                <div style={{ fontSize: "12px", fontWeight: 600, color: colors.textSecondary, marginTop: "2px" }}>
-                  Pending 1st Scan
-                </div>
-              </div>
-
-              <div
-                style={{
-                  padding: "16px",
-                  borderRadius: "16px",
-                  backgroundColor: colors.surface,
-                  border: `1px solid ${colors.surfaceBorder}`,
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: "26px", fontWeight: 800, color: "#10B981" }}>
-                  {refDashboard?.totalQualified ?? 0}
-                </div>
-                <div style={{ fontSize: "12px", fontWeight: 600, color: colors.textSecondary, marginTop: "2px" }}>
-                  Completed Scans
-                </div>
-              </div>
-
-              <div
-                style={{
-                  padding: "16px",
-                  borderRadius: "16px",
-                  backgroundColor: colors.surface,
-                  border: `1px solid ${colors.surfaceBorder}`,
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: "26px", fontWeight: 800, color: "#8B5CF6" }}>
-                  {refDashboard?.goldCardsEarned ?? 0}
-                </div>
-                <div style={{ fontSize: "12px", fontWeight: 600, color: colors.textSecondary, marginTop: "2px" }}>
-                  Gold VIP Cards
-                </div>
-              </div>
-            </div>
-
-            {/* Invited Friends Ledger */}
-            <div
-              style={{
-                borderRadius: "20px",
-                border: `1px solid ${colors.surfaceBorder}`,
-                backgroundColor: colors.surface,
-                padding: "18px",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div>
-                  <div style={{ fontSize: "16px", fontWeight: 700, color: colors.text }}>
-                    Invited Friends Ledger
-                  </div>
-                  <div style={{ fontSize: "13px", color: colors.textSecondary, marginTop: "2px" }}>
-                    Live attribution &amp; qualification status
-                  </div>
-                </div>
-              </div>
-
-              {/* Filter pills */}
-              <div style={{ display: "flex", gap: "8px", margin: "14px 0" }}>
-                <button
-                  type="button"
-                  onClick={() => setRefFilter("all")}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: "8px",
-                    border: "none",
-                    backgroundColor: refFilter === "all" ? colors.primary : `${colors.textMuted}15`,
-                    color: refFilter === "all" ? "#FFFFFF" : colors.textSecondary,
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  All ({refDashboard?.totalInvited ?? 0})
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRefFilter("pending")}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: "8px",
-                    border: "none",
-                    backgroundColor: refFilter === "pending" ? "#F59E0B" : `${colors.textMuted}15`,
-                    color: refFilter === "pending" ? "#FFFFFF" : colors.textSecondary,
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  Pending ({refDashboard?.totalPending ?? 0})
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setRefFilter("qualified")}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: "8px",
-                    border: "none",
-                    backgroundColor: refFilter === "qualified" ? "#10B981" : `${colors.textMuted}15`,
-                    color: refFilter === "qualified" ? "#FFFFFF" : colors.textSecondary,
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  Qualified ({refDashboard?.totalQualified ?? 0})
-                </button>
-              </div>
-
-              {/* List */}
-              {filteredReferrals.length === 0 ? (
-                <div
-                  style={{
-                    padding: "28px",
-                    textAlign: "center",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
-                >
-                  <Ionicons name="people-outline" size={32} color={colors.textMuted} />
-                  <div style={{ fontSize: "13px", color: colors.textSecondary, maxWidth: "260px" }}>
-                    {refFilter === "all"
-                      ? "No friends invited yet. Share your code above to start earning!"
-                      : `No ${refFilter} referrals right now.`}
-                  </div>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  {filteredReferrals.map((friend) => {
-                    const isQualified = friend.status === "qualified";
-                    return (
-                      <div
-                        key={friend.id}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "12px 0",
-                          borderBottom: `1px solid ${colors.surfaceBorder}`,
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <div
-                            style={{
-                              width: "38px",
-                              height: "38px",
-                              borderRadius: "12px",
-                              backgroundColor: isQualified ? "#10B98120" : "#F59E0B20",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "16px",
-                              fontWeight: 800,
-                              color: isQualified ? "#10B981" : "#F59E0B",
-                            }}
-                          >
-                            {(friend.invitedUserUsername || "F").slice(0, 1).toUpperCase()}
-                          </div>
-                          <div>
-                            <div style={{ fontSize: "14px", fontWeight: 700, color: colors.text }}>
-                              @{friend.invitedUserUsername || "friend"}
+                                {copiedId === card.id ? "COPIED! ✓" : "COPY CODE"}
+                              </button>
                             </div>
-                            <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "1px" }}>
-                              Joined {new Date(friend.createdAt).toLocaleDateString()}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          {isQualified ? (
-                            <span
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                padding: "5px 10px",
-                                borderRadius: "8px",
-                                backgroundColor: "#10B98120",
-                                color: "#10B981",
-                                fontSize: "11px",
-                                fontWeight: 700,
-                              }}
-                            >
-                              <Ionicons name="checkmark-circle" size={13} color="#10B981" />
-                              <span>Gold Card Issued</span>
-                            </span>
-                          ) : (
-                            <a
-                              href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                                `Hey @${friend.invitedUserUsername || "friend"}! Your BinRo Silver Welcome Scratch Card is waiting in your account. Scan any QR code with BinRo to unlock it right away: https://www.binro.in/invite/${inviteCode}`
-                              )}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                padding: "6px 10px",
-                                borderRadius: "8px",
-                                backgroundColor: `${colors.primary}18`,
-                                color: colors.primary,
-                                fontSize: "12px",
-                                fontWeight: 700,
-                                textDecoration: "none",
-                              }}
-                            >
-                              <Ionicons name="logo-whatsapp" size={13} color={colors.primary} />
-                              <span>Remind</span>
-                            </a>
                           )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleRedeem(card)}
+                            className={styles.redeemBtn}
+                            aria-label={`Redeem coupon for ${card.offer.merchantName}`}
+                          >
+                            <Ionicons name="open-outline" size={16} />
+                            <span>Copy Code &amp; Redeem Offer</span>
+                          </button>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Were You Invited Manual Entry */}
-            <div
-              style={{
-                borderRadius: "20px",
-                border: `1px solid ${colors.surfaceBorder}`,
-                backgroundColor: colors.surface,
-                padding: "18px",
-              }}
-            >
-              <div style={{ fontSize: "16px", fontWeight: 700, color: colors.text }}>
-                Have a Referral Code?
+                      )}
+                    </article>
+                  );
+                })}
               </div>
-              <div style={{ fontSize: "13px", color: colors.textSecondary, marginTop: "2px" }}>
-                {wallet?.referredByCode
-                  ? `Active gift linked to referral code ${wallet.referredByCode}.`
-                  : (wallet?.lifetimeEligibleScans || 0) > 0 || (wallet?.dailyEligibleScans || 0) > 0
-                    ? "In accordance with Google Pay referral rules, codes can only be claimed before making your very first QR scan."
-                    : "Type your friend's 7-character code to claim your Silver Welcome Scratch Card before your first scan."}
-              </div>
-
-              {wallet?.referredByCode ? (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "12px",
-                    borderRadius: "12px",
-                    backgroundColor: `${colors.safe}15`,
-                    color: colors.safe,
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    marginTop: "12px",
-                  }}
-                >
-                  <Ionicons name="checkmark-circle" size={16} color={colors.safe} />
-                  <span>Linked to code: {wallet.referredByCode}</span>
-                </div>
-              ) : (wallet?.lifetimeEligibleScans || 0) > 0 || (wallet?.dailyEligibleScans || 0) > 0 ? (
-                <div
-                  style={{
-                    marginTop: "12px",
-                    padding: "14px",
-                    borderRadius: "14px",
-                    backgroundColor: isDark ? "rgba(255,255,255,0.04)" : "#F1F5F9",
-                    border: `1px solid ${colors.surfaceBorder}`,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                  }}
-                >
-                  <Ionicons name="lock-closed" size={20} color={colors.textMuted} />
-                  <div>
-                    <div style={{ fontSize: "13px", fontWeight: 700, color: colors.text }}>
-                      Referral Code Input Disabled
-                    </div>
-                    <div style={{ fontSize: "12px", color: colors.textSecondary, marginTop: "2px", lineHeight: "1.4" }}>
-                      Because you have already scanned your first QR code with BinRo, friend referral codes can no longer be applied to this account.
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={handleApplyReferral} style={{ marginTop: "12px" }}>
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <input
-                      type="text"
-                      value={referralInput}
-                      onChange={(e) => setReferralInput(e.target.value)}
-                      placeholder="e.g. yn5i82v"
-                      maxLength={10}
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      spellCheck="false"
-                      style={{
-                        flex: 1,
-                        height: "46px",
-                        borderRadius: "12px",
-                        border: `1px solid ${colors.surfaceBorder}`,
-                        backgroundColor: isDark ? colors.surfaceLight : "#F1F5F9",
-                        color: colors.text,
-                        padding: "0 14px",
-                        fontSize: "14px",
-                        outline: "none",
-                      }}
-                    />
-                    <button
-                      type="submit"
-                      disabled={!referralInput.trim()}
-                      style={{
-                        padding: "0 20px",
-                        borderRadius: "12px",
-                        backgroundColor: colors.primary,
-                        color: "#ffffff",
-                        border: "none",
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        cursor: !referralInput.trim() ? "not-allowed" : "pointer",
-                        opacity: !referralInput.trim() ? 0.5 : 1,
-                      }}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                  <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "6px" }}>
-                    ⚠️ Note: This input will be permanently disabled once you scan your first QR code.
-                  </div>
-                  {referralStatus && (
-                    <div style={{ fontSize: "12px", fontWeight: 600, color: colors.primary, marginTop: "8px" }}>
-                      {referralStatus}
-                    </div>
-                  )}
-                </form>
-              )}
-            </div>
-          </div>
+            )}
+          </>
         )}
+      </main>
 
-        <div style={{ height: "90px" }} />
-      </div>
-
-      <BottomTabBar />
-    </main>
+      <BottomTabBar activeTab="rewards" />
+    </div>
   );
 }

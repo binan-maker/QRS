@@ -81,11 +81,7 @@ export function HomeHeader() {
         )}
       </div>
 
-      <div className={styles.headerRight} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <Link href="/rewards" className={styles.signInPill} title="BinRo Scratch Cards & Rewards">
-          <Ionicons name="gift-outline" size={16} color={colors.primary} />
-          <span>Rewards</span>
-        </Link>
+      <div className={styles.headerRight}>
         {user ? (
           <Link
             href="/profile"

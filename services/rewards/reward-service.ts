@@ -1,4 +1,4 @@
-import { supabase } from "../../lib/supabase";
+import { supabase, isWebSupabaseConfigured } from "../../lib/supabase";
 import { universalAsyncStorage as AsyncStorage } from "../../shared/utils/universal-storage";
 import {
   DEFAULT_REWARD_LIMITS,
@@ -28,6 +28,13 @@ const REF_CODE_LETTERS = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
 const REF_CODE_DIGITS = "23456789";
 const REF_CODE_CHARS = REF_CODE_LETTERS + REF_CODE_DIGITS;
 
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 /**
  * Generates an immutable, unique 7-character mix of letters and numbers (e.g. yn5i82v, lJ36U2m).
  */
@@ -56,12 +63,25 @@ export async function getOrCreateUserReferralCode(userId: string): Promise<strin
     if (cached && cached.trim().length > 0) return cached.trim();
   } catch {}
 
+  if (!isWebSupabaseConfigured()) {
+    const candidate = generate7CharReferralCode();
+    await AsyncStorage.setItem(localKey, candidate).catch(() => {});
+    return candidate;
+  }
+
   try {
-    const { data: userRow } = await supabase
-      .from("users")
-      .select("referral_code")
-      .eq("id", userId)
-      .maybeSingle();
+    const userRow = await withTimeout(
+      (async () => {
+        const { data } = await supabase
+          .from("users")
+          .select("referral_code")
+          .eq("id", userId)
+          .maybeSingle();
+        return data;
+      })(),
+      2000,
+      null
+    );
 
     if (userRow?.referral_code && String(userRow.referral_code).trim().length > 0) {
       const code = String(userRow.referral_code).trim();
@@ -72,31 +92,41 @@ export async function getOrCreateUserReferralCode(userId: string): Promise<strin
 
   // Generate unique 7-character candidate with zero collision guarantee
   let candidate = generate7CharReferralCode();
-  for (let attempt = 0; attempt < 10; attempt++) {
-    try {
-      const { data: clash } = await supabase
-        .from("users")
-        .select("id")
-        .ilike("referral_code", candidate)
-        .maybeSingle();
-      if (!clash) break;
+  try {
+    const clash = await withTimeout(
+      (async () => {
+        const { data } = await supabase
+          .from("users")
+          .select("id")
+          .ilike("referral_code", candidate)
+          .maybeSingle();
+        return data;
+      })(),
+      1500,
+      null
+    );
+    if (clash) {
       candidate = generate7CharReferralCode();
-    } catch {
-      break;
     }
-  }
+  } catch {}
 
   try {
-    const { error: updateErr } = await supabase
-      .from("users")
-      .update({ referral_code: candidate })
-      .eq("id", userId);
+    await withTimeout(
+      (async () => {
+        const { error: updateErr } = await supabase
+          .from("users")
+          .update({ referral_code: candidate })
+          .eq("id", userId);
 
-    if (updateErr) {
-      await supabase
-        .from("users")
-        .upsert({ id: userId, referral_code: candidate }, { onConflict: "id" });
-    }
+        if (updateErr) {
+          await supabase
+            .from("users")
+            .upsert({ id: userId, referral_code: candidate }, { onConflict: "id" });
+        }
+      })(),
+      2000,
+      undefined
+    );
     await AsyncStorage.setItem(localKey, candidate);
   } catch {}
 
@@ -197,13 +227,21 @@ function mapRowToScratchCard(row: any, offersPool: RewardOffer[]): ScratchCardIt
 }
 
 export async function getRewardLimits(): Promise<RewardLimitsConfig> {
+  if (!isWebSupabaseConfigured()) return DEFAULT_REWARD_LIMITS;
   try {
-    const { data, error } = await supabase
-      .from("reward_limits")
-      .select("*")
-      .eq("id", "default")
-      .maybeSingle();
-    if (!error && data) {
+    const data = await withTimeout(
+      (async () => {
+        const { data: row } = await supabase
+          .from("reward_limits")
+          .select("*")
+          .eq("id", "default")
+          .maybeSingle();
+        return row;
+      })(),
+      2000,
+      null
+    );
+    if (data) {
       return {
         id: "default",
         dailyCardCap: Number(data.daily_card_cap ?? DEFAULT_REWARD_LIMITS.dailyCardCap),
@@ -227,13 +265,21 @@ export async function getRewardLimits(): Promise<RewardLimitsConfig> {
 }
 
 export async function getApprovedRewardOffers(): Promise<RewardOffer[]> {
+  if (!isWebSupabaseConfigured()) return DEFAULT_REWARD_OFFERS;
   try {
-    const { data, error } = await supabase
-      .from("reward_offers")
-      .select("*")
-      .eq("is_active", true)
-      .eq("is_approved", true);
-    if (!error && Array.isArray(data) && data.length > 0) {
+    const data = await withTimeout(
+      (async () => {
+        const { data: rows } = await supabase
+          .from("reward_offers")
+          .select("*")
+          .eq("is_active", true)
+          .eq("is_approved", true);
+        return rows;
+      })(),
+      2000,
+      null
+    );
+    if (Array.isArray(data) && data.length > 0) {
       return data.map(mapRowToOffer);
     }
   } catch {}
@@ -317,14 +363,27 @@ export async function getUserRewardWallet(userId: string): Promise<RewardWallet>
   const today = getTodayDateString();
   const local = await loadLocalWallet(userId, limits);
 
-  try {
-    const { data, error } = await supabase
-      .from("reward_wallet")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
+  if (!isWebSupabaseConfigured()) {
+    const ownCode = await getOrCreateUserReferralCode(userId);
+    local.ownReferralCode = ownCode;
+    return local;
+  }
 
-    if (!error && data) {
+  try {
+    const data = await withTimeout(
+      (async () => {
+        const { data: row } = await supabase
+          .from("reward_wallet")
+          .select("*")
+          .eq("user_id", userId)
+          .maybeSingle();
+        return row;
+      })(),
+      2500,
+      null
+    );
+
+    if (data) {
       const dbDate = String(data.daily_date ?? today).slice(0, 10);
       const isSameDay = dbDate === today;
       const dailyEligibleScans = Math.max(
@@ -410,15 +469,26 @@ export async function getUserScratchCards(userId: string): Promise<ScratchCardIt
     loadLocalScratchCards(userId),
   ]);
 
-  try {
-    const { data, error } = await supabase
-      .from("scratch_cards")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(100);
+  if (!isWebSupabaseConfigured()) {
+    return localCards;
+  }
 
-    if (!error && Array.isArray(data)) {
+  try {
+    const data = await withTimeout(
+      (async () => {
+        const { data: rows } = await supabase
+          .from("scratch_cards")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(100);
+        return rows;
+      })(),
+      2500,
+      null
+    );
+
+    if (Array.isArray(data)) {
       const dbCards = data.map((row) => mapRowToScratchCard(row, offers));
       const byId = new Map<string, ScratchCardItem>();
       for (const c of localCards) byId.set(c.id, c);
@@ -1163,76 +1233,92 @@ export async function getUserReferralsDashboard(
     if (raw) referrals = JSON.parse(raw);
   } catch {}
 
-  try {
-    const { data, error } = await supabase
-      .from("referrals")
-      .select(`
-        id,
-        referrer_user_id,
-        referrer_code,
-        invited_user_id,
-        status,
-        qualifying_qr_code_id,
-        friend_card_id,
-        referrer_card_id,
-        qualified_at,
-        created_at
-      `)
-      .eq("referrer_user_id", userId)
-      .order("created_at", { ascending: false });
-
-    if (!error && Array.isArray(data) && data.length > 0) {
-      const invitedIds = data.map((r: any) => String(r.invited_user_id)).filter(Boolean);
-      const userMap = new Map<string, { username?: string; displayName?: string; photoUrl?: string | null }>();
-
-      if (invitedIds.length > 0) {
-        try {
-          const { data: userRows } = await supabase
-            .from("users")
-            .select("id, username, display_name, photo_url, avatar_url")
-            .in("id", invitedIds);
-
-          if (userRows) {
-            for (const u of userRows) {
-              userMap.set(String(u.id), {
-                username: u.username ? String(u.username).replace(/^@/, "") : undefined,
-                displayName: u.display_name ? String(u.display_name) : undefined,
-                photoUrl: u.photo_url || u.avatar_url || null,
-              });
-            }
-          }
-        } catch {}
-      }
-
-      const dbReferrals: ReferralRecord[] = data.map((r: any) => {
-        const uInfo = userMap.get(String(r.invited_user_id));
-        return {
-          id: String(r.id),
-          referrerUserId: String(r.referrer_user_id),
-          referrerCode: String(r.referrer_code || code),
-          invitedUserId: String(r.invited_user_id),
-          invitedUserUsername: uInfo?.username || "friend",
-          invitedUserDisplayName: uInfo?.displayName || `@${uInfo?.username || "friend"}`,
-          invitedUserPhotoUrl: uInfo?.photoUrl || null,
-          status: r.status || "pending_first_scan",
-          qualifyingQrCodeId: r.qualifying_qr_code_id ?? null,
-          friendCardId: r.friend_card_id ?? null,
-          referrerCardId: r.referrer_card_id ?? null,
-          qualifiedAt: r.qualified_at ?? null,
-          createdAt: String(r.created_at || new Date().toISOString()),
-        };
-      });
-
-      const mapById = new Map<string, ReferralRecord>();
-      for (const ref of referrals) mapById.set(ref.id, ref);
-      for (const ref of dbReferrals) mapById.set(ref.id, ref);
-      referrals = Array.from(mapById.values()).sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  if (isWebSupabaseConfigured()) {
+    try {
+      const dbData = await withTimeout(
+        (async () => {
+          const { data, error } = await supabase
+            .from("referrals")
+            .select(`
+              id,
+              referrer_user_id,
+              referrer_code,
+              invited_user_id,
+              status,
+              qualifying_qr_code_id,
+              friend_card_id,
+              referrer_card_id,
+              qualified_at,
+              created_at
+            `)
+            .eq("referrer_user_id", userId)
+            .order("created_at", { ascending: false });
+          return !error && Array.isArray(data) ? data : null;
+        })(),
+        2500,
+        null
       );
 
-      await AsyncStorage.setItem(`${LOCAL_REFERRALS_PREFIX}${userId}`, JSON.stringify(referrals)).catch(() => {});
-    }
-  } catch {}
+      if (dbData && dbData.length > 0) {
+        const invitedIds = dbData.map((r: any) => String(r.invited_user_id)).filter(Boolean);
+        const userMap = new Map<string, { username?: string; displayName?: string; photoUrl?: string | null }>();
+
+        if (invitedIds.length > 0) {
+          try {
+            const userRows = await withTimeout(
+              (async () => {
+                const { data } = await supabase
+                  .from("users")
+                  .select("id, username, display_name, photo_url, avatar_url")
+                  .in("id", invitedIds);
+                return data;
+              })(),
+              2000,
+              null
+            );
+
+            if (userRows) {
+              for (const u of userRows) {
+                userMap.set(String(u.id), {
+                  username: u.username ? String(u.username).replace(/^@/, "") : undefined,
+                  displayName: u.display_name ? String(u.display_name) : undefined,
+                  photoUrl: u.photo_url || u.avatar_url || null,
+                });
+              }
+            }
+          } catch {}
+        }
+
+        const dbReferrals: ReferralRecord[] = dbData.map((r: any) => {
+          const uInfo = userMap.get(String(r.invited_user_id));
+          return {
+            id: String(r.id),
+            referrerUserId: String(r.referrer_user_id),
+            referrerCode: String(r.referrer_code || code),
+            invitedUserId: String(r.invited_user_id),
+            invitedUserUsername: uInfo?.username || "friend",
+            invitedUserDisplayName: uInfo?.displayName || `@${uInfo?.username || "friend"}`,
+            invitedUserPhotoUrl: uInfo?.photoUrl || null,
+            status: r.status || "pending_first_scan",
+            qualifyingQrCodeId: r.qualifying_qr_code_id ?? null,
+            friendCardId: r.friend_card_id ?? null,
+            referrerCardId: r.referrer_card_id ?? null,
+            qualifiedAt: r.qualified_at ?? null,
+            createdAt: String(r.created_at || new Date().toISOString()),
+          };
+        });
+
+        const mapById = new Map<string, ReferralRecord>();
+        for (const ref of referrals) mapById.set(ref.id, ref);
+        for (const ref of dbReferrals) mapById.set(ref.id, ref);
+        referrals = Array.from(mapById.values()).sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        await AsyncStorage.setItem(`${LOCAL_REFERRALS_PREFIX}${userId}`, JSON.stringify(referrals)).catch(() => {});
+      }
+    } catch {}
+  }
 
   const totalInvited = referrals.length;
   const totalQualified = referrals.filter((r) => r.status === "qualified").length;

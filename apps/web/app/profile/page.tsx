@@ -622,41 +622,6 @@ export default function ProfilePage() {
                     boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.25)",
                   }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setReferralModalOpen(true);
-                    }}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      padding: "10px 12px",
-                      borderRadius: "10px",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      color: "inherit",
-                    }}
-                  >
-                    <Ionicons name="gift-outline" size={18} color="var(--primary, #2563EB)" />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text, #0f172a)" }}>
-                        Referral code
-                      </div>
-                      <div style={{ fontSize: "11px", color: "var(--text-muted, #94a3b8)" }}>
-                        {rewardWallet?.isReferralEligible
-                          ? "Enter friend's code"
-                          : rewardWallet?.referredByCode
-                            ? `Applied: ${rewardWallet.referredByCode}`
-                            : "Ineligible (First scan completed)"}
-                      </div>
-                    </div>
-                  </button>
-
                   <Link
                     href="/rewards"
                     onClick={() => setMenuOpen(false)}
@@ -671,9 +636,39 @@ export default function ProfilePage() {
                       color: "inherit",
                     }}
                   >
-                    <Ionicons name="sparkles-outline" size={18} color="#F59E0B" />
-                    <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text, #0f172a)" }}>
-                      Rewards &amp; Offers
+                    <Ionicons name="gift-outline" size={18} color="var(--primary, #2563EB)" />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text, #0f172a)" }}>
+                        Scratch Cards
+                      </div>
+                      <div style={{ fontSize: "11px", color: "var(--text-muted, #94a3b8)" }}>
+                        Milestone vouchers &amp; coupons
+                      </div>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/referrals"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      textDecoration: "none",
+                      color: "inherit",
+                    }}
+                  >
+                    <Ionicons name="people-outline" size={18} color="#F59E0B" />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text, #0f172a)" }}>
+                        Refer &amp; Earn
+                      </div>
+                      <div style={{ fontSize: "11px", color: "var(--text-muted, #94a3b8)" }}>
+                        Gold VIP cards &amp; invite tracking
+                      </div>
                     </div>
                   </Link>
 
@@ -1244,6 +1239,30 @@ export default function ProfilePage() {
                 <div className={styles.actionTextCol}>
                   <span className={styles.actionLabel}>Scan History</span>
                   <span className={styles.actionSub}>Review, search or delete your scans</span>
+                </div>
+                <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
+              </Link>
+
+              {/* Scratch Cards */}
+              <Link href="/rewards" className={styles.actionItem}>
+                <div className={styles.actionIcon}>
+                  <Ionicons name="gift-outline" size={18} />
+                </div>
+                <div className={styles.actionTextCol}>
+                  <span className={styles.actionLabel}>Scratch Cards</span>
+                  <span className={styles.actionSub}>Daily scan milestone vouchers &amp; coupons</span>
+                </div>
+                <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
+              </Link>
+
+              {/* Refer & Earn */}
+              <Link href="/referrals" className={styles.actionItem}>
+                <div className={styles.actionIcon}>
+                  <Ionicons name="people-outline" size={18} />
+                </div>
+                <div className={styles.actionTextCol}>
+                  <span className={styles.actionLabel}>Refer &amp; Earn</span>
+                  <span className={styles.actionSub}>Invite friends, give Silver &amp; earn Gold VIP cards</span>
                 </div>
                 <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
               </Link>

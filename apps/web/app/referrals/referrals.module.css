@@ -1,0 +1,574 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BINRO WEB: REFER & EARN (REFERRALS) PAGE STYLES (referrals.module.css)
+   Bespoke, fluid, anti-slop design for mobile, tablet, and desktop.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.pageFrame {
+  min-height: 100dvh;
+  background-color: var(--background);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 16px 16px calc(100px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 24px 24px 80px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 32px 32px 96px;
+  }
+}
+
+/* ── Top Navigation Bar ─────────────────────────────────────────────────── */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.topBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.backBtn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.backBtn:hover {
+  background-color: var(--surface-light);
+}
+
+.backBtn:active {
+  transform: scale(0.96);
+}
+
+.headingBlock {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pageTitle {
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: clamp(20px, calc(16px + 0.8vw + 0.4vmin), 28px);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.pageSubtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 3px 0 0;
+  line-height: 1.4;
+}
+
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.topActionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  min-height: 44px;
+  border-radius: 12px;
+  background-color: var(--primary-dim);
+  border: 1px solid rgba(0, 82, 204, 0.2);
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.topActionBtn:hover {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.topActionBtn:active {
+  transform: scale(0.97);
+}
+
+/* ── Responsive Layout Grid (Desktop 2-column split) ────────────────────── */
+.referralLayoutGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (min-width: 1024px) {
+  .referralLayoutGrid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+}
+
+.columnLeft,
+.columnRight {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Two-Sided VIP Hero Card ────────────────────────────────────────────── */
+.heroCard {
+  border-radius: 22px;
+  border: 1.5px solid rgba(0, 82, 204, 0.25);
+  background: linear-gradient(135deg, rgba(0, 82, 204, 0.08), rgba(56, 189, 248, 0.05));
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+}
+
+.kickerRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #f59e0b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.heroHeading {
+  font-size: clamp(20px, calc(17px + 0.6vw + 0.3vmin), 24px);
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.heroBody {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Referral Code & Link Box ───────────────────────────────────────────── */
+.codeCard {
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.codeLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.codeValue {
+  font-family: var(--font-mono, monospace);
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--text);
+  margin-top: 2px;
+}
+
+.copyCodeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  min-height: 44px;
+  border-radius: 12px;
+  background-color: var(--primary);
+  color: #ffffff;
+  border: none;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.copyCodeBtn:hover {
+  opacity: 0.92;
+}
+
+.copyCodeBtn:active {
+  transform: scale(0.97);
+}
+
+/* ── Social Share Row ───────────────────────────────────────────────────── */
+.shareRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.shareBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 14px;
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.shareBtn:hover {
+  opacity: 0.92;
+}
+
+.shareBtn:active {
+  transform: scale(0.98);
+}
+
+.shareWhatsApp {
+  background-color: #25d366;
+  color: #ffffff;
+}
+
+.shareTelegram {
+  background-color: #229ed9;
+  color: #ffffff;
+}
+
+.shareNative {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+/* ── Analytics 4-Grid ───────────────────────────────────────────────────── */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.metricCard {
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  padding: 18px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.metricValue {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.metricLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* ── Ledger Section ─────────────────────────────────────────────────────── */
+.ledgerCard {
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.ledgerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.ledgerTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.ledgerFilterBar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ledgerFilterBtn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface-light);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.ledgerFilterBtnActive {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.ledgerList {
+  display: flex;
+  flex-direction: column;
+}
+
+.ledgerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--surface-border);
+  gap: 12px;
+}
+
+.ledgerRow:last-child {
+  border-bottom: none;
+}
+
+.ledgerUserCol {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ledgerAvatar {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.ledgerUsername {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ledgerJoinedDate {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.qualifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.remindBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background-color: var(--primary-dim);
+  border: 1px solid rgba(0, 82, 204, 0.2);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.remindBtn:hover {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+
+.ledgerEmpty {
+  padding: 32px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+.ledgerEmptyText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  max-width: 280px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── Claim Referral Code Card ───────────────────────────────────────────── */
+.claimCard {
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.claimTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.claimDesc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 4px 0 12px;
+  line-height: 1.45;
+}
+
+.claimForm {
+  display: flex;
+  gap: 10px;
+}
+
+.claimInput {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface-light);
+  color: var(--text);
+  padding: 0 14px;
+  font-size: 14px;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.5px;
+  outline: none;
+}
+
+.claimInput:focus {
+  border-color: var(--primary);
+}
+
+.claimBtn {
+  padding: 0 20px;
+  min-height: 44px;
+  border-radius: 12px;
+  background-color: var(--primary);
+  color: #ffffff;
+  border: none;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+}
+
+.claimBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.claimLinkedNotice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background-color: rgba(5, 150, 105, 0.1);
+  color: #059669;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.claimDisabledNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background-color: var(--surface-light);
+  border: 1px solid var(--surface-border);
+}
+
+.claimFeedback {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+}
