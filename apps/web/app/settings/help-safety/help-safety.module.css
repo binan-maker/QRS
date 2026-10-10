@@ -1,0 +1,279 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BINRO HELP & SAFETY — EXECUTIVE ARCHITECTURE & BRAND SYSTEM
+   Sleek corporate styling, crisp typography, brand blue (#0052CC) accents,
+   zero vibe-coding, zero cartoon/kids design. Fully responsive across
+   mobile (320px - 640px), tablet (640px - 1024px), and desktop (1024px+).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.container {
+  min-height: 100dvh;
+  width: 100%;
+  background-color: var(--background);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.inner {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 16px calc(92px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+/* ── Top Navigation Bar ─────────────────────────────────────────────────── */
+.navBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 44px;
+  margin-top: 4px;
+  box-sizing: border-box;
+}
+
+.navBackBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.navBackBtn:hover {
+  background-color: var(--surface-light);
+  border-color: var(--text-muted);
+}
+
+.navBackBtn:active {
+  transform: scale(0.96);
+}
+
+.navTitle {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.015em;
+  text-align: center;
+}
+
+.navSpacer {
+  width: 38px;
+  flex-shrink: 0;
+}
+
+/* ── Overview Hero Card ─────────────────────────────────────────────────── */
+.heroCard {
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 16px;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.heroHeaderRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.heroIconWrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background-color: var(--primary-dim);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.heroTitleCol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.heroTitle {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.heroSubtitle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.heroDesc {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* ── Section & Card Groups ──────────────────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.sectionHeader {
+  padding: 0 4px;
+}
+
+.sectionLabel {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.cardGroup {
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 18px;
+  min-height: 48px;
+  text-decoration: none;
+  color: var(--text);
+  background-color: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.menuItem:hover {
+  background-color: var(--surface-light);
+}
+
+.menuItem:active {
+  background-color: var(--surface-border);
+}
+
+.menuIconWrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background-color: var(--surface-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.menuTextCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.menuLabel {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+
+.menuSublabel {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--surface-border);
+  margin: 0 18px;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+.footerCard {
+  padding: 16px 20px;
+  border-radius: 12px;
+  background-color: var(--surface-light);
+  border: 1px solid var(--surface-border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.footerCardText {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* ── Tablet & Desktop Responsiveness ───────────────────────────────────── */
+@media (min-width: 640px) {
+  .inner {
+    max-width: 680px;
+    padding: 24px 20px calc(92px + env(safe-area-inset-bottom, 0px));
+    gap: 24px;
+  }
+
+  .heroCard {
+    padding: 26px 24px;
+  }
+
+  .heroTitle {
+    font-size: 19px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .inner {
+    max-width: 780px;
+    padding: 32px 24px calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+}

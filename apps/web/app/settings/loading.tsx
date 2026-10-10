@@ -7,62 +7,78 @@ export default function SettingsLoading() {
       <div className={styles.inner}>
         {/* Top Nav Bar Skeleton */}
         <header className={styles.navBar}>
-          <div className="ytSkeleton" style={{ width: "36px", height: "36px", borderRadius: "10px" }} />
-          <div className="ytSkeleton" style={{ width: "90px", height: "22px", borderRadius: "6px" }} />
-          <div style={{ width: "36px" }} />
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "12px",
+              backgroundColor: "var(--surface-light)",
+            }}
+          />
+          <div
+            style={{
+              width: "100px",
+              height: "22px",
+              borderRadius: "8px",
+              backgroundColor: "var(--surface-light)",
+            }}
+          />
+          <div style={{ width: "40px" }} />
         </header>
 
         {/* Account Profile Card Skeleton */}
-        <div
-          className={styles.accountCard}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "14px",
-            padding: "16px 18px",
-            marginBottom: "20px",
-          }}
-        >
-          <div
-            className="ytSkeleton"
-            style={{ width: "48px", height: "48px", borderRadius: "24px", flexShrink: 0 }}
-          />
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
-            <div className="ytSkeleton" style={{ width: "130px", height: "16px", borderRadius: "6px" }} />
-            <div className="ytSkeleton" style={{ width: "180px", height: "12px", borderRadius: "6px" }} />
-          </div>
-          <div className="ytSkeleton" style={{ width: "18px", height: "18px", borderRadius: "6px" }} />
-        </div>
-
-        {/* Settings Group 1 Skeleton */}
-        <div style={{ marginBottom: "22px" }}>
-          <div className="ytSkeleton" style={{ width: "90px", height: "12px", marginBottom: "10px", marginLeft: "4px" }} />
-          <div className={styles.menuCard} style={{ display: "flex", flexDirection: "column" }}>
-            {[1, 2, 3, 4].map((i) => (
+        <div className={styles.accountCard}>
+          <div className={styles.accountInfo}>
+            <div
+              style={{
+                width: "46px",
+                height: "46px",
+                borderRadius: "23px",
+                backgroundColor: "var(--surface-light)",
+                flexShrink: 0,
+              }}
+            />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
               <div
-                key={i}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "15px 16px",
-                  borderBottom: i < 4 ? "1px solid var(--surface-border)" : "none",
+                  width: "140px",
+                  height: "16px",
+                  borderRadius: "6px",
+                  backgroundColor: "var(--surface-light)",
                 }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div className="ytSkeleton" style={{ width: "32px", height: "32px", borderRadius: "8px" }} />
-                  <div className="ytSkeleton" style={{ width: "110px", height: "15px", borderRadius: "6px" }} />
-                </div>
-                <div className="ytSkeleton" style={{ width: "36px", height: "20px", borderRadius: "10px" }} />
-              </div>
-            ))}
+              />
+              <div
+                style={{
+                  width: "180px",
+                  height: "12px",
+                  borderRadius: "6px",
+                  backgroundColor: "var(--surface-light)",
+                }}
+              />
+            </div>
           </div>
+          <div
+            style={{
+              width: "48px",
+              height: "32px",
+              borderRadius: "8px",
+              backgroundColor: "var(--surface-light)",
+            }}
+          />
         </div>
 
-        {/* Settings Group 2 Skeleton */}
-        <div style={{ marginBottom: "22px" }}>
-          <div className="ytSkeleton" style={{ width: "110px", height: "12px", marginBottom: "10px", marginLeft: "4px" }} />
-          <div className={styles.menuCard} style={{ display: "flex", flexDirection: "column" }}>
+        {/* Group Skeleton 1 */}
+        <div className={styles.section}>
+          <div
+            style={{
+              width: "80px",
+              height: "12px",
+              borderRadius: "4px",
+              backgroundColor: "var(--surface-light)",
+              marginBottom: "4px",
+            }}
+          />
+          <div className={styles.cardGroup}>
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
@@ -70,15 +86,110 @@ export default function SettingsLoading() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "15px 16px",
+                  padding: "13px 18px",
                   borderBottom: i < 3 ? "1px solid var(--surface-border)" : "none",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div className="ytSkeleton" style={{ width: "32px", height: "32px", borderRadius: "8px" }} />
-                  <div className="ytSkeleton" style={{ width: "130px", height: "15px", borderRadius: "6px" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                  <div
+                    style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "10px",
+                      backgroundColor: "var(--surface-light)",
+                    }}
+                  />
+                  <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                    <div
+                      style={{
+                        width: "110px",
+                        height: "14px",
+                        borderRadius: "5px",
+                        backgroundColor: "var(--surface-light)",
+                      }}
+                    />
+                    <div
+                      style={{
+                        width: "160px",
+                        height: "11px",
+                        borderRadius: "5px",
+                        backgroundColor: "var(--surface-light)",
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="ytSkeleton" style={{ width: "16px", height: "16px", borderRadius: "4px" }} />
+                <div
+                  style={{
+                    width: "16px",
+                    height: "16px",
+                    borderRadius: "4px",
+                    backgroundColor: "var(--surface-light)",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Group Skeleton 2 */}
+        <div className={styles.section}>
+          <div
+            style={{
+              width: "100px",
+              height: "12px",
+              borderRadius: "4px",
+              backgroundColor: "var(--surface-light)",
+              marginBottom: "4px",
+            }}
+          />
+          <div className={styles.cardGroup}>
+            {[1, 2].map((i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "13px 18px",
+                  borderBottom: i < 2 ? "1px solid var(--surface-border)" : "none",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                  <div
+                    style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "10px",
+                      backgroundColor: "var(--surface-light)",
+                    }}
+                  />
+                  <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                    <div
+                      style={{
+                        width: "120px",
+                        height: "14px",
+                        borderRadius: "5px",
+                        backgroundColor: "var(--surface-light)",
+                      }}
+                    />
+                    <div
+                      style={{
+                        width: "180px",
+                        height: "11px",
+                        borderRadius: "5px",
+                        backgroundColor: "var(--surface-light)",
+                      }}
+                    />
+                  </div>
+                </div>
+                <div
+                  style={{
+                    width: "16px",
+                    height: "16px",
+                    borderRadius: "4px",
+                    backgroundColor: "var(--surface-light)",
+                  }}
+                />
               </div>
             ))}
           </div>

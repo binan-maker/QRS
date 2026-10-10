@@ -1,56 +1,27 @@
 "use client";
 
-import React, { useState, useEffect, Suspense, useTransition } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Ionicons } from "@/lib/mobile-icons";
 import { useAuth } from "@/lib/auth-context";
+import { useTheme, type ThemeMode } from "@/lib/theme-context";
 import { useAvatar, isUserUploadedPhoto } from "@/lib/avatar-context";
 import { UserAvatar } from "@/components/avatar/UserAvatar";
+import { clearAllUserScans } from "@/lib/scan-history";
 import { deleteUserAccountPermanently } from "@/lib/user-account";
 import { BottomTabBar } from "@/components/navigation/BottomTabBar";
 import SettingsLoading from "./loading";
 import styles from "./settings.module.css";
 
-type SectionType =
-  | "main"
-  | "account"
-  | "account-details"
-  | "guide"
-  | "feedback"
-  | "trust-scores"
-  | "terms"
-  | "privacy";
-
-const SECTION_TITLES: Record<SectionType, string> = {
-  main: "Settings",
-  account: "Account Management",
-  "account-details": "Account Details",
-  guide: "Manual Guide",
-  feedback: "Send Feedback",
-  "trust-scores": "About Trust Scores",
-  terms: "Terms of Service",
-  privacy: "Privacy Policy",
-};
-
-const EXTERNAL_REDIRECT_SECTIONS: ReadonlySet<string> = new Set([
-  "account-details",
-  "guide",
-  "feedback",
-  "trust-scores",
-  "terms",
-  "privacy",
-]);
-
 function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { mode: themeMode, setMode: setThemeMode } = useTheme();
   const { cachedUrl, avatarUrl } = useAvatar();
 
-  const [, startTransition] = useTransition();
-
-  // Safe client-side hydration for localStorage avatar
+  // Avatar resolution
   const [localCustom, setLocalCustom] = useState<string | null>(null);
 
   useEffect(() => {
@@ -60,354 +31,349 @@ function SettingsContent() {
           localStorage.getItem(`user_custom_avatar_${user.id}`) ||
           localStorage.getItem(`user_avatar_${user.id}`);
         setLocalCustom(stored);
-      } catch {
-        // Local storage inaccessible
-      }
+      } catch {}
     }
   }, [user?.id]);
 
-  // Prioritize user's uploaded avatar over provider default avatar
-  const photoURL =
-    (cachedUrl && isUserUploadedPhoto(cachedUrl) ? cachedUrl : null) ||
-    (avatarUrl && isUserUploadedPhoto(avatarUrl) ? avatarUrl : null) ||
-    (localCustom && isUserUploadedPhoto(localCustom) ? localCustom : null) ||
-    user?.user_metadata?.custom_avatar_url ||
-    cachedUrl ||
-    avatarUrl ||
-    localCustom ||
-    user?.user_metadata?.avatar_url ||
-    user?.user_metadata?.picture ||
-    user?.user_metadata?.photo_url ||
-    user?.user_metadata?.photoURL ||
-    null;
+  const photoURL = useMemo(() => {
+    return (
+      (cachedUrl && isUserUploadedPhoto(cachedUrl) ? cachedUrl : null) ||
+      (avatarUrl && isUserUploadedPhoto(avatarUrl) ? avatarUrl : null) ||
+      (localCustom && isUserUploadedPhoto(localCustom) ? localCustom : null) ||
+      user?.user_metadata?.custom_avatar_url ||
+      cachedUrl ||
+      avatarUrl ||
+      localCustom ||
+      user?.user_metadata?.avatar_url ||
+      user?.user_metadata?.picture ||
+      user?.user_metadata?.photo_url ||
+      null
+    );
+  }, [cachedUrl, avatarUrl, localCustom, user]);
 
-  const initialSectionParam = (searchParams.get("section") as SectionType) || "main";
-  const [section, setSection] = useState<SectionType>(initialSectionParam);
+  const displayName = useMemo(() => {
+    return (
+      user?.user_metadata?.display_name ||
+      user?.user_metadata?.full_name ||
+      user?.email?.split("@")[0] ||
+      "User"
+    );
+  }, [user]);
 
-  const displayName =
-    user?.user_metadata?.display_name ||
-    user?.user_metadata?.full_name ||
-    user?.email?.split("@")[0] ||
-    "User";
+  const username = useMemo(() => {
+    return (
+      user?.user_metadata?.username ||
+      user?.email?.split("@")[0] ||
+      ""
+    );
+  }, [user]);
 
-  // Delete account confirmation states
+  // Modal dialog states
+  const [clearModalOpen, setClearModalOpen] = useState(false);
+  const [clearingData, setClearingData] = useState(false);
+
+  const [signOutModalOpen, setSignOutModalOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [deleteConfirmModal, setDeleteConfirmModal] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  // Keep section in sync if query param changes
-  useEffect(() => {
-    const param = searchParams.get("section") as SectionType;
-    if (param && SECTION_TITLES[param]) {
-      setSection(param);
-    } else if (!param) {
-      setSection("main");
-    }
-  }, [searchParams]);
+  // Toast feedback state
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Pure React effect: Handle full-page dedicated route redirects without render side-effects
-  useEffect(() => {
-    if (section === "account-details") {
-      router.replace("/settings/account-details");
-    } else if (section === "guide") {
-      router.replace("/guide");
-    } else if (section === "feedback") {
-      router.replace("/feedback");
-    } else if (section === "trust-scores") {
-      router.replace("/trust-scores");
-    } else if (section === "terms") {
-      router.replace("/terms");
-    } else if (section === "privacy") {
-      router.replace("/privacy");
-    }
-  }, [section, router]);
+  const showToast = useCallback((msg: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToastMessage(msg);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 2500);
+  }, []);
 
-  const handleBack = () => {
-    if (section !== "main") {
-      setSection("main");
-      startTransition(() => {
-        router.replace("/settings");
-      });
-      return;
-    }
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
+
+  // Back action
+  const handleBack = useCallback(() => {
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
       return;
     }
-    router.push("/profile");
-  };
+    router.push("/");
+  }, [router]);
 
-  const openAccountSection = () => {
-    setSection("account");
-    startTransition(() => {
-      router.push("/settings?section=account");
-    });
-  };
+  // Theme change
+  const handleSelectTheme = useCallback(
+    (newMode: ThemeMode) => {
+      setThemeMode(newMode);
+      showToast(
+        newMode === "system"
+          ? "Theme set to System Default."
+          : newMode === "dark"
+          ? "Dark mode enabled."
+          : "Light mode enabled."
+      );
+    },
+    [setThemeMode, showToast]
+  );
 
-  const handleDeleteAccount = async () => {
+  // Clear local scan cache
+  const handleClearLocalData = useCallback(async () => {
+    setClearingData(true);
+    try {
+      await clearAllUserScans(user?.id);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("binro:scan_cleared"));
+        window.dispatchEvent(new CustomEvent("binro:scan_added"));
+      }
+      setClearModalOpen(false);
+      showToast("Local scan history cleared.");
+    } catch {
+      showToast("Could not clear scan history.");
+    } finally {
+      setClearingData(false);
+    }
+  }, [user?.id, showToast]);
+
+  // Sign out
+  const handleSignOutConfirm = useCallback(async () => {
+    setSigningOut(true);
+    try {
+      await signOut();
+      setSignOutModalOpen(false);
+      showToast("Signed out successfully.");
+      router.replace("/");
+    } catch {
+      showToast("Could not sign out. Please try again.");
+    } finally {
+      setSigningOut(false);
+    }
+  }, [signOut, showToast, router]);
+
+  // Delete account
+  const handleDeleteAccountConfirm = useCallback(async () => {
     if (deleteConfirmText.trim() !== "DELETE" || !user?.id || deletingAccount) return;
     setDeletingAccount(true);
     setDeleteError("");
     try {
       await deleteUserAccountPermanently(user.id);
       await signOut().catch(() => {});
+      setDeleteModalOpen(false);
+      showToast("Account deleted.");
       router.replace("/");
-    } catch (e: any) {
-      console.error("[settings] account deletion error:", e);
+    } catch (err: any) {
       setDeleteError(
-        e?.message || "Failed to delete account. Please try again or contact support."
+        err?.message || "Failed to delete account. Please try again."
       );
+    } finally {
       setDeletingAccount(false);
     }
-  };
+  }, [deleteConfirmText, user?.id, deletingAccount, signOut, showToast, router]);
 
-  if (loading) {
+  if (authLoading) {
     return <SettingsLoading />;
   }
 
-  // If redirecting to full dedicated page, render loading indicator cleanly
-  if (EXTERNAL_REDIRECT_SECTIONS.has(section)) {
-    return <SettingsLoading />;
-  }
+  return (
+    <main className={styles.container}>
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div className={styles.toastPill} role="status" aria-live="polite">
+          <Ionicons name="checkmark-circle" size={16} color="var(--primary)" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SUB-SECTION: ACCOUNT MANAGEMENT (DANGER ZONE)
-  // ═══════════════════════════════════════════════════════════════════════════
-  if (section === "account") {
-    // If an unauthenticated user somehow opens account management directly
-    if (!user) {
-      return (
-        <main className={styles.container}>
-          <div className={styles.inner}>
-            <header className={styles.navBar}>
-              <button
-                type="button"
-                onClick={handleBack}
-                className={styles.navBackBtn}
-                aria-label="Back to settings"
-              >
-                <Ionicons name="chevron-back" size={20} />
-              </button>
-              <h1 className={styles.navTitle}>{SECTION_TITLES.account}</h1>
-              <div className={styles.navSpacer} />
-            </header>
-
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "48px 20px",
-                backgroundColor: "var(--surface)",
-                border: "1px solid var(--surface-border)",
-                borderRadius: "20px",
-                textAlign: "center",
-                marginTop: "20px",
-              }}
-            >
+      {/* Clear Local Data Modal */}
+      {clearModalOpen && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="clear-modal-title"
+        >
+          <div className={styles.modalCard}>
+            <div className={styles.modalHeader}>
               <div
+                className={styles.modalIconRing}
                 style={{
-                  width: "64px",
-                  height: "64px",
-                  borderRadius: "32px",
-                  backgroundColor: "var(--primary-dim)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: "16px",
-                  color: "var(--primary)",
+                  backgroundColor: "var(--danger-dim)",
+                  color: "var(--danger)",
                 }}
               >
-                <Ionicons name="lock-closed-outline" size={32} />
+                <Ionicons name="trash-outline" size={20} />
               </div>
-              <h2
-                style={{
-                  margin: "0 0 8px",
-                  fontSize: "var(--fs-xl)",
-                  fontWeight: 700,
-                  color: "var(--text)",
-                }}
-              >
-                Sign In Required
+              <h2 id="clear-modal-title" className={styles.modalTitle}>
+                Clear Local History
               </h2>
-              <p
-                style={{
-                  margin: "0 0 24px",
-                  fontSize: "var(--fs-base)",
-                  color: "var(--text-secondary)",
-                  maxWidth: "280px",
-                  lineHeight: 1.4,
-                }}
-              >
-                Account management is only available to registered users.
-              </p>
-              <Link
-                href="/login?returnUrl=/settings?section=account"
-                className={styles.submitBtn}
-                style={{ textDecoration: "none", width: "100%", maxWidth: "260px" }}
-              >
-                Sign In
-              </Link>
             </div>
-          </div>
-          <BottomTabBar activeTab="profile" />
-        </main>
-      );
-    }
-
-    return (
-      <main className={styles.container}>
-        <div className={styles.inner}>
-          <div className={styles.subInner}>
-            <header className={styles.navBar}>
+            <p className={styles.modalDesc}>
+              This will remove cached scan entries from this browser. Your cloud
+              account and submitted reports will not be removed.
+            </p>
+            <div className={styles.modalActions}>
               <button
                 type="button"
-                onClick={handleBack}
-                className={styles.navBackBtn}
-                aria-label="Back to settings"
+                onClick={() => setClearModalOpen(false)}
+                disabled={clearingData}
+                className={styles.modalCancelBtn}
               >
-                <Ionicons name="chevron-back" size={20} />
+                Cancel
               </button>
-              <h1 className={styles.navTitle}>{SECTION_TITLES.account}</h1>
-              <div className={styles.navSpacer} />
-            </header>
-
-            <div className={styles.section}>
-              <h2 className={styles.sectionLabel}>CONNECTED ACCOUNT</h2>
-              <div className={styles.menuGroup}>
-                <div className={styles.accountCard}>
-                  <UserAvatar
-                    src={photoURL}
-                    name={displayName}
-                    size={48}
-                    showRing={true}
-                  />
-                  <div className={styles.menuTextCol}>
-                    <strong className={styles.accountName}>{displayName}</strong>
-                    <span className={styles.accountEmail}>{user?.email}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className={styles.section}>
-              <h2 className={styles.sectionLabel}>DANGER ZONE</h2>
-              <div className={styles.warningCard}>
-                <div className={styles.warningHeader}>
-                  <Ionicons name="alert-circle" size={20} color="var(--danger)" />
-                  <h3 className={styles.warningTitle}>Delete BinRo Account</h3>
-                </div>
-                <p className={styles.warningDesc}>
-                  Permanently delete your user profile, scan histories, and comments. This action cannot be reversed.
-                </p>
-
-                {deleteError && (
-                  <div
-                    style={{
-                      padding: "10px 14px",
-                      borderRadius: "12px",
-                      backgroundColor: "var(--danger-dim)",
-                      border: "1px solid var(--danger)",
-                      color: "var(--danger)",
-                      fontSize: "var(--fs-base)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      marginBottom: "12px",
-                    }}
-                    role="alert"
-                  >
-                    <Ionicons name="alert-circle-outline" size={18} color="var(--danger)" />
-                    <span>{deleteError}</span>
-                  </div>
-                )}
-
-                {deleteConfirmModal ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
-                    <label
-                      htmlFor="delete-account-input"
-                      className={styles.inputLabel}
-                      style={{ color: "var(--danger)" }}
-                    >
-                      Type &quot;DELETE&quot; to confirm:
-                    </label>
-                    <input
-                      id="delete-account-input"
-                      type="text"
-                      value={deleteConfirmText}
-                      onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      placeholder="DELETE"
-                      disabled={deletingAccount}
-                      aria-required="true"
-                      aria-invalid={
-                        deleteConfirmText.length > 0 &&
-                        deleteConfirmText.trim() !== "DELETE"
-                      }
-                      className={styles.textInput}
-                      style={{ borderColor: "var(--danger)" }}
-                      autoFocus
-                    />
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDeleteConfirmModal(false);
-                          setDeleteError("");
-                        }}
-                        disabled={deletingAccount}
-                        className={styles.fieldCancelBtn}
-                        style={{ flex: 1 }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        disabled={deleteConfirmText.trim() !== "DELETE" || deletingAccount}
-                        onClick={handleDeleteAccount}
-                        className={styles.deleteAccountBtn}
-                        style={{
-                          flex: 1,
-                          opacity:
-                            deleteConfirmText.trim() === "DELETE" && !deletingAccount
-                              ? 1
-                              : 0.5,
-                        }}
-                      >
-                        {deletingAccount ? "Deleting..." : "Confirm Delete"}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeleteConfirmModal(true);
-                      setDeleteError("");
-                    }}
-                    className={styles.deleteAccountBtn}
-                  >
-                    <Ionicons name="trash-outline" size={16} />
-                    <span>Delete Account</span>
-                  </button>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={handleClearLocalData}
+                disabled={clearingData}
+                className={styles.modalConfirmDangerBtn}
+              >
+                {clearingData ? "Clearing..." : "Clear History"}
+              </button>
             </div>
           </div>
         </div>
-        <BottomTabBar activeTab="profile" />
-      </main>
-    );
-  }
+      )}
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // MAIN SETTINGS VIEW (Accessible to both Authenticated and Guest Users)
-  // ═══════════════════════════════════════════════════════════════════════════
-  return (
-    <main className={styles.container}>
+      {/* Sign Out Modal */}
+      {signOutModalOpen && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="signout-modal-title"
+        >
+          <div className={styles.modalCard}>
+            <div className={styles.modalHeader}>
+              <div
+                className={styles.modalIconRing}
+                style={{
+                  backgroundColor: "var(--primary-dim)",
+                  color: "var(--primary)",
+                }}
+              >
+                <Ionicons name="log-out-outline" size={20} />
+              </div>
+              <h2 id="signout-modal-title" className={styles.modalTitle}>
+                Sign Out
+              </h2>
+            </div>
+            <p className={styles.modalDesc}>
+              Are you sure you want to sign out of BinRo on this device?
+            </p>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                onClick={() => setSignOutModalOpen(false)}
+                disabled={signingOut}
+                className={styles.modalCancelBtn}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSignOutConfirm}
+                disabled={signingOut}
+                className={styles.modalConfirmBtn}
+              >
+                {signingOut ? "Signing out..." : "Sign Out"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {deleteModalOpen && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-modal-title"
+        >
+          <div className={styles.modalCard}>
+            <div className={styles.modalHeader}>
+              <div
+                className={styles.modalIconRing}
+                style={{
+                  backgroundColor: "var(--danger-dim)",
+                  color: "var(--danger)",
+                }}
+              >
+                <Ionicons name="alert-circle-outline" size={22} />
+              </div>
+              <h2 id="delete-modal-title" className={styles.modalTitle}>
+                Delete Account
+              </h2>
+            </div>
+            <p className={styles.modalDesc}>
+              This will permanently delete your account, scan histories, votes,
+              and reputation data. This action is irreversible.
+            </p>
+
+            {deleteError && (
+              <p style={{ color: "var(--danger)", fontSize: 13, margin: 0 }}>
+                {deleteError}
+              </p>
+            )}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <label
+                htmlFor="confirm-delete-input"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                Type &quot;DELETE&quot; to confirm:
+              </label>
+              <input
+                id="confirm-delete-input"
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                autoComplete="off"
+                disabled={deletingAccount}
+                className={styles.modalInput}
+                autoFocus
+              />
+            </div>
+
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setDeleteConfirmText("");
+                  setDeleteError("");
+                }}
+                disabled={deletingAccount}
+                className={styles.modalCancelBtn}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccountConfirm}
+                disabled={
+                  deleteConfirmText.trim() !== "DELETE" || deletingAccount
+                }
+                className={styles.modalConfirmDangerBtn}
+              >
+                {deletingAccount ? "Deleting..." : "Permanently Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={styles.inner}>
-        {/* Navigation Bar */}
+        {/* Top Navigation */}
         <header className={styles.navBar}>
           <button
             type="button"
@@ -418,218 +384,357 @@ function SettingsContent() {
             <Ionicons name="chevron-back" size={20} />
           </button>
           <h1 className={styles.navTitle}>Settings</h1>
-          <div className={styles.navSpacer} />
+          <div className={styles.navSpacer} aria-hidden="true" />
         </header>
 
-        <div className={styles.settingsLayout}>
-          {/* ── COLUMN 1: ACCOUNT & SECURITY ── */}
-          <div className={styles.settingsColumn}>
-            <div className={styles.infoCard}>
-              <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>Account & Security</h2>
-              </div>
-              <div className={styles.cardContent}>
-                {user ? (
-                  <>
-                    <div className={styles.accountCard}>
-                      <UserAvatar
-                        src={photoURL}
-                        name={displayName}
-                        size={46}
-                        showRing={true}
-                      />
-                      <div className={styles.menuTextCol}>
-                        <strong className={styles.accountName}>{displayName}</strong>
-                        <span className={styles.accountEmail}>{user.email}</span>
-                      </div>
+        {/* ── SECTION 1: ACCOUNT ── */}
+        <section className={styles.section} aria-label="Account">
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionLabel}>Account</span>
+          </div>
+
+          {user ? (
+            <>
+              {/* Account Profile Card */}
+              <div className={styles.accountCard}>
+                <div className={styles.accountInfo}>
+                  <UserAvatar
+                    src={photoURL}
+                    name={displayName}
+                    size={46}
+                    showRing={true}
+                  />
+                  <div className={styles.accountMeta}>
+                    <strong className={styles.accountName}>{displayName}</strong>
+                    <span className={styles.accountEmail}>{user.email}</span>
+                    <div className={styles.accountTag}>
+                      {username && <span>@{username}</span>}
+                      {username && <span aria-hidden="true">·</span>}
+                      <span>Verified</span>
                     </div>
+                  </div>
+                </div>
 
-                    <div className={styles.divider} />
+                <Link
+                  href="/settings/account-details"
+                  className={styles.editAccountBtn}
+                  aria-label="Edit account details"
+                >
+                  Edit
+                </Link>
+              </div>
 
-                    {/* Dedicated Account Details page */}
-                    <Link
-                      href="/settings/account-details"
-                      className={styles.menuItem}
-                      style={{ textDecoration: "none" }}
-                    >
-                      <div className={styles.menuIconWrap}>
-                        <Ionicons name="person-circle-outline" size={18} />
-                      </div>
-                      <div className={styles.menuTextCol}>
-                        <span className={styles.menuLabel}>Account Details</span>
-                        <span className={styles.menuSublabel}>Manage display name, @username &amp; email</span>
-                      </div>
-                      <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
-                    </Link>
+              {/* Account Rows */}
+              <div className={styles.cardGroup}>
+                <Link href="/settings/account-details" className={styles.menuItem}>
+                  <div className={styles.menuIconWrap}>
+                    <Ionicons name="person-circle-outline" size={20} />
+                  </div>
+                  <div className={styles.menuTextCol}>
+                    <span className={styles.menuLabel}>Account Details</span>
+                    <span className={styles.menuSublabel}>
+                      Display name, @username, and email
+                    </span>
+                  </div>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color="var(--text-muted)"
+                  />
+                </Link>
+              </div>
+            </>
+          ) : (
+            /* Guest Sign In */
+            <div className={styles.guestCard}>
+              <div className={styles.guestInfo}>
+                <div className={styles.guestIconWrap}>
+                  <Ionicons name="person-outline" size={20} />
+                </div>
+                <div className={styles.guestTextCol}>
+                  <strong className={styles.guestTitle}>
+                    Sign in to your account
+                  </strong>
+                  <span className={styles.guestSub}>
+                    Sync scan history and community reputation
+                  </span>
+                </div>
+              </div>
+              <Link
+                href="/login?returnUrl=/settings"
+                className={styles.guestSignInBtn}
+              >
+                Sign In
+              </Link>
+            </div>
+          )}
+        </section>
 
-                    <div className={styles.divider} />
+        {/* ── SECTION 2: PREFERENCES (THEME) ── */}
+        <section className={styles.section} aria-label="Appearance">
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionLabel}>Appearance</span>
+          </div>
 
-                    {/* Account Management (Delete Account / Danger Zone) */}
-                    <button
-                      type="button"
-                      onClick={openAccountSection}
-                      className={styles.menuItem}
-                    >
-                      <div className={styles.menuIconWrap}>
-                        <Ionicons name="shield-outline" size={18} />
-                      </div>
-                      <div className={styles.menuTextCol}>
-                        <span className={styles.menuLabel}>Account Management</span>
-                        <span className={styles.menuSublabel}>Security, deletion & credentials</span>
-                      </div>
-                      <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
-                    </button>
+          <div className={styles.themeCard}>
+            <p className={styles.themePrompt}>Choose how BinRo looks on your device</p>
 
-                    <div className={styles.divider} />
+            <div className={styles.themeRow} role="radiogroup" aria-label="Theme selection">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={themeMode === "system"}
+                onClick={() => handleSelectTheme("system")}
+                className={`${styles.themeOption} ${
+                  themeMode === "system" ? styles.themeOptionActive : ""
+                }`}
+              >
+                <Ionicons
+                  name="desktop-outline"
+                  size={16}
+                  color={themeMode === "system" ? "var(--primary)" : "var(--text-secondary)"}
+                />
+                <span>System</span>
+              </button>
 
-                    {/* Direct shortcut to Profile page */}
-                    <Link
-                      href="/profile"
-                      className={styles.menuItem}
-                      style={{ textDecoration: "none" }}
-                    >
-                      <div className={styles.menuIconWrap}>
-                        <Ionicons name="person-outline" size={18} />
-                      </div>
-                      <div className={styles.menuTextCol}>
-                        <span className={styles.menuLabel}>Edit Profile & Theme</span>
-                        <span className={styles.menuSublabel}>Change photo, name, username or appearance</span>
-                      </div>
-                      <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
-                    </Link>
-                  </>
-                ) : (
-                  <Link
-                    href="/login?returnUrl=/settings"
-                    className={styles.signInCard}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={themeMode === "light"}
+                onClick={() => handleSelectTheme("light")}
+                className={`${styles.themeOption} ${
+                  themeMode === "light" ? styles.themeOptionActive : ""
+                }`}
+              >
+                <Ionicons
+                  name="sunny-outline"
+                  size={16}
+                  color={themeMode === "light" ? "var(--primary)" : "var(--text-secondary)"}
+                />
+                <span>Light</span>
+              </button>
+
+              <button
+                type="button"
+                role="radio"
+                aria-checked={themeMode === "dark"}
+                onClick={() => handleSelectTheme("dark")}
+                className={`${styles.themeOption} ${
+                  themeMode === "dark" ? styles.themeOptionActive : ""
+                }`}
+              >
+                <Ionicons
+                  name="moon-outline"
+                  size={15}
+                  color={themeMode === "dark" ? "var(--primary)" : "var(--text-secondary)"}
+                />
+                <span>Dark</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── SECTION 3: DATA & PRIVACY ── */}
+        <section className={styles.section} aria-label="Data">
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionLabel}>Data &amp; Storage</span>
+          </div>
+
+          <div className={styles.cardGroup}>
+            <button
+              type="button"
+              onClick={() => setClearModalOpen(true)}
+              className={styles.menuItem}
+            >
+              <div className={styles.menuIconWrap}>
+                <Ionicons name="trash-outline" size={18} />
+              </div>
+              <div className={styles.menuTextCol}>
+                <span className={styles.menuLabel}>Clear Local History</span>
+                <span className={styles.menuSublabel}>
+                  Remove cached scan records from this browser
+                </span>
+              </div>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color="var(--text-muted)"
+              />
+            </button>
+          </div>
+        </section>
+
+        {/* ── SECTION 4: TRUST & SAFETY ── */}
+        <section className={styles.section} aria-label="Trust and safety">
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionLabel}>Trust &amp; Safety</span>
+          </div>
+
+          <div className={styles.cardGroup}>
+            {/* Trust & Safety Scores */}
+            <Link href="/trust-scores" className={styles.menuItem}>
+              <div className={styles.menuIconWrap}>
+                <Ionicons name="shield-checkmark-outline" size={19} />
+              </div>
+              <div className={styles.menuTextCol}>
+                <span className={styles.menuLabel}>Trust &amp; Safety</span>
+                <span className={styles.menuSublabel}>
+                  Verification metrics and reputation scoring
+                </span>
+              </div>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color="var(--text-muted)"
+              />
+            </Link>
+
+            <div className={styles.divider} />
+
+            {/* Help & Safety Hub */}
+            <Link href="/settings/help-safety" className={styles.menuItem}>
+              <div className={styles.menuIconWrap}>
+                <Ionicons name="help-buoy-outline" size={19} />
+              </div>
+              <div className={styles.menuTextCol}>
+                <span className={styles.menuLabel}>Help &amp; Safety</span>
+                <span className={styles.menuSublabel}>
+                  Safety guide, trust scores, feedback, and about BinRo
+                </span>
+              </div>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color="var(--text-muted)"
+              />
+            </Link>
+          </div>
+        </section>
+
+        {/* ── SECTION 5: LEGAL & ABOUT ── */}
+        <section className={styles.section} aria-label="Legal and about">
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionLabel}>Legal &amp; About</span>
+          </div>
+
+          <div className={styles.cardGroup}>
+            <Link href="/terms" className={styles.menuItem}>
+              <div className={styles.menuIconWrap}>
+                <Ionicons name="document-text-outline" size={18} />
+              </div>
+              <div className={styles.menuTextCol}>
+                <span className={styles.menuLabel}>Terms of Service</span>
+                <span className={styles.menuSublabel}>
+                  Rules, disclaimers, and service terms
+                </span>
+              </div>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color="var(--text-muted)"
+              />
+            </Link>
+
+            <div className={styles.divider} />
+
+            <Link href="/privacy" className={styles.menuItem}>
+              <div className={styles.menuIconWrap}>
+                <Ionicons name="lock-closed-outline" size={18} />
+              </div>
+              <div className={styles.menuTextCol}>
+                <span className={styles.menuLabel}>Privacy Policy</span>
+                <span className={styles.menuSublabel}>
+                  Zero data-selling guarantee and local camera processing
+                </span>
+              </div>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color="var(--text-muted)"
+              />
+            </Link>
+          </div>
+        </section>
+
+        {/* ── SECTION 6: ACTIONS & DANGER ZONE (Logged In Only) ── */}
+        {user && (
+          <section className={styles.section} aria-label="Account management">
+            <div className={styles.sectionHeader}>
+              <span className={styles.sectionLabel}>Session &amp; Security</span>
+            </div>
+
+            <div className={styles.cardGroup}>
+              {/* Sign Out */}
+              <button
+                type="button"
+                onClick={() => setSignOutModalOpen(true)}
+                className={styles.menuItem}
+              >
+                <div className={styles.menuIconWrap}>
+                  <Ionicons name="log-out-outline" size={18} />
+                </div>
+                <div className={styles.menuTextCol}>
+                  <span className={styles.menuLabel}>Sign Out</span>
+                  <span className={styles.menuSublabel}>
+                    End your active session on this device
+                  </span>
+                </div>
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color="var(--text-muted)"
+                />
+              </button>
+            </div>
+
+            {/* Danger Zone: Delete Account */}
+            <div className={styles.dangerGroup}>
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteModalOpen(true);
+                  setDeleteConfirmText("");
+                  setDeleteError("");
+                }}
+                className={styles.menuItem}
+              >
+                <div
+                  className={`${styles.menuIconWrap} ${styles.menuIconWrapDanger}`}
+                >
+                  <Ionicons name="alert-circle-outline" size={19} />
+                </div>
+                <div className={styles.menuTextCol}>
+                  <span
+                    className={`${styles.menuLabel} ${styles.menuLabelDanger}`}
                   >
-                    <div className={styles.signInIcon}>
-                      <Ionicons name="person-outline" size={22} />
-                    </div>
-                    <div className={styles.menuTextCol}>
-                      <strong className={styles.signInTitle}>Sign In / Create Account</strong>
-                      <span className={styles.signInSub}>
-                        Access cloud sync, custom avatars & security controls
-                      </span>
-                    </div>
-                    <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
-                  </Link>
-                )}
-              </div>
+                    Delete Account
+                  </span>
+                  <span className={styles.menuSublabel}>
+                    Permanently delete your profile and all associated data
+                  </span>
+                </div>
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color="var(--danger)"
+                />
+              </button>
             </div>
-          </div>
-
-          {/* ── COLUMN 2: HELP & LEGAL (Available to everyone) ── */}
-          <div className={styles.settingsColumn}>
-            {/* ── HELP & INFORMATION SECTION ── */}
-            <div className={styles.infoCard}>
-              <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>Help & Information</h2>
-              </div>
-              <div className={styles.cardContent}>
-                <Link
-                  href="/guide"
-                  className={styles.menuItem}
-                  style={{ textDecoration: "none" }}
-                >
-                  <div className={styles.menuIconWrap}>
-                    <Ionicons name="book-outline" size={18} />
-                  </div>
-                  <div className={styles.menuTextCol}>
-                    <span className={styles.menuLabel}>Manual Guide</span>
-                    <span className={styles.menuSublabel}>
-                      Documentary guide to QR security & scanner forensics
-                    </span>
-                  </div>
-                  <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
-                </Link>
-
-                <div className={styles.divider} />
-
-                <Link
-                  href="/trust-scores"
-                  className={styles.menuItem}
-                  style={{ textDecoration: "none" }}
-                >
-                  <div className={styles.menuIconWrap}>
-                    <Ionicons name="shield-checkmark-outline" size={18} />
-                  </div>
-                  <div className={styles.menuTextCol}>
-                    <span className={styles.menuLabel}>About Trust Scores</span>
-                    <span className={styles.menuSublabel}>
-                      How safety ratings and threat detection work
-                    </span>
-                  </div>
-                  <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
-                </Link>
-
-                <div className={styles.divider} />
-
-                <Link
-                  href="/feedback"
-                  className={styles.menuItem}
-                  style={{ textDecoration: "none" }}
-                >
-                  <div className={styles.menuIconWrap}>
-                    <Ionicons name="chatbubble-outline" size={18} />
-                  </div>
-                  <div className={styles.menuTextCol}>
-                    <span className={styles.menuLabel}>Support &amp; Feedback</span>
-                    <span className={styles.menuSublabel}>Report bugs or request new features</span>
-                  </div>
-                  <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
-                </Link>
-              </div>
-            </div>
-
-            {/* ── LEGAL & COMPLIANCE SECTION ── */}
-            <div className={styles.infoCard}>
-              <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>Legal & Compliance</h2>
-              </div>
-              <div className={styles.cardContent}>
-                <Link
-                  href="/terms"
-                  className={styles.menuItem}
-                  style={{ textDecoration: "none" }}
-                >
-                  <div className={styles.menuIconWrap}>
-                    <Ionicons name="document-text-outline" size={18} />
-                  </div>
-                  <div className={styles.menuTextCol}>
-                    <span className={styles.menuLabel}>Terms of Service</span>
-                    <span className={styles.menuSublabel}>Usage rules, disclaimers and liability</span>
-                  </div>
-                  <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
-                </Link>
-
-                <div className={styles.divider} />
-
-                <Link
-                  href="/privacy"
-                  className={styles.menuItem}
-                  style={{ textDecoration: "none" }}
-                >
-                  <div className={styles.menuIconWrap}>
-                    <Ionicons name="lock-closed-outline" size={18} />
-                  </div>
-                  <div className={styles.menuTextCol}>
-                    <span className={styles.menuLabel}>Privacy Policy</span>
-                    <span className={styles.menuSublabel}>How we collect and protect your data</span>
-                  </div>
-                  <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+          </section>
+        )}
 
         {/* ── FOOTER ── */}
         <footer className={styles.footer}>
-          <div className={styles.footerBadge}>BinRo v1.0.0</div>
-          <p className={styles.footerTagline}>Scan smart. Stay safe.</p>
-          <p className={styles.footerDisclaimer}>
-            Trust scores reflect community opinion, not verified fact. You are solely responsible for all decisions made after scanning a QR code.
+          <div className={styles.footerBrand}>
+            Bin<span style={{ color: "var(--primary)" }}>Ro</span>
+          </div>
+          <div className={styles.footerMeta}>
+            <span>Version 1.0.0</span>
+            <span aria-hidden="true">·</span>
+            <span>Know Before You Scan</span>
+          </div>
+          <p className={styles.footerNote}>
+            Trust scores reflect community signals and security heuristics.
           </p>
         </footer>
       </div>
@@ -641,31 +746,7 @@ function SettingsContent() {
 
 export default function SettingsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className={styles.container}>
-          <div
-            className={styles.inner}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <div
-              style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                border: "3px solid var(--primary-dim)",
-                borderTopColor: "var(--primary)",
-                animation: "spin 0.8s linear infinite",
-              }}
-            />
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<SettingsLoading />}>
       <SettingsContent />
     </Suspense>
   );
