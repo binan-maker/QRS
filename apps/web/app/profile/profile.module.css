@@ -7,7 +7,10 @@
 .container {
   min-height: 100dvh;
   width: 100%;
-  background-color: var(--background);
+  background:
+    radial-gradient(circle at 12% 10%, var(--primary-dim), transparent 45%),
+    radial-gradient(circle at 88% 85%, var(--card-glow), transparent 45%),
+    var(--background);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,7 +22,7 @@
   max-width: 480px;
   min-height: 100dvh;
   margin: 0 auto;
-  padding: 16px 20px calc(100px + env(safe-area-inset-bottom, 0px));
+  padding: 24px 18px calc(100px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -31,9 +34,10 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  margin-top: 4px;
-  margin-bottom: 24px;
+  margin-top: 0;
+  margin-bottom: 22px;
   width: 100%;
+  position: relative;
 }
 
 .pageTitle {
@@ -439,6 +443,102 @@
   transform: scale(0.98);
 }
 
+/* ── Account Details Navigation Link Card (Profile Left Column) ───────────── */
+.accountDetailsLinkCard {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.025);
+  box-sizing: border-box;
+  text-decoration: none;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  margin-top: 4px;
+}
+
+.accountDetailsLinkCard:hover {
+  border-color: var(--primary);
+  background-color: var(--surface-light);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+.accountDetailsLinkCard:active {
+  transform: scale(0.99);
+}
+
+.accountDetailsLinkLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.accountDetailsLinkIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background-color: var(--primary-dim);
+  border: 1px solid rgba(0, 82, 204, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.accountDetailsLinkContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.accountDetailsLinkTitle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(13.5px, calc(12px + 0.3vw + 0.15vmin), 15px);
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+
+.accountDetailsLinkSub {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(11px, calc(10px + 0.18vw + 0.1vmin), 12px);
+  color: var(--text-muted);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.accountDetailsLinkRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.accountDetailsBadge {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--primary);
+  background-color: var(--primary-dim);
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+
+
 /* ── Account Details & Settings Cards ────────────────────────────────────── */
 .infoCard {
   background-color: var(--surface);
@@ -609,25 +709,25 @@
 .themeGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 8px;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .themeCardBtn {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 13px 8px;
-  border-radius: 14px;
+  padding: 10px 8px;
+  border-radius: 12px;
   border: 1px solid var(--surface-border);
   background-color: var(--surface-light);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.15s ease;
   font-family: var(--font-inter), "Inter", sans-serif;
-  font-size: clamp(11px, calc(9.8px + 0.2vw + 0.14vmin), 12.5px);
+  font-size: clamp(11.5px, calc(10.5px + 0.18vw + 0.12vmin), 13px);
   font-weight: 600;
   position: relative;
   outline: none;
@@ -642,7 +742,7 @@
   background-color: var(--primary) !important;
   color: #ffffff !important;
   border-color: var(--primary) !important;
-  box-shadow: 0 4px 14px var(--card-glow);
+  box-shadow: 0 2px 8px var(--card-glow);
 }
 
 /* ── Action Cards Grid & Responsive Layout ── */
@@ -1166,15 +1266,48 @@
 }
 
 /* ── Tablet Responsive Layout (640px – 1023px) ───────────────────────────── */
-@media (min-width: 640px) {
-  .inner {
-    max-width: 760px;
-    padding: 24px 24px 80px;
+@media (min-width: 640px) and (max-width: 1023px) {
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100dvh;
+    margin-top: -64px;
+    padding: 84px 24px 32px;
+    background:
+      radial-gradient(circle at 18% 10%, var(--primary-dim), transparent 45%),
+      radial-gradient(circle at 82% 90%, var(--card-glow), transparent 45%),
+      var(--background);
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  /* Hide in-page profile heading and settings icon when top header navbar is active */
+  .inner {
+    width: 100%;
+    max-width: 720px;
+    min-height: auto;
+    padding: 0;
+    margin: 0 auto;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    box-sizing: border-box;
+  }
+
   .topBar {
-    display: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+
+  .pageTitle {
+    font-size: clamp(19px, calc(14px + 0.65vw + 0.45vmin), 23px);
+    line-height: 1.25;
   }
 
   .profileGrid {
@@ -1256,18 +1389,47 @@
 /* ── Desktop Responsive Layout (>= 1024px) ───────────────────────────────── */
 @media (min-width: 1024px) {
   .container {
-    min-height: calc(100dvh - 60px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100dvh;
+    margin-top: -64px;
+    padding: 84px 24px 32px;
+    background:
+      radial-gradient(circle at 12% 10%, var(--primary-dim), transparent 45%),
+      radial-gradient(circle at 88% 85%, var(--card-glow), transparent 45%),
+      var(--background);
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .inner {
+    width: 100%;
     max-width: 1200px;
     min-height: auto;
-    padding: 20px 24px 32px;
+    padding: 0;
+    margin: 0 auto;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    box-sizing: border-box;
   }
 
-  /* Hide in-page profile heading and settings icon when top header navbar is active */
   .topBar {
-    display: none;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    width: 100%;
+  }
+
+  .pageTitle {
+    font-size: 26px;
+    line-height: 32px;
+    letter-spacing: -0.4px;
   }
 
   /* Two-column stretchable profile grid */
@@ -1477,4 +1639,6 @@
   font-size: clamp(8.5px, calc(7.8px + 0.14vw + 0.1vmin), 10px);
   color: var(--text-muted);
 }
+
+
 

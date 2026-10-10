@@ -15,6 +15,7 @@ import styles from "./settings.module.css";
 type SectionType =
   | "main"
   | "account"
+  | "account-details"
   | "guide"
   | "feedback"
   | "trust-scores"
@@ -24,6 +25,7 @@ type SectionType =
 const SECTION_TITLES: Record<SectionType, string> = {
   main: "Settings",
   account: "Account Management",
+  "account-details": "Account Details",
   guide: "Manual Guide",
   feedback: "Send Feedback",
   "trust-scores": "About Trust Scores",
@@ -32,6 +34,7 @@ const SECTION_TITLES: Record<SectionType, string> = {
 };
 
 const EXTERNAL_REDIRECT_SECTIONS: ReadonlySet<string> = new Set([
+  "account-details",
   "guide",
   "feedback",
   "trust-scores",
@@ -105,7 +108,9 @@ function SettingsContent() {
 
   // Pure React effect: Handle full-page dedicated route redirects without render side-effects
   useEffect(() => {
-    if (section === "guide") {
+    if (section === "account-details") {
+      router.replace("/settings/account-details");
+    } else if (section === "guide") {
       router.replace("/guide");
     } else if (section === "feedback") {
       router.replace("/feedback");
@@ -441,6 +446,24 @@ function SettingsContent() {
 
                     <div className={styles.divider} />
 
+                    {/* Dedicated Account Details page */}
+                    <Link
+                      href="/settings/account-details"
+                      className={styles.menuItem}
+                      style={{ textDecoration: "none" }}
+                    >
+                      <div className={styles.menuIconWrap}>
+                        <Ionicons name="person-circle-outline" size={18} />
+                      </div>
+                      <div className={styles.menuTextCol}>
+                        <span className={styles.menuLabel}>Account Details</span>
+                        <span className={styles.menuSublabel}>Manage display name, @username &amp; email</span>
+                      </div>
+                      <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
+                    </Link>
+
+                    <div className={styles.divider} />
+
                     {/* Account Management (Delete Account / Danger Zone) */}
                     <button
                       type="button"
@@ -551,8 +574,8 @@ function SettingsContent() {
                     <Ionicons name="chatbubble-outline" size={18} />
                   </div>
                   <div className={styles.menuTextCol}>
-                    <span className={styles.menuLabel}>Send Feedback</span>
-                    <span className={styles.menuSublabel}>Report bugs or suggest new features</span>
+                    <span className={styles.menuLabel}>Support &amp; Feedback</span>
+                    <span className={styles.menuSublabel}>Report bugs or request new features</span>
                   </div>
                   <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
                 </Link>

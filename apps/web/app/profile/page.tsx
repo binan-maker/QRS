@@ -9,18 +9,7 @@ import { useAvatar, isUserUploadedPhoto } from "@/lib/avatar-context";
 import { useTheme } from "@/lib/theme-context";
 import { getWebSupabase, isWebSupabaseConfigured } from "@/lib/supabase";
 import { clearAllUserScans } from "@/lib/scan-history";
-import { sanitizeTextInput } from "@/lib/web-security";
-import {
-  sanitizeUsername,
-  validateUsername,
-  getRemainingUsernameCooldownDays,
-  canUserChangeUsername,
-} from "@shared/utils/username-rules";
-import {
-  checkUsernameAvailability,
-  updateUsernamePermanently,
-  type UsernameAvailabilityResult,
-} from "@/lib/username-service";
+import { sanitizeUsername } from "@shared/utils/username-rules";
 import { syncStructuredUserProfile } from "@/lib/user-account";
 import { BottomTabBar } from "@/components/navigation/BottomTabBar";
 import {
@@ -58,25 +47,13 @@ export default function ProfilePage() {
   // Editable states
   const [displayNameState, setDisplayNameState] = useState(initialDisplayName);
   const [usernameState, setUsernameState] = useState(initialUsername);
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [isEditingUsername, setIsEditingUsername] = useState(false);
-  const [nameInput, setNameInput] = useState(initialDisplayName);
-  const [usernameInput, setUsernameInput] = useState(initialUsername);
-  const [usernameValidationError, setUsernameValidationError] = useState<string | null>(null);
   const [usernameLastChangedAt, setUsernameLastChangedAt] = useState<string | null>(
     user?.user_metadata?.username_last_changed_at || null
   );
   const [pastUsernames, setPastUsernames] = useState<string[]>(
     user?.user_metadata?.past_usernames || []
   );
-  const [checkingAvailability, setCheckingAvailability] = useState(false);
-  const [availabilityStatus, setAvailabilityStatus] = useState<UsernameAvailabilityResult>({
-    available: true,
-  });
-  const [savingName, setSavingName] = useState(false);
-  const [savingUsername, setSavingUsername] = useState(false);
   const [clearingData, setClearingData] = useState(false);
-  const [resendingVerification, setResendingVerification] = useState(false);
   const [userStats, setUserStats] = useState<{
     scanCount: number;
     commentCount: number;
@@ -86,14 +63,12 @@ export default function ProfilePage() {
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Google Pay Referral states
-  const [menuOpen, setMenuOpen] = useState(false);
   const [referralModalOpen, setReferralModalOpen] = useState(false);
   const [rewardWallet, setRewardWallet] = useState<RewardWallet | null>(null);
   const [referralCodeInput, setReferralCodeInput] = useState("");
   const [referralApplying, setReferralApplying] = useState(false);
   const [referralFeedback, setReferralFeedback] = useState<{ text: string; isError: boolean } | null>(null);
   const [referralSuccess, setReferralSuccess] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const loadWallet = useCallback(async () => {
     if (user?.id) {
@@ -107,21 +82,6 @@ export default function ProfilePage() {
   useEffect(() => {
     void loadWallet();
   }, [loadWallet]);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    if (menuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [menuOpen]);
 
   const handleApplyReferral = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,8 +104,6 @@ export default function ProfilePage() {
     }
   };
 
-  const cooldownDays = getRemainingUsernameCooldownDays(usernameLastChangedAt);
-  const canChangeUsername = cooldownDays === 0;
 
   // Cleanup toast timer on unmount
   useEffect(() => {
@@ -169,9 +127,7 @@ export default function ProfilePage() {
         ""
       );
       setDisplayNameState(name);
-      setNameInput(name);
       setUsernameState(uName);
-      setUsernameInput(uName);
       if (user?.user_metadata?.username_last_changed_at) {
         setUsernameLastChangedAt(user.user_metadata.username_last_changed_at);
       }
@@ -222,7 +178,6 @@ export default function ProfilePage() {
           if (data?.username) {
             const clean = sanitizeUsername(data.username);
             setUsernameState(clean);
-            setUsernameInput(clean);
           }
           if (data?.username_last_changed_at) {
             setUsernameLastChangedAt(data.username_last_changed_at);
@@ -284,61 +239,7 @@ export default function ProfilePage() {
     }
   }, [user?.id]);
 
-  // Real-time debounced username availability check against Supabase
-  useEffect(() => {
-    if (!isEditingUsername) {
-      setAvailabilityStatus({ available: true });
-      setCheckingAvailability(false);
-      return;
-    }
 
-    const trimmed = usernameInput.trim();
-    if (!trimmed) {
-      setAvailabilityStatus({
-        available: false,
-        error: "Username cannot be empty.",
-      });
-      setCheckingAvailability(false);
-      return;
-    }
-
-    const val = validateUsername(trimmed);
-    if (!val.valid) {
-      setAvailabilityStatus({
-        available: false,
-        error: val.error || "Invalid username format.",
-      });
-      setCheckingAvailability(false);
-      return;
-    }
-
-    if (usernameState && trimmed.toLowerCase() === usernameState.toLowerCase()) {
-      setAvailabilityStatus({
-        available: true,
-        isCurrent: true,
-        message: "This is your current username.",
-      });
-      setCheckingAvailability(false);
-      return;
-    }
-
-    setCheckingAvailability(true);
-    const timer = setTimeout(async () => {
-      try {
-        const res = await checkUsernameAvailability(trimmed, user?.id, usernameState);
-        setAvailabilityStatus(res);
-      } catch {
-        setAvailabilityStatus({
-          available: false,
-          error: "Unable to verify username right now.",
-        });
-      } finally {
-        setCheckingAvailability(false);
-      }
-    }, 280);
-
-    return () => clearTimeout(timer);
-  }, [usernameInput, isEditingUsername, user?.id, usernameState]);
 
   const initials =
     displayNameState
@@ -374,23 +275,6 @@ export default function ProfilePage() {
     toastTimerRef.current = setTimeout(() => setToast(null), 3200);
   };
 
-  const handleResendVerification = async () => {
-    if (!user?.email || !isWebSupabaseConfigured()) return;
-    setResendingVerification(true);
-    try {
-      const supabase = getWebSupabase();
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: user.email,
-      });
-      if (error) throw error;
-      showToast("Verification email sent! Check your inbox.");
-    } catch (err: any) {
-      showToast(err?.message || "Failed to resend verification email.", "error");
-    } finally {
-      setResendingVerification(false);
-    }
-  };
 
   const handlePickPhoto = () => {
     setPhotoModalOpen(false);
@@ -422,92 +306,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSaveName = async () => {
-    const trimmed = sanitizeTextInput(nameInput.trim(), 40);
-    if (!trimmed) {
-      showToast("Name cannot be empty.", "error");
-      return;
-    }
-    setSavingName(true);
-    try {
-      setDisplayNameState(trimmed);
-      setIsEditingName(false);
-      if (isWebSupabaseConfigured()) {
-        const supabase = getWebSupabase();
-        await supabase.auth.updateUser({ data: { display_name: trimmed, full_name: trimmed } });
-        if (user?.id) {
-          const { error: updateErr } = await supabase
-            .from("users")
-            .update({ display_name: trimmed, updated_at: new Date().toISOString() })
-            .eq("id", user.id);
 
-          if (updateErr) {
-            await supabase.from("users").upsert(
-              {
-                id: user.id,
-                email: user.email || `${user.id}@binro.app`,
-                display_name: trimmed,
-                updated_at: new Date().toISOString(),
-              },
-              { onConflict: "id" }
-            );
-          }
-        }
-      }
-      showToast("Display name updated.");
-    } catch {
-      showToast("Failed to save display name.", "error");
-    } finally {
-      setSavingName(false);
-    }
-  };
-
-  const handleSaveUsername = async () => {
-    const sanitized = sanitizeUsername(usernameInput);
-    const validation = validateUsername(sanitized);
-    if (!validation.valid) {
-      showToast(validation.error || "Invalid username format.", "error");
-      return;
-    }
-    if (!canChangeUsername) {
-      showToast(
-        `Usernames can only be edited once every 15 days (${cooldownDays} day${
-          cooldownDays === 1 ? "" : "s"
-        } remaining).`,
-        "error"
-      );
-      return;
-    }
-    if (!availabilityStatus.available && !availabilityStatus.isCurrent) {
-      showToast(availabilityStatus.error || "This username is taken.", "error");
-      return;
-    }
-    if (!user?.id) {
-      showToast("Please sign in to update your username.", "error");
-      return;
-    }
-
-    setSavingUsername(true);
-    try {
-      const result = await updateUsernamePermanently({
-        userId: user.id,
-        newUsername: sanitized,
-        oldUsername: usernameState || null,
-        lastChangedAt: usernameLastChangedAt,
-        existingPastUsernames: pastUsernames,
-      });
-
-      setUsernameState(sanitized);
-      setIsEditingUsername(false);
-      setUsernameLastChangedAt(result.newChangedAt);
-      setPastUsernames(result.pastUsernames);
-      showToast("Username updated successfully. Can be edited again in 15 days.");
-    } catch (err: any) {
-      showToast(err?.message || "Failed to save username.", "error");
-    } finally {
-      setSavingUsername(false);
-    }
-  };
 
   const handleClearData = async () => {
     setClearingData(true);
@@ -590,114 +389,10 @@ export default function ProfilePage() {
       />
 
       <div className={styles.inner}>
-        {/* Top Bar with Settings and Google Pay Three-Dot Menu */}
-        <header className={styles.topBar} style={{ position: "relative" }}>
+        {/* Top Bar with Settings */}
+        <header className={styles.topBar}>
           <h1 className={styles.pageTitle}>Profile</h1>
-          <div className={styles.topBarActions} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            {/* Google Pay Style Three Dots (⋮) Menu Button */}
-            <div ref={menuRef} style={{ position: "relative" }}>
-              <button
-                type="button"
-                onClick={() => setMenuOpen((prev) => !prev)}
-                className={styles.iconBtn}
-                title="More options"
-                aria-label="More options"
-              >
-                <Ionicons name="ellipsis-vertical" size={17} />
-              </button>
-
-              {/* Google Pay Style Dropdown Popover */}
-              {menuOpen && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "42px",
-                    right: "0px",
-                    backgroundColor: "var(--surface, #ffffff)",
-                    border: "1px solid var(--surface-border, #e2e8f0)",
-                    borderRadius: "16px",
-                    padding: "6px",
-                    minWidth: "220px",
-                    zIndex: 1000,
-                    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.25)",
-                  }}
-                >
-                  <Link
-                    href="/rewards"
-                    onClick={() => setMenuOpen(false)}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      padding: "10px 12px",
-                      borderRadius: "10px",
-                      textDecoration: "none",
-                      color: "inherit",
-                    }}
-                  >
-                    <Ionicons name="gift-outline" size={18} color="var(--primary)" />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>
-                        Scratch Cards
-                      </div>
-                      <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                        Milestone vouchers &amp; coupons
-                      </div>
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/referrals"
-                    onClick={() => setMenuOpen(false)}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      padding: "10px 12px",
-                      borderRadius: "10px",
-                      textDecoration: "none",
-                      color: "inherit",
-                    }}
-                  >
-                    <Ionicons name="people-outline" size={18} color="var(--primary)" />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>
-                        Refer &amp; Earn
-                      </div>
-                      <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                        Gold VIP cards &amp; invite tracking
-                      </div>
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/settings"
-                    onClick={() => setMenuOpen(false)}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      padding: "10px 12px",
-                      borderRadius: "10px",
-                      textDecoration: "none",
-                      color: "inherit",
-                    }}
-                  >
-                    <Ionicons name="settings-outline" size={18} color="var(--primary)" />
-                    <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--text)" }}>
-                      Settings
-                    </div>
-                    <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                      Preferences &amp; policies
-                    </div>
-                  </Link>
-                </div>
-              )}
-            </div>
-
+          <div className={styles.topBarActions}>
             <Link
               href="/settings"
               className={styles.iconBtn}
@@ -784,391 +479,44 @@ export default function ProfilePage() {
               </div>
             </section>
 
-            {/* Mobile External Section Label */}
-            <div className={styles.mobileSectionHeading}>Account Details</div>
-
-            {/* Account Information Card */}
-            <div className={styles.infoCard}>
-              <div className={`${styles.sectionHeader} ${styles.desktopOnlyHeader}`}>
-                <span className={styles.sectionTitle}>Account Details</span>
-              </div>
-
-              {/* Display Name Edit Row */}
-              <div className={styles.fieldItem}>
-                {isEditingName ? (
-                  <div className={styles.fieldEditContainer}>
-                    <span className={styles.fieldLabel}>Display Name</span>
-                    <input
-                      type="text"
-                      value={nameInput}
-                      onChange={(e) => setNameInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleSaveName();
-                        if (e.key === "Escape") {
-                          setNameInput(displayNameState);
-                          setIsEditingName(false);
-                        }
-                      }}
-                      placeholder="Your full name"
-                      maxLength={40}
-                      className={styles.fieldInput}
-                      autoFocus
-                    />
-                    <div className={styles.fieldInputActions}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNameInput(displayNameState);
-                          setIsEditingName(false);
-                        }}
-                        className={styles.fieldCancelBtn}
-                        disabled={savingName}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleSaveName}
-                        className={styles.fieldSaveBtn}
-                        disabled={savingName || !nameInput.trim()}
-                      >
-                        {savingName ? "Saving..." : "Save"}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.compactFieldRow}>
-                    <span className={styles.fieldLabel}>Display Name</span>
-                    <div className={styles.compactFieldRight}>
-                      <span className={styles.fieldValue}>{displayNameState}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNameInput(displayNameState);
-                          setIsEditingName(true);
-                        }}
-                        className={styles.fieldEditBtn}
-                        aria-label="Edit display name"
-                      >
-                        <Ionicons name="pencil-outline" size={12} />
-                        <span>Edit</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Username Row */}
-              <div className={styles.fieldItem}>
-                {isEditingUsername ? (
-                  <div className={styles.fieldEditContainer}>
-                    <span className={styles.fieldLabel}>Username</span>
-                    <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                      <span
-                        style={{
-                          position: "absolute",
-                          left: "12px",
-                          color: "var(--text-muted)",
-                          fontSize: "var(--fs-base)",
-                          pointerEvents: "none",
-                        }}
-                      >
-                        @
-                      </span>
-                      <input
-                        type="text"
-                        value={usernameInput}
-                        onChange={(e) => {
-                          const sanitized = sanitizeUsername(e.target.value);
-                          setUsernameInput(sanitized);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && (availabilityStatus.available || availabilityStatus.isCurrent)) {
-                            handleSaveUsername();
-                          }
-                          if (e.key === "Escape") {
-                            setUsernameInput(usernameState);
-                            setIsEditingUsername(false);
-                          }
-                        }}
-                        placeholder="username"
-                        maxLength={20}
-                        className={styles.fieldInput}
-                        style={{
-                          paddingLeft: "28px",
-                          paddingRight: "36px",
-                          borderColor:
-                            availabilityStatus.checked && !availabilityStatus.available
-                              ? "var(--danger)"
-                              : availabilityStatus.checked &&
-                                availabilityStatus.available &&
-                                !availabilityStatus.isCurrent
-                              ? "var(--safe)"
-                              : undefined,
-                        }}
-                        autoFocus
-                      />
-                      <div
-                        style={{
-                          position: "absolute",
-                          right: "12px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {checkingAvailability ? (
-                          <span
-                            style={{
-                              width: "14px",
-                              height: "14px",
-                              border: "2px solid var(--surface-border)",
-                              borderTopColor: "var(--primary)",
-                              borderRadius: "50%",
-                              display: "inline-block",
-                              animation: "spin 0.8s linear infinite",
-                            }}
-                          />
-                        ) : availabilityStatus.checked ? (
-                          availabilityStatus.available ? (
-                            <Ionicons
-                              name="checkmark-circle"
-                              size={18}
-                              color="var(--safe)"
-                            />
-                          ) : (
-                            <Ionicons
-                              name="close-circle"
-                              size={18}
-                              color="var(--danger)"
-                            />
-                          )
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {/* Live Availability / Validation Message */}
-                    <div style={{ marginTop: "6px" }} aria-live="polite">
-                      {checkingAvailability ? (
-                        <p style={{ color: "var(--text-muted)", fontSize: "var(--fs-xs)", margin: 0 }}>
-                          Checking availability...
-                        </p>
-                      ) : availabilityStatus.checked ? (
-                        availabilityStatus.available ? (
-                          <p
-                            style={{
-                              color: availabilityStatus.isCurrent
-                                ? "var(--text-muted)"
-                                : "var(--safe)",
-                              fontSize: "var(--fs-sm)",
-                              margin: 0,
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            <Ionicons
-                              name={
-                                availabilityStatus.isCurrent
-                                  ? "information-circle-outline"
-                                  : "checkmark"
-                              }
-                              size={14}
-                            />
-                            {availabilityStatus.message || "Username is available"}
-                          </p>
-                        ) : (
-                          <p
-                            style={{
-                              color: "var(--danger)",
-                              fontSize: "var(--fs-sm)",
-                              margin: 0,
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            <Ionicons name="close" size={14} />
-                            {availabilityStatus.error || "This username is taken"}
-                          </p>
-                        )
-                      ) : null}
-                    </div>
-
-                    {/* On-Demand Username Rules Box (Visible only while editing username) */}
-                    <div className={styles.inlineUsernameRulesBox}>
-                      <span className={styles.inlineRulesTitle}>Username Rules</span>
-                      <ul className={styles.inlineRulesList}>
-                        <li>3–20 lowercase letters, numbers, underscores, or periods</li>
-                        <li>Can be changed once every 15 days</li>
-                        <li>Past handles stay permanently reserved to your account</li>
-                      </ul>
-                    </div>
-
-                    {/* Past handles list if any */}
-                    {pastUsernames && pastUsernames.length > 0 && (
-                      <div
-                        style={{
-                          marginTop: "6px",
-                          fontSize: "var(--fs-xs)",
-                          color: "var(--text-muted)",
-                          lineHeight: "1.4",
-                        }}
-                      >
-                        <span style={{ fontWeight: 600 }}>Your past handles: </span>
-                        {pastUsernames.map((u, i) => (
-                          <span
-                            key={u}
-                            style={{
-                              fontFamily: "monospace",
-                              color: "var(--text-secondary)",
-                            }}
-                          >
-                            @{u}
-                            {i < pastUsernames.length - 1 ? ", " : ""}
-                          </span>
-                        ))}
-                        <span style={{ marginLeft: "4px", opacity: 0.8 }}>
-                          (permanently reserved to you)
-                        </span>
-                      </div>
-                    )}
-
-                    <div className={styles.fieldInputActions}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUsernameInput(usernameState);
-                          setIsEditingUsername(false);
-                        }}
-                        className={styles.fieldCancelBtn}
-                        disabled={savingUsername}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleSaveUsername}
-                        className={styles.fieldSaveBtn}
-                        disabled={
-                          savingUsername ||
-                          checkingAvailability ||
-                          !usernameInput.trim() ||
-                          (!availabilityStatus.available && !availabilityStatus.isCurrent)
-                        }
-                      >
-                        {savingUsername ? "Saving..." : "Save"}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.compactFieldWrap}>
-                    <div className={styles.compactFieldRow}>
-                      <span className={styles.fieldLabel}>Username</span>
-                      <div className={styles.compactFieldRight}>
-                        <span className={styles.fieldValue}>
-                          {usernameState ? `@${usernameState}` : "Not set"}
-                        </span>
-                        {canChangeUsername ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setUsernameInput(usernameState);
-                              setIsEditingUsername(true);
-                            }}
-                            className={styles.fieldEditBtn}
-                            aria-label="Edit username"
-                          >
-                            <Ionicons name="pencil-outline" size={12} />
-                            <span>{usernameState ? "Edit" : "Set"}</span>
-                          </button>
-                        ) : (
-                          <span className={styles.cooldownPill}>
-                            <Ionicons name="time-outline" size={11} />
-                            <span>{cooldownDays}d left</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className={styles.usernameSubMetaRow}>
-                      {canChangeUsername ? (
-                        <span className={styles.usernameSubStatus}>
-                          Ready to change (15-day cooldown rule)
-                        </span>
-                      ) : (
-                        <span className={styles.usernameSubStatusWarning}>
-                          Can change again in {cooldownDays} day{cooldownDays === 1 ? "" : "s"} (15d rule)
-                        </span>
-                      )}
-
-                      {pastUsernames && pastUsernames.length > 0 && (
-                        <span className={styles.pastHandlesCompact}>
-                          Past: {pastUsernames.map((u) => `@${u}`).join(", ")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Email Row */}
-              <div className={styles.fieldItem}>
-                <div className={styles.compactFieldRow}>
-                  <span className={styles.fieldLabel}>Email</span>
-                  <div className={styles.compactFieldRight}>
-                    <span className={styles.fieldValue}>{user.email}</span>
-                    {Boolean(user.email_confirmed_at || (user as any).confirmed_at) ? (
-                      <span className={styles.verifiedBadge}>
-                        <Ionicons name="checkmark-circle" size={12} color="var(--safe)" />
-                        <span className={styles.badgeTextDesktop}>Verified</span>
-                      </span>
-                    ) : (
-                      <div className={styles.unverifiedBadgeRow}>
-                        <button
-                          type="button"
-                          onClick={handleResendVerification}
-                          disabled={resendingVerification}
-                          className={styles.resendBtn}
-                          aria-label="Resend verification email"
-                        >
-                          {resendingVerification ? "Sending..." : "Verify"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+            {/* ── Account Details Navigation Link Card (Settings) ── */}
+            <Link
+              href="/settings/account-details"
+              className={styles.accountDetailsLinkCard}
+              style={{ textDecoration: "none" }}
+            >
+              <div className={styles.accountDetailsLinkLeft}>
+                <div className={styles.accountDetailsLinkIcon}>
+                  <Ionicons name="person-circle-outline" size={20} color="var(--primary)" />
+                </div>
+                <div className={styles.accountDetailsLinkContent}>
+                  <strong className={styles.accountDetailsLinkTitle}>Account Details</strong>
+                  <span className={styles.accountDetailsLinkSub}>
+                    Manage display name, @username &amp; email
+                  </span>
                 </div>
               </div>
-            </div>
+              <div className={styles.accountDetailsLinkRight}>
+                <Ionicons name="chevron-forward" size={16} color="var(--text-muted)" />
+              </div>
+            </Link>
           </div>
 
           {/* ── RIGHT COLUMN: Appearance & Quick Actions ── */}
           <div className={styles.profileRightCol}>
-            {/* Desktop-Only Appearance Theme Card */}
-            <div className={`${styles.infoCard} ${styles.desktopThemeCard}`}>
+            {/* Unified Theme Preference Card */}
+            <div className={styles.infoCard}>
               <div className={styles.sectionHeader}>
-                <span className={styles.sectionTitle}>Appearance & Theme</span>
+                <span className={styles.sectionTitle}>Theme</span>
               </div>
-              <div className={styles.themeGrid}>
-                <button
-                  type="button"
-                  onClick={() => setThemeMode("system")}
-                  className={`${styles.themeCardBtn} ${themeMode === "system" ? styles.themeCardBtnActive : ""}`}
-                  aria-pressed={themeMode === "system"}
-                >
-                  <Ionicons name="phone-portrait-outline" size={17} />
-                  <span>System</span>
-                </button>
-
+              <div className={styles.themeGrid} role="group" aria-label="Theme selection">
                 <button
                   type="button"
                   onClick={() => setThemeMode("light")}
                   className={`${styles.themeCardBtn} ${themeMode === "light" ? styles.themeCardBtnActive : ""}`}
                   aria-pressed={themeMode === "light"}
                 >
-                  <Ionicons name="sunny-outline" size={17} />
+                  <Ionicons name="sunny-outline" size={16} />
                   <span>Light</span>
                 </button>
 
@@ -1178,55 +526,17 @@ export default function ProfilePage() {
                   className={`${styles.themeCardBtn} ${themeMode === "dark" ? styles.themeCardBtnActive : ""}`}
                   aria-pressed={themeMode === "dark"}
                 >
-                  <Ionicons name="moon-outline" size={17} />
+                  <Ionicons name="moon-outline" size={16} />
                   <span>Dark</span>
                 </button>
-              </div>
-            </div>
 
-            {/* Mobile External Section Label */}
-            <div className={styles.mobileSectionHeading}>Preferences &amp; Shortcuts</div>
-
-            {/* Mobile-Only Inline Segmented Theme Control Card */}
-            <div className={styles.mobileThemeCard}>
-              <div className={styles.mobileThemeLeft}>
-                <div className={styles.actionIcon}>
-                  <Ionicons name="color-palette-outline" size={18} />
-                </div>
-                <span className={styles.actionLabel}>Theme</span>
-              </div>
-              <div className={styles.segmentedThemeControl} role="group" aria-label="Theme selection">
-                <button
-                  type="button"
-                  onClick={() => setThemeMode("light")}
-                  className={`${styles.segmentedThemeBtn} ${
-                    themeMode === "light" ? styles.segmentedThemeBtnActive : ""
-                  }`}
-                  aria-pressed={themeMode === "light"}
-                >
-                  <Ionicons name="sunny-outline" size={13} />
-                  <span>Light</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setThemeMode("dark")}
-                  className={`${styles.segmentedThemeBtn} ${
-                    themeMode === "dark" ? styles.segmentedThemeBtnActive : ""
-                  }`}
-                  aria-pressed={themeMode === "dark"}
-                >
-                  <Ionicons name="moon-outline" size={13} />
-                  <span>Dark</span>
-                </button>
                 <button
                   type="button"
                   onClick={() => setThemeMode("system")}
-                  className={`${styles.segmentedThemeBtn} ${
-                    themeMode === "system" ? styles.segmentedThemeBtnActive : ""
-                  }`}
+                  className={`${styles.themeCardBtn} ${themeMode === "system" ? styles.themeCardBtnActive : ""}`}
                   aria-pressed={themeMode === "system"}
                 >
-                  <Ionicons name="phone-portrait-outline" size={13} />
+                  <Ionicons name="contrast-outline" size={16} />
                   <span>Auto</span>
                 </button>
               </div>
@@ -1276,33 +586,6 @@ export default function ProfilePage() {
                 </div>
               </Link>
 
-              {/* Settings & Preferences */}
-              <Link href="/settings" className={styles.actionCard}>
-                <div className={styles.actionIcon}>
-                  <Ionicons name="settings-outline" size={19} />
-                </div>
-                <div className={styles.actionTextCol}>
-                  <span className={styles.actionLabel}>Settings &amp; Preferences</span>
-                  <span className={styles.actionSub}>Account management, legal policies &amp; guide</span>
-                </div>
-                <div className={styles.actionArrow}>
-                  <Ionicons name="chevron-forward" size={16} />
-                </div>
-              </Link>
-
-              {/* Support & Feedback */}
-              <Link href="/feedback" className={styles.actionCard}>
-                <div className={styles.actionIcon}>
-                  <Ionicons name="chatbubble-outline" size={19} />
-                </div>
-                <div className={styles.actionTextCol}>
-                  <span className={styles.actionLabel}>Support &amp; Feedback</span>
-                  <span className={styles.actionSub}>Report bugs or request new features</span>
-                </div>
-                <div className={styles.actionArrow}>
-                  <Ionicons name="chevron-forward" size={16} />
-                </div>
-              </Link>
 
               {/* Clear Local Cache */}
               <button

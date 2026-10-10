@@ -1,0 +1,410 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACCOUNT DETAILS — CLEAN & PROFESSIONAL BRAND STYLING
+   Brand-consistent with BinRo Settings. Minimalist, uncluttered, responsive.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.container {
+  min-height: 100dvh;
+  width: 100%;
+  background-color: var(--background);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 16px 16px calc(100px + env(safe-area-inset-bottom, 0px));
+}
+
+.inner {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* ── Navigation Bar ──────────────────────────────────────────────────────── */
+.navBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 48px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.navBackBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  flex-shrink: 0;
+}
+
+.navBackBtn:hover {
+  background-color: var(--surface-light);
+}
+
+.navBackBtn:active {
+  transform: scale(0.96);
+}
+
+.navTitle {
+  margin: 0;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  letter-spacing: -0.2px;
+  flex: 1;
+}
+
+.navSpacer {
+  width: 40px;
+  flex-shrink: 0;
+}
+
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+.toastSuccess,
+.toastError {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.toastSuccess {
+  background-color: var(--surface);
+  border: 1px solid var(--safe);
+  color: var(--safe);
+}
+
+.toastError {
+  background-color: var(--surface);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+
+/* ── Clean Unified Card ──────────────────────────────────────────────────── */
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--surface-border);
+  width: 100%;
+}
+
+/* ── Row Layout ──────────────────────────────────────────────────────────── */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.rowMain {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.label {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.value {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+.subtext {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.statusText {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--safe);
+  margin-top: 2px;
+}
+
+.statusTextUnverified {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--warning);
+  margin-top: 2px;
+}
+
+.rowAction {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.actionBtn {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.actionBtn:hover {
+  background-color: var(--surface-light);
+}
+
+.actionBtn:active {
+  opacity: 0.7;
+}
+
+.lockedText {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+/* ── Inline Edit Mode ────────────────────────────────────────────────────── */
+.editContainer {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--surface);
+}
+
+.editHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.inputPrefix {
+  position: absolute;
+  left: 14px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background-color: var(--background);
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.input:focus {
+  border-color: var(--primary);
+}
+
+.inputWithPrefix {
+  padding-left: 30px;
+  padding-right: 36px;
+}
+
+.editFeedback {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12px;
+  margin: 0;
+}
+
+.editActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.cancelBtn {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--surface-border);
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.cancelBtn:hover {
+  background-color: var(--surface-light);
+}
+
+.saveBtn {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--primary);
+  border: none;
+  padding: 7px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.saveBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.saveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Guest View ──────────────────────────────────────────────────────────── */
+.guestContainer {
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.guestIcon {
+  margin-bottom: 12px;
+  color: var(--text-muted);
+}
+
+.guestTitle {
+  margin: 0 0 6px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.guestDesc {
+  margin: 0 0 20px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  color: var(--text-secondary);
+  max-width: 280px;
+  line-height: 1.4;
+}
+
+.guestSignInBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  border-radius: 10px;
+  background-color: var(--primary);
+  color: #ffffff;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.guestSignInBtn:hover {
+  opacity: 0.9;
+}
+
+/* ── Tablet / Desktop Responsive ─────────────────────────────────────────── */
+@media (min-width: 640px) {
+  .inner {
+    max-width: 580px;
+  }
+
+  .card {
+    border-radius: 20px;
+  }
+
+  .row {
+    padding: 20px 24px;
+  }
+
+  .editContainer {
+    padding: 20px 24px;
+  }
+}
