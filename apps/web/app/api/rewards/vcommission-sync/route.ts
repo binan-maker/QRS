@@ -249,8 +249,13 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Upsert into Supabase if configured ──────────────────────────────
-    let supabaseResult = "Supabase not configured yet - returned in memory & cached locally";
-    const supabase = isWebSupabaseConfigured() ? getSupabaseClient() : null;
+    let supabaseResult = "Supabase not configured (environment variables missing or set to placeholder)";
+    const { isConfigured, hasServiceRole } = await import("@/lib/supabase").then((m) => m.getSupabaseEnvConfig());
+    const supabase = hasServiceRole
+      ? (await import("@/lib/supabase")).createAdminSupabaseClient()
+      : isConfigured
+      ? (await import("@/lib/supabase")).getSupabaseClient()
+      : null;
 
     if (supabase && transformedCoupons.length > 0) {
       const { error: upsertErr } = await supabase
@@ -258,10 +263,12 @@ export async function POST(req: NextRequest) {
         .upsert(transformedCoupons, { onConflict: "id" });
 
       if (upsertErr) {
-        supabaseResult = `Supabase upsert note: ${upsertErr.message}`;
+        supabaseResult = `Supabase upsert error: ${upsertErr.message} (code: ${upsertErr.code || "unknown"})`;
       } else {
         supabaseResult = `Successfully synced & upserted ${transformedCoupons.length} deals to public.rewards_deals`;
       }
+    } else if (transformedCoupons.length === 0) {
+      supabaseResult = "No coupons were extracted from input (provide vCommission API Key, CSV rows, or Feed URL)";
     }
 
     return NextResponse.json({
