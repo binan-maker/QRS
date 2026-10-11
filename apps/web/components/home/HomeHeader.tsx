@@ -70,14 +70,20 @@ export function HomeHeader() {
     <header className={styles.header}>
       <div className={styles.headerLeft}>
         {user ? (
-          <h1 className={styles.greeting}>
-            {"👋 Hey, "}
-            <span className={styles.greetingHighlight}>
-              {firstName.length > 14 ? `${firstName.slice(0, 12)}…` : firstName}
-            </span>
-          </h1>
+          <div>
+            <h1 className={styles.greeting}>
+              {"Hey, "}
+              <span className={styles.greetingHighlight}>
+                {firstName.length > 14 ? `${firstName.slice(0, 12)}…` : firstName}
+              </span>
+            </h1>
+            <p className={styles.greetingSubtitle}>Know Before You Scan · Zero-Trust QR Shield</p>
+          </div>
         ) : (
-          <h1 className={styles.greeting}>Welcome</h1>
+          <div>
+            <h1 className={styles.greeting}>Welcome to BinRo</h1>
+            <p className={styles.greetingSubtitle}>Public QR code safety &amp; community trust shield</p>
+          </div>
         )}
       </div>
 

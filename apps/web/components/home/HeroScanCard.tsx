@@ -70,12 +70,15 @@ export function HeroScanCard() {
           </div>
 
           <div className={styles.heroCopy}>
-            <strong className={styles.heroHeading} style={{ color: colors.primary }}>
-              BinRo
-            </strong>
-            <span className={styles.heroTitle} style={{ color: colors.text }}>
-              Scan QR Code
+            <span className={styles.heroKicker} style={{ color: colors.primary }}>
+              Zero-Trust Protection
             </span>
+            <strong className={styles.heroHeading} style={{ color: colors.text }}>
+              Scan Any QR Code
+            </strong>
+            <p className={styles.heroSubtitle} style={{ color: colors.textSecondary }}>
+              Preview hidden destination links, verify UPI recipients &amp; check community safety scores before you open.
+            </p>
           </div>
 
           <div
@@ -91,9 +94,20 @@ export function HeroScanCard() {
           </div>
         </div>
 
-        <small className={styles.heroTagline} style={{ color: colors.textSecondary }}>
-          BinRo — Know Before You Scan
-        </small>
+        <div className={styles.heroPillRow}>
+          <span className={styles.heroFeaturePill} style={{ color: colors.textSecondary }}>
+            <Ionicons name="shield-checkmark" size={13} color={colors.primary} />
+            <span>Link Preview</span>
+          </span>
+          <span className={styles.heroFeaturePill} style={{ color: colors.textSecondary }}>
+            <Ionicons name="card" size={13} color={colors.primary} />
+            <span>UPI Safety</span>
+          </span>
+          <span className={styles.heroFeaturePill} style={{ color: colors.textSecondary }}>
+            <Ionicons name="people" size={13} color={colors.primary} />
+            <span>Community Trust</span>
+          </span>
+        </div>
       </Link>
     </div>
   );

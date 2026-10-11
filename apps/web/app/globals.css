@@ -51,17 +51,21 @@ html[data-theme="light"] {
   --amber-soft: rgba(217, 119, 6, 0.09);
   --green: #059669;
 
-  /* Fluid Responsive Typography Scale (Width vw + Height/Resolution vmin -> Exact Desktop Max) */
-  --fs-2xs: clamp(8.5px, calc(7.8px + 0.14vw + 0.1vmin), 10px);
-  --fs-xs: clamp(9.5px, calc(8.6px + 0.16vw + 0.12vmin), 11px);
-  --fs-sm: clamp(10.5px, calc(9.4px + 0.2vw + 0.14vmin), 12px);
-  --fs-base: clamp(11.5px, calc(10.1px + 0.22vw + 0.16vmin), 13px);
-  --fs-md: clamp(12.2px, calc(10.8px + 0.25vw + 0.18vmin), 14px);
-  --fs-lg: clamp(13.5px, calc(11.6px + 0.34vw + 0.22vmin), 16px);
-  --fs-xl: clamp(15px, calc(12.5px + 0.42vw + 0.3vmin), 18px);
-  --fs-2xl: clamp(16.5px, calc(13.2px + 0.55vw + 0.38vmin), 22px);
-  --fs-3xl: clamp(18px, calc(13.8px + 0.72vw + 0.48vmin), 26px);
-  --fs-display: clamp(22px, calc(16px + 1vw + 0.65vmin), 32px);
+  /* Attractive & Crisp Next.js Typography System */
+  --font-sans: var(--font-sans, "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  --font-heading: var(--font-heading, "Outfit", var(--font-sans), sans-serif);
+  --font-inter: var(--font-sans);
+
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13.5px;
+  --fs-base: 15px;
+  --fs-md: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 19px;
+  --fs-2xl: 23px;
+  --fs-3xl: 28px;
+  --fs-display: clamp(28px, calc(20px + 1.2vw), 38px);
 }
 
 html[data-theme="dark"],
@@ -187,25 +191,31 @@ html.dark {
 html {
   min-width: 320px;
   background: var(--background);
-  font-size: clamp(13.5px, calc(11.8px + 0.3vw + 0.2vmin), 16px);
+  font-size: 16px;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-}
-
-@media (min-width: 1024px) {
-  html {
-    font-size: 16px;
-  }
 }
 
 body {
   margin: 0;
   color: var(--text);
   background: var(--background);
-  font-family: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: var(--fs-md);
+  font-family: var(--font-sans), var(--font-inter), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: var(--fs-base);
+  line-height: 1.55;
+  letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), var(--font-sans), sans-serif;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 0;
 }
 
 @media (min-width: 601px) {
