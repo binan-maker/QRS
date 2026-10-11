@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       method: "GET",
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
       },
       redirect: "follow",
@@ -34,13 +34,22 @@ export async function GET(req: NextRequest) {
     });
 
     if (!upstreamRes.ok) {
-      return new NextResponse("Failed to fetch upstream image", {
+      return new NextResponse("Upstream image unavailable", {
         status: upstreamRes.status,
       });
     }
 
-    const contentType =
-      upstreamRes.headers.get("content-type") || "image/png";
+    const contentType = upstreamRes.headers.get("content-type") || "image/png";
+
+    // Prevent proxying non-image responses (e.g. affiliate redirect HTML pages)
+    if (
+      !contentType.toLowerCase().startsWith("image/") &&
+      !contentType.toLowerCase().includes("octet-stream") &&
+      !contentType.toLowerCase().includes("svg")
+    ) {
+      return new NextResponse("Resource is not an image", { status: 415 });
+    }
+
     const imageBuffer = await upstreamRes.arrayBuffer();
 
     return new NextResponse(imageBuffer, {
@@ -49,6 +58,7 @@ export async function GET(req: NextRequest) {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
         "Access-Control-Allow-Origin": "*",
+        "Cross-Origin-Resource-Policy": "cross-origin",
       },
     });
   } catch (err: any) {

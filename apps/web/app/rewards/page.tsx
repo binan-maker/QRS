@@ -25,6 +25,45 @@ import styles from "./rewards.module.css";
 
 type FilterType = "all" | "unscratched" | "revealed" | "locked";
 
+export const AHMED_TEST_EMAIL = "ahmedsameerbinan2@gmail.com";
+
+// ── Exclusive Free Reward Card for ahmedsameerbinan2@gmail.com ───────────────
+const AHMED_FREE_REWARD_CARD: ScratchCardItem = {
+  id: "ahmed_exclusive_free_card",
+  userId: AHMED_TEST_EMAIL,
+  tier: "gold",
+  sourceType: "milestone",
+  sourceLabel: "Ahmed's Free Reward",
+  status: "unlocked",
+  offerId: "vc_tatacliq_ahmed_vip",
+  offer: {
+    id: "vc_tatacliq_ahmed_vip",
+    networkProvider: "vcommission",
+    campaignId: "10240",
+    merchantName: "Tata CLiQ",
+    merchantLogoUrl: "https://www.google.com/s2/favicons?domain=tatacliq.com&sz=128",
+    title: "Flat ₹500 + Extra 15% OFF VIP Voucher",
+    description:
+      "Exclusive complimentary test reward for ahmedsameerbinan2@gmail.com. Free to scratch immediately with zero scan requirements.",
+    couponCode: "AHMEDFREE500",
+    destinationUrl: "https://tracking.vcommission.com/aff_c?offer_id=10240&aff_id=132680",
+    tier: "gold",
+    category: "Fashion & Lifestyle",
+    termsText:
+      "Exclusive test voucher for ahmedsameerbinan2@gmail.com. Valid on premium fashion, electronics & lifestyle at Tata CLiQ via vCommission.",
+    isApproved: true,
+    isActive: true,
+    dailyAllocationLimit: 999,
+    totalAllocated: 0,
+    expiresAt: "2027-12-31T23:59:59Z",
+  },
+  unlockRequirementText: null,
+  scratchedAt: null,
+  redeemedAt: null,
+  expiresAt: null,
+  createdAt: new Date().toISOString(),
+};
+
 // ── Built-in Demo Scratch Card (Guaranteed Immediate Visibility) ─────────────
 const DEMO_SCRATCH_CARD: ScratchCardItem = {
   id: "demo_card_binro_vip",
@@ -72,6 +111,48 @@ export default function ScratchCardsPage() {
   const [scratchModalCard, setScratchModalCard] = useState<ScratchCardItem | null>(null);
   const [isDemoModal, setIsDemoModal] = useState(false);
   const [detailModalCard, setDetailModalCard] = useState<ScratchCardItem | null>(null);
+
+  // Exclusive Ahmed Free Reward Tester State
+  const [isAhmedActive, setIsAhmedActive] = useState(false);
+
+  useEffect(() => {
+    const currentEmail = user?.email?.toLowerCase().trim();
+    const storedTest =
+      typeof window !== "undefined" &&
+      localStorage.getItem("binro_test_as_ahmed") === "true";
+    if (currentEmail === AHMED_TEST_EMAIL || storedTest) {
+      setIsAhmedActive(true);
+    }
+  }, [user?.email]);
+
+  const toggleAhmedMode = useCallback(() => {
+    setIsAhmedActive((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        if (next) {
+          localStorage.setItem("binro_test_as_ahmed", "true");
+        } else {
+          localStorage.removeItem("binro_test_as_ahmed");
+        }
+      }
+      return next;
+    });
+  }, []);
+
+  // Restore scratched state for Ahmed free card if already scratched locally
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isScratched = localStorage.getItem("binro_ahmed_card_scratched") === "true";
+      const isRedeemed = localStorage.getItem("binro_ahmed_card_redeemed") === "true";
+      if (isRedeemed) {
+        AHMED_FREE_REWARD_CARD.status = "redeemed";
+        AHMED_FREE_REWARD_CARD.redeemedAt = new Date().toISOString();
+      } else if (isScratched) {
+        AHMED_FREE_REWARD_CARD.status = "scratched";
+        AHMED_FREE_REWARD_CARD.scratchedAt = new Date().toISOString();
+      }
+    }
+  }, []);
 
   // vCommission Automation Sync Modal
   const [showSyncModal, setShowSyncModal] = useState(false);
@@ -141,9 +222,17 @@ export default function ScratchCardsPage() {
 
   // Active Deck: Dynamically built from real offers without hardcoding
   const activeDeck = useMemo(() => {
+    const baseCards: ScratchCardItem[] = [];
+    if (isAhmedActive) {
+      baseCards.push(AHMED_FREE_REWARD_CARD);
+    }
+    baseCards.push(DEMO_SCRATCH_CARD);
+
     if (userCards.length > 0) {
-      const hasDemo = userCards.some((c) => c.id === DEMO_SCRATCH_CARD.id);
-      return hasDemo ? userCards : [DEMO_SCRATCH_CARD, ...userCards];
+      const filtered = userCards.filter(
+        (c) => c.id !== DEMO_SCRATCH_CARD.id && c.id !== AHMED_FREE_REWARD_CARD.id
+      );
+      return [...baseCards, ...filtered];
     }
     const offersPool = liveOffers.length > 0 ? liveOffers : DEFAULT_REWARD_OFFERS;
     const dynamicCards: ScratchCardItem[] = offersPool.map((offer, idx) => ({
@@ -161,8 +250,8 @@ export default function ScratchCardsPage() {
       expiresAt: offer.expiresAt || null,
       createdAt: new Date().toISOString(),
     }));
-    return [DEMO_SCRATCH_CARD, ...dynamicCards];
-  }, [userCards, liveOffers, user?.id]);
+    return [...baseCards, ...dynamicCards];
+  }, [userCards, liveOffers, user?.id, isAhmedActive]);
 
   // Filtered Cards
   const filteredCards = useMemo(() => {
@@ -186,7 +275,7 @@ export default function ScratchCardsPage() {
 
   // Open scratch modal
   const handleOpenScratch = (card: ScratchCardItem) => {
-    setIsDemoModal(card.id === DEMO_SCRATCH_CARD.id);
+    setIsDemoModal(card.id === DEMO_SCRATCH_CARD.id || card.id === AHMED_FREE_REWARD_CARD.id);
     setScratchModalCard(card);
   };
 
@@ -198,6 +287,14 @@ export default function ScratchCardsPage() {
   // Scratch completed
   const handleScratchComplete = useCallback(
     async (card: ScratchCardItem) => {
+      if (card.id === AHMED_FREE_REWARD_CARD.id) {
+        AHMED_FREE_REWARD_CARD.status = "scratched";
+        AHMED_FREE_REWARD_CARD.scratchedAt = new Date().toISOString();
+        if (typeof window !== "undefined") {
+          localStorage.setItem("binro_ahmed_card_scratched", "true");
+        }
+        return;
+      }
       if (card.id === DEMO_SCRATCH_CARD.id) {
         // Update local demo state
         DEMO_SCRATCH_CARD.status = "scratched";
@@ -215,6 +312,17 @@ export default function ScratchCardsPage() {
   // Claim or Redeem
   const handleRedeem = useCallback(
     async (card: ScratchCardItem) => {
+      if (card.id === AHMED_FREE_REWARD_CARD.id) {
+        AHMED_FREE_REWARD_CARD.status = "redeemed";
+        AHMED_FREE_REWARD_CARD.redeemedAt = new Date().toISOString();
+        if (typeof window !== "undefined") {
+          localStorage.setItem("binro_ahmed_card_redeemed", "true");
+        }
+        if (card.offer.destinationUrl) {
+          window.open(card.offer.destinationUrl, "_blank", "noopener,noreferrer");
+        }
+        return;
+      }
       if (card.id === DEMO_SCRATCH_CARD.id) {
         DEMO_SCRATCH_CARD.status = "redeemed";
         DEMO_SCRATCH_CARD.redeemedAt = new Date().toISOString();
@@ -264,6 +372,20 @@ export default function ScratchCardsPage() {
           <div className={styles.topBarRight}>
             <button
               type="button"
+              onClick={toggleAhmedMode}
+              className={styles.syncActionBtn}
+              style={{
+                borderColor: isAhmedActive ? "#F59E0B" : undefined,
+                color: isAhmedActive ? "#D97706" : undefined,
+                background: isAhmedActive ? "rgba(245, 158, 11, 0.1)" : undefined,
+              }}
+              title="Toggle exclusive test reward for ahmedsameerbinan2@gmail.com"
+            >
+              <Ionicons name="gift-outline" size={16} color={isAhmedActive ? "#D97706" : "currentColor"} />
+              <span>{isAhmedActive ? "Ahmed VIP Active" : "Test as Ahmed"}</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setShowSyncModal(true)}
               className={styles.syncActionBtn}
               title="Automate vCommission Deals Sync"
@@ -281,6 +403,32 @@ export default function ScratchCardsPage() {
             </Link>
           </div>
         </header>
+
+        {/* ── Exclusive Free Reward Banner for ahmedsameerbinan2@gmail.com ────── */}
+        {isAhmedActive && (
+          <div className={styles.ahmedBanner} role="region" aria-label="Exclusive free reward">
+            <div className={styles.ahmedBannerLeft}>
+              <div className={styles.ahmedBannerIcon}>
+                <Ionicons name="sparkles" size={20} />
+              </div>
+              <div>
+                <div className={styles.ahmedBannerTitle}>
+                  Free VIP Scratch Card Active for {AHMED_TEST_EMAIL}
+                </div>
+                <div className={styles.ahmedBannerSub}>
+                  Complimentary Tata CLiQ ₹500 test voucher ready below. Zero scan requirements.
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleOpenScratch(AHMED_FREE_REWARD_CARD)}
+              className={styles.ahmedBannerAction}
+            >
+              Scratch Free Card
+            </button>
+          </div>
+        )}
 
         {/* ── Prominent Featured Demo Scratch Card (Clearly Visible at Top) ─── */}
         <div
@@ -411,6 +559,7 @@ export default function ScratchCardsPage() {
         {/* ── Mature & Professional Cards Grid ──────────────────────────────── */}
         <div className={styles.cardsGrid} role="list" aria-label="Scratch cards deck">
           {filteredCards.map((card) => {
+            const isAhmedCard = card.id === AHMED_FREE_REWARD_CARD.id;
             const isDemo = card.id === DEMO_SCRATCH_CARD.id;
             const isUnscratched = card.status === "unlocked";
             const isRevealed = card.status === "scratched" || card.status === "redeemed";
@@ -421,7 +570,7 @@ export default function ScratchCardsPage() {
               <div
                 key={card.id}
                 role="listitem"
-                className={styles.rewardCard}
+                className={`${styles.rewardCard} ${isAhmedCard ? styles.cardAhmedFree : ""}`}
                 aria-label={`${offer.merchantName} - ${offer.title}`}
               >
                 {/* Card Top: Merchant & Tier */}
@@ -441,22 +590,26 @@ export default function ScratchCardsPage() {
 
                   <span
                     className={`${styles.tierPill} ${
-                      isDemo
-                        ? styles.tierPillDemo
-                        : card.tier === "gold"
-                          ? styles.tierPillGold
-                          : card.tier === "silver"
-                            ? styles.tierPillSilver
-                            : styles.tierPillBronze
+                      isAhmedCard
+                        ? styles.tierPillAhmed
+                        : isDemo
+                          ? styles.tierPillDemo
+                          : card.tier === "gold"
+                            ? styles.tierPillGold
+                            : card.tier === "silver"
+                              ? styles.tierPillSilver
+                              : styles.tierPillBronze
                     }`}
                   >
-                    {isDemo
-                      ? "Demo Card"
-                      : card.tier === "gold"
-                        ? "Gold VIP"
-                        : card.tier === "silver"
-                          ? "Silver"
-                          : "Bronze"}
+                    {isAhmedCard
+                      ? "Free VIP Reward"
+                      : isDemo
+                        ? "Demo Card"
+                        : card.tier === "gold"
+                          ? "Gold VIP"
+                          : card.tier === "silver"
+                            ? "Silver"
+                            : "Bronze"}
                   </span>
                 </div>
 
@@ -473,8 +626,12 @@ export default function ScratchCardsPage() {
                   <span className={styles.statusIndicator}>
                     {isUnscratched && (
                       <>
-                        <Ionicons name="sparkles" size={12} color="var(--primary)" />
-                        <span>Ready to scratch</span>
+                        <Ionicons
+                          name="sparkles"
+                          size={12}
+                          color={isAhmedCard ? "#F59E0B" : "var(--primary)"}
+                        />
+                        <span>{isAhmedCard ? "Free · Ready to scratch" : "Ready to scratch"}</span>
                       </>
                     )}
                     {isRevealed && (
@@ -496,10 +653,12 @@ export default function ScratchCardsPage() {
                     <button
                       type="button"
                       onClick={() => handleOpenScratch(card)}
-                      className={`${styles.cardActionBtn} ${styles.cardActionScratch}`}
+                      className={`${styles.cardActionBtn} ${
+                        isAhmedCard ? styles.ahmedBannerAction : styles.cardActionScratch
+                      }`}
                     >
                       <Ionicons name="sparkles" size={13} color="#ffffff" />
-                      <span>Scratch</span>
+                      <span>{isAhmedCard ? "Scratch Free" : "Scratch"}</span>
                     </button>
                   )}
 
