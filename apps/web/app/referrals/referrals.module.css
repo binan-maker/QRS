@@ -196,11 +196,14 @@
   width: 100%;
   border-radius: 22px;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 58, 153, 0.15);
-  background-color: #061120;
+  /* Light Theme: Rich executive royal sapphire base (not pitch-black) */
+  background: linear-gradient(135deg, #0A47B8 0%, #1D4ED8 50%, #2563EB 100%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 10px 28px -4px rgba(10, 71, 184, 0.22), 0 2px 6px rgba(0, 0, 0, 0.04);
   user-select: none;
   cursor: grab;
   touch-action: pan-y;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .carouselDragging {
@@ -209,8 +212,10 @@
 
 html[data-theme="dark"] .carouselContainer,
 html.dark .carouselContainer {
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(59, 130, 246, 0.22);
+  /* Dark Theme: Deep, elegant midnight sapphire (never murky or muddy pitch-black) */
+  background: linear-gradient(135deg, #0B1934 0%, #122B59 50%, #1A3C7C 100%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(96, 165, 250, 0.24);
 }
 
 .carouselTrack {
@@ -253,6 +258,16 @@ html.dark .carouselContainer {
   }
 }
 
+/* Slide 1: Gold VIP ambient flare (seamless on top of container gradient) */
+.heroSlideGold {
+  background: radial-gradient(circle at 90% 15%, rgba(251, 191, 36, 0.22) 0%, rgba(245, 158, 11, 0.06) 45%, transparent 70%);
+}
+
+/* Slide 2: Silver Welcome ambient flare (seamless on top of container gradient) */
+.heroSlideSilver {
+  background: radial-gradient(circle at 90% 15%, rgba(226, 232, 240, 0.22) 0%, rgba(186, 230, 253, 0.08) 45%, transparent 70%);
+}
+
 .slideTopRow {
   display: flex;
   align-items: center;
@@ -278,11 +293,24 @@ html.dark .carouselContainer {
   font-weight: 800;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: #93C5FD;
-  background: rgba(14, 165, 233, 0.18);
-  border: 1px solid rgba(147, 197, 253, 0.3);
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  backdrop-filter: blur(8px);
+}
+
+.slidePillTagGold {
+  color: #FDE047;
+  background: rgba(245, 158, 11, 0.22);
+  border: 1px solid rgba(253, 224, 71, 0.45);
+}
+
+.slidePillTagSilver {
+  color: #F8FAFC;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(226, 232, 240, 0.45);
 }
 
 .heroTitle {
@@ -296,14 +324,23 @@ html.dark .carouselContainer {
 }
 
 .heroHighlight {
-  color: #FDE047;
   font-weight: 800;
+}
+
+.heroHighlightGold {
+  color: #FDE047;
+  text-shadow: 0 0 20px rgba(251, 191, 36, 0.35);
+}
+
+.heroHighlightSilver {
+  color: #E2E8F0;
+  text-shadow: 0 0 16px rgba(226, 232, 240, 0.35);
 }
 
 .heroSubtitle {
   font-family: var(--font-inter), "Inter", sans-serif;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 255, 255, 0.92);
   margin: 3px 0 0;
   line-height: 1.45;
 }

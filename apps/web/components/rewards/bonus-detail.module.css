@@ -1,0 +1,246 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BINRO WEB: BONUS DETAIL MODAL (Image 2 Right Phone Reference)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: overlayIn 0.2s ease-out;
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (min-width: 640px) {
+  .sheetOverlay {
+    align-items: center;
+    padding: 24px;
+  }
+}
+
+.sheetContent {
+  width: 100%;
+  max-width: 480px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 28px 28px 0 0;
+  padding: 20px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 640px) {
+  .sheetContent {
+    border-radius: 28px;
+    padding: 24px;
+  }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.sheetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.backCircleBtn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--surface-light);
+  border: 1px solid var(--surface-border);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.backCircleBtn:hover {
+  background: var(--surface-border);
+}
+
+.sheetTitle {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+/* Hero artwork inside sheet (Matches Image 2 right phone) */
+.heroArtwork {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #3B82F6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.25);
+}
+
+.heroArtworkGold {
+  background: linear-gradient(135deg, #78350F 0%, #D97706 50%, #F59E0B 100%);
+}
+
+.heroArtworkSilver {
+  background: linear-gradient(135deg, #334155 0%, #475569 50%, #64748B 100%);
+}
+
+.artworkIcon {
+  color: #ffffff;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+}
+
+.artworkPillRow {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  padding: 6px 12px;
+  border-radius: 100px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.artworkBrandIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #3B82F6;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.artworkPillLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Meta Data Table (Matching Image 2: Period, Cashback, Received bonuses) */
+.metaGrid {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-light);
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.metaRow:last-child {
+  border-bottom: none;
+}
+
+.metaLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.metaValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metaValueHighlight {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+/* Description Text */
+.descBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.descHeading {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.descText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.termsText {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin: 0;
+  border-top: 1px dashed var(--surface-border);
+  padding-top: 10px;
+}
+
+/* Action CTA */
+.actionBtn {
+  width: 100%;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 82, 204, 0.28);
+  transition: all 0.15s ease;
+}
+
+.actionBtn:hover {
+  background: #0043a8;
+  transform: translateY(-1px);
+}

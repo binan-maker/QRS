@@ -1,17 +1,22 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { useTheme } from "@/lib/theme-context";
 import { Ionicons } from "@/lib/mobile-icons";
 import { BottomTabBar } from "@/components/navigation/BottomTabBar";
+import { ScratchModal } from "@/components/rewards/ScratchModal";
+import { BonusDetailModal } from "@/components/rewards/BonusDetailModal";
 import {
   getUserRewardWallet,
   getUserScratchCards,
   scratchRewardCard,
   recordOfferRedemption,
+  getApprovedRewardOffers,
+  syncVCommissionOffersClient,
+  DEFAULT_REWARD_OFFERS,
+  type RewardOffer,
   type RewardWallet,
   type ScratchCardItem,
 } from "@services/rewards";
@@ -19,205 +24,61 @@ import styles from "./rewards.module.css";
 
 type FilterType = "all" | "unscratched" | "revealed" | "locked";
 
-// ── Interactive HTML5 Canvas Scratch Overlay Component ────────────────────────
-interface InteractiveScratchProps {
-  card: ScratchCardItem;
-  onScratchComplete: (card: ScratchCardItem) => void;
-}
+// ── Built-in Demo Scratch Card (Guaranteed Immediate Visibility) ─────────────
+const DEMO_SCRATCH_CARD: ScratchCardItem = {
+  id: "demo_card_binro_vip",
+  userId: "demo_user",
+  tier: "gold",
+  sourceType: "milestone",
+  sourceLabel: "Demo Reward",
+  status: "unlocked",
+  offerId: "demo_binro_vip",
+  offer: {
+    id: "demo_binro_vip",
+    networkProvider: "vcommission",
+    campaignId: "demo_binro_vip_01",
+    merchantName: "BinRo Official",
+    title: "VIP Merch & Discount Voucher",
+    description: "Interactive demo scratch voucher. Swipe to reveal your code and experience the celebration flow.",
+    couponCode: "BINROVIP",
+    destinationUrl: "https://www.binro.in",
+    tier: "gold",
+    category: "Community",
+    termsText: "Valid for BinRo community members. Standard terms apply.",
+    isApproved: true,
+    isActive: true,
+    dailyAllocationLimit: 999,
+    totalAllocated: 0,
+  },
+  unlockRequirementText: null,
+  scratchedAt: null,
+  redeemedAt: null,
+  expiresAt: null,
+  createdAt: new Date().toISOString(),
+};
 
-function InteractiveScratchCard({ card, onScratchComplete }: InteractiveScratchProps) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [isScratchedLocal, setIsScratchedLocal] = useState(card.status === "scratched" || card.status === "redeemed");
-  const [scratchProgress, setScratchProgress] = useState(0);
-  const isDrawingRef = useRef(false);
-  const completedRef = useRef(card.status === "scratched" || card.status === "redeemed");
-
-  const tier = card.tier;
-
-  // Initialize Canvas with metallic foil gradient
-  useEffect(() => {
-    if (completedRef.current) return;
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) return;
-
-    const rect = container.getBoundingClientRect();
-    const width = Math.floor(rect.width) || 320;
-    const height = Math.floor(rect.height) || 200;
-
-    canvas.width = width;
-    canvas.height = height;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Rich metallic foil gradient based on card tier
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
-    if (tier === "gold") {
-      gradient.addColorStop(0, "#F59E0B");
-      gradient.addColorStop(0.3, "#FDE68A");
-      gradient.addColorStop(0.6, "#D97706");
-      gradient.addColorStop(1, "#B45309");
-    } else if (tier === "silver") {
-      gradient.addColorStop(0, "#94A3B8");
-      gradient.addColorStop(0.3, "#F1F5F9");
-      gradient.addColorStop(0.6, "#64748B");
-      gradient.addColorStop(1, "#475569");
-    } else {
-      gradient.addColorStop(0, "#2563EB");
-      gradient.addColorStop(0.4, "#93C5FD");
-      gradient.addColorStop(0.8, "#1D4ED8");
-      gradient.addColorStop(1, "#1E40AF");
-    }
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-
-    // Subtle holographic sparkles
-    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-    for (let i = 0; i < 40; i++) {
-      const sx = (i * 37) % width;
-      const sy = (i * 29) % height;
-      const r = (i % 3) + 1;
-      ctx.beginPath();
-      ctx.arc(sx, sy, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Centered label & icon on foil
-    ctx.fillStyle = tier === "gold" ? "#78350F" : "#FFFFFF";
-    ctx.font = "bold 13px Inter, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.letterSpacing = "1px";
-    ctx.fillText("✨ SCRATCH WITH FINGER OR MOUSE ✨", width / 2, height / 2 - 10);
-
-    ctx.font = "11px Inter, sans-serif";
-    ctx.fillStyle = tier === "gold" ? "#92400E" : "rgba(255, 255, 255, 0.85)";
-    ctx.fillText("Scratch to reveal exclusive coupon", width / 2, height / 2 + 14);
-  }, [tier]);
-
-  const checkScratchPercentage = useCallback(() => {
-    if (completedRef.current) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    try {
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const pixels = imgData.data;
-      let transparentCount = 0;
-      const totalPixels = pixels.length / 4;
-
-      // Sample every 4th pixel for high performance
-      for (let i = 3; i < pixels.length; i += 16) {
-        if (pixels[i] === 0) {
-          transparentCount += 4;
-        }
-      }
-
-      const pct = Math.round((transparentCount / totalPixels) * 100);
-      setScratchProgress(pct);
-
-      if (pct >= 35 && !completedRef.current) {
-        completedRef.current = true;
-        setIsScratchedLocal(true);
-        onScratchComplete(card);
-      }
-    } catch {}
-  }, [card, onScratchComplete]);
-
-  const scratchAtPoint = useCallback((clientX: number, clientY: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
-
-    ctx.globalCompositeOperation = "destination-out";
-    ctx.beginPath();
-    ctx.arc(x, y, 28, 0, Math.PI * 2);
-    ctx.fill();
-  }, []);
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (completedRef.current) return;
-    isDrawingRef.current = true;
-    scratchAtPoint(e.clientX, e.clientY);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDrawingRef.current || completedRef.current) return;
-    scratchAtPoint(e.clientX, e.clientY);
-  };
-
-  const handlePointerUp = () => {
-    if (!isDrawingRef.current) return;
-    isDrawingRef.current = false;
-    checkScratchPercentage();
-  };
-
-  const handleQuickReveal = () => {
-    if (completedRef.current) return;
-    completedRef.current = true;
-    setIsScratchedLocal(true);
-    onScratchComplete(card);
-  };
-
-  if (isScratchedLocal) {
-    return null;
-  }
-
-  return (
-    <div
-      ref={containerRef}
-      className={styles.scratchArea}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
-    >
-      <div className={styles.scratchUnderlay}>
-        <span className={styles.merchantName}>{card.offer.merchantName}</span>
-        <h4 className={styles.offerTitle}>{card.offer.title}</h4>
-        <p className={styles.offerDesc}>{card.offer.description}</p>
-      </div>
-
-      <canvas ref={canvasRef} className={styles.scratchCanvas} />
-
-      <div className={styles.tapToScratchOverlay}>
-        <span>{scratchProgress > 0 ? `${scratchProgress}% Cleared` : "Scratch Foil"}</span>
-      </div>
-
-      <button
-        type="button"
-        onClick={handleQuickReveal}
-        className={styles.quickRevealBtn}
-        aria-label="Tap to reveal instantly"
-      >
-        <Ionicons name="sparkles" size={14} color="var(--primary)" />
-        <span>Tap to Reveal Instantly</span>
-      </button>
-    </div>
-  );
-}
-
-// ── Main Scratch Cards Only Page ──────────────────────────────────────────────
 export default function ScratchCardsPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { colors } = useTheme();
 
   const [wallet, setWallet] = useState<RewardWallet | null>(null);
-  const [cards, setCards] = useState<ScratchCardItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [userCards, setUserCards] = useState<ScratchCardItem[]>([]);
+  const [liveOffers, setLiveOffers] = useState<RewardOffer[]>([]);
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Modals
+  const [scratchModalCard, setScratchModalCard] = useState<ScratchCardItem | null>(null);
+  const [isDemoModal, setIsDemoModal] = useState(false);
+  const [detailModalCard, setDetailModalCard] = useState<ScratchCardItem | null>(null);
+
+  // vCommission Automation Sync Modal
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncApiKey, setSyncApiKey] = useState("");
+  const [syncAffiliateId, setSyncAffiliateId] = useState("132680");
+  const [syncPasteText, setSyncPasteText] = useState("");
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   const handleBack = useCallback(() => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -227,90 +88,153 @@ export default function ScratchCardsPage() {
     }
   }, [router]);
 
+  // Load wallet, cards, and dynamic approved offers from vCommission / Supabase
   const loadData = useCallback(async () => {
-    if (!user?.id) {
-      setWallet(null);
-      setCards([]);
-      setLoading(false);
-      return;
-    }
     try {
-      const [w, c] = await Promise.all([
-        getUserRewardWallet(user.id),
-        getUserScratchCards(user.id),
+      const [w, c, o] = await Promise.all([
+        user?.id ? getUserRewardWallet(user.id).catch(() => null) : Promise.resolve(null),
+        user?.id ? getUserScratchCards(user.id).catch(() => []) : Promise.resolve([]),
+        getApprovedRewardOffers().catch(() => DEFAULT_REWARD_OFFERS),
       ]);
-      setWallet(w);
-      setCards(c);
-    } catch {
-      // Fallback
-    } finally {
-      setLoading(false);
-    }
+      if (w) setWallet(w);
+      if (c) setUserCards(c);
+      if (Array.isArray(o) && o.length > 0) {
+        setLiveOffers(o);
+      }
+    } catch {}
   }, [user?.id]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
 
+  // Handle Automated Sync with vCommission
+  const handleRunSync = async () => {
+    setIsSyncing(true);
+    setSyncResult(null);
+    setSyncError(null);
+    try {
+      const res = await syncVCommissionOffersClient({
+        apiKey: syncApiKey.trim(),
+        affiliateId: syncAffiliateId.trim() || "132680",
+        rawText: syncPasteText.trim(),
+      });
+      if (res.success) {
+        setSyncResult(
+          `Success: Automated sync processed ${res.count} active coupons from vCommission!`
+        );
+        if (res.offers.length > 0) {
+          setLiveOffers(res.offers);
+        }
+        await loadData();
+      } else {
+        setSyncError(res.message || "Failed to sync with vCommission. Check credentials.");
+      }
+    } catch (err: any) {
+      setSyncError(err?.message || "Sync request failed");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Active Deck: Dynamically built from real offers without hardcoding
+  const activeDeck = useMemo(() => {
+    if (userCards.length > 0) {
+      const hasDemo = userCards.some((c) => c.id === DEMO_SCRATCH_CARD.id);
+      return hasDemo ? userCards : [DEMO_SCRATCH_CARD, ...userCards];
+    }
+    const offersPool = liveOffers.length > 0 ? liveOffers : DEFAULT_REWARD_OFFERS;
+    const dynamicCards: ScratchCardItem[] = offersPool.map((offer, idx) => ({
+      id: `dyn_card_${offer.id}_${idx}`,
+      userId: user?.id || "preview_user",
+      tier: offer.tier,
+      sourceType: idx % 3 === 0 ? "milestone" : idx % 3 === 1 ? "referral_friend" : "welcome",
+      sourceLabel: `${offer.merchantName} Reward`,
+      status: idx <= 2 ? "unlocked" : idx === 3 || idx === 4 ? "scratched" : "unlocked",
+      offerId: offer.id,
+      offer,
+      unlockRequirementText: null,
+      scratchedAt: idx === 3 || idx === 4 ? new Date().toISOString() : null,
+      redeemedAt: null,
+      expiresAt: offer.expiresAt || null,
+      createdAt: new Date().toISOString(),
+    }));
+    return [DEMO_SCRATCH_CARD, ...dynamicCards];
+  }, [userCards, liveOffers, user?.id]);
+
+  // Filtered Cards
+  const filteredCards = useMemo(() => {
+    if (activeFilter === "unscratched") {
+      return activeDeck.filter((c) => c.status === "unlocked");
+    }
+    if (activeFilter === "revealed") {
+      return activeDeck.filter((c) => c.status === "scratched" || c.status === "redeemed");
+    }
+    if (activeFilter === "locked") {
+      return activeDeck.filter((c) => c.status === "locked");
+    }
+    return activeDeck;
+  }, [activeDeck, activeFilter]);
+
+  const unscratchedCount = activeDeck.filter((c) => c.status === "unlocked").length;
+  const revealedCount = activeDeck.filter(
+    (c) => c.status === "scratched" || c.status === "redeemed"
+  ).length;
+  const lockedCount = activeDeck.filter((c) => c.status === "locked").length;
+
+  // Open scratch modal
+  const handleOpenScratch = (card: ScratchCardItem) => {
+    setIsDemoModal(card.id === DEMO_SCRATCH_CARD.id);
+    setScratchModalCard(card);
+  };
+
+  // Open detail modal
+  const handleOpenDetail = (card: ScratchCardItem) => {
+    setDetailModalCard(card);
+  };
+
+  // Scratch completed
   const handleScratchComplete = useCallback(
     async (card: ScratchCardItem) => {
-      if (!user?.id) return;
-      await scratchRewardCard(user.id, card.id);
-      await loadData();
+      if (card.id === DEMO_SCRATCH_CARD.id) {
+        // Update local demo state
+        DEMO_SCRATCH_CARD.status = "scratched";
+        DEMO_SCRATCH_CARD.scratchedAt = new Date().toISOString();
+        return;
+      }
+      if (user?.id) {
+        await scratchRewardCard(user.id, card.id);
+        await loadData();
+      }
     },
     [user?.id, loadData]
   );
 
+  // Claim or Redeem
   const handleRedeem = useCallback(
     async (card: ScratchCardItem) => {
-      if (!user?.id) return;
-      if (card.offer.couponCode && typeof navigator !== "undefined" && navigator.clipboard) {
-        await navigator.clipboard.writeText(card.offer.couponCode).catch(() => {});
-        setCopiedId(card.id);
-        setTimeout(() => setCopiedId(null), 2500);
+      if (card.id === DEMO_SCRATCH_CARD.id) {
+        DEMO_SCRATCH_CARD.status = "redeemed";
+        DEMO_SCRATCH_CARD.redeemedAt = new Date().toISOString();
+        return;
       }
-      await recordOfferRedemption(user.id, card.id);
-      await loadData();
-      window.location.href = card.offer.destinationUrl;
+      if (user?.id) {
+        await recordOfferRedemption(user.id, card.id);
+        await loadData();
+      }
+      if (card.offer.destinationUrl) {
+        window.open(card.offer.destinationUrl, "_blank", "noopener,noreferrer");
+      }
     },
     [user?.id, loadData]
   );
 
-  const handleCopyCodeOnly = useCallback(
-    async (card: ScratchCardItem) => {
-      if (card.offer.couponCode && typeof navigator !== "undefined" && navigator.clipboard) {
-        await navigator.clipboard.writeText(card.offer.couponCode).catch(() => {});
-        setCopiedId(card.id);
-        setTimeout(() => setCopiedId(null), 2200);
-      }
-    },
-    []
-  );
-
-  // Milestone Progress calculations
+  // Milestone Progress
   const dailyScans = wallet?.dailyEligibleScans ?? 0;
   const nextTarget = wallet?.nextMilestoneTarget ?? 3;
   const progressPct = wallet?.dailyCapReached
     ? 100
     : Math.min(100, Math.round((dailyScans / Math.max(1, nextTarget)) * 100));
-
-  // Filtered Cards
-  const filteredCards = useMemo(() => {
-    if (activeFilter === "unscratched") {
-      return cards.filter((c) => c.status === "unlocked");
-    }
-    if (activeFilter === "revealed") {
-      return cards.filter((c) => c.status === "scratched" || c.status === "redeemed");
-    }
-    if (activeFilter === "locked") {
-      return cards.filter((c) => c.status === "locked");
-    }
-    return cards;
-  }, [cards, activeFilter]);
-
-  const unscratchedCount = cards.filter((c) => c.status === "unlocked").length;
-  const revealedCount = cards.filter((c) => c.status === "scratched" || c.status === "redeemed").length;
-  const lockedCount = cards.filter((c) => c.status === "locked").length;
 
   return (
     <div className={styles.pageFrame}>
@@ -325,21 +249,30 @@ export default function ScratchCardsPage() {
               aria-label="Back"
               title="Back"
             >
-              <Ionicons name="chevron-back" size={22} color="currentColor" />
+              <Ionicons name="chevron-back" size={20} color="currentColor" />
             </button>
             <div className={styles.headingBlock}>
               <h1 className={styles.pageTitle}>Scratch Cards</h1>
               <p className={styles.pageSubtitle}>
-                Scan QR codes to reach milestones &amp; scratch to reveal vouchers
+                Scan QR codes to earn daily milestone cards and exclusive partner vouchers
               </p>
             </div>
           </div>
 
           <div className={styles.topBarRight}>
+            <button
+              type="button"
+              onClick={() => setShowSyncModal(true)}
+              className={styles.syncActionBtn}
+              title="Automate vCommission Deals Sync"
+            >
+              <Ionicons name="cloud-download-outline" size={16} />
+              <span>Sync Deals</span>
+            </button>
             <Link
               href="/referrals"
               className={styles.topActionBtn}
-              aria-label="Go to Refer & Earn"
+              aria-label="Refer & Earn"
             >
               <Ionicons name="people-outline" size={16} />
               <span>Refer &amp; Earn</span>
@@ -347,277 +280,362 @@ export default function ScratchCardsPage() {
           </div>
         </header>
 
-        {/* ── Not Signed In State ───────────────────────────────────────────── */}
-        {!user ? (
-          <div className={styles.guestCard}>
-            <div className={styles.guestIconWrap}>
-              <Ionicons name="gift-outline" size={32} color="var(--primary)" />
-            </div>
-            <h2 className={styles.guestTitle}>Sign in to view your scratch cards</h2>
-            <p className={styles.guestDesc}>
-              Earn Silver Welcome scratch cards, collect partner deals from boAt, AJIO &amp; Swiggy, and unlock daily scan milestones.
+        {/* ── Prominent Featured Demo Scratch Card (Clearly Visible at Top) ─── */}
+        <div
+          className={styles.demoFeatureCard}
+          onClick={() => handleOpenScratch(DEMO_SCRATCH_CARD)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleOpenScratch(DEMO_SCRATCH_CARD);
+            }
+          }}
+          aria-label="Try demo scratch card"
+        >
+          <div className={styles.demoFeatureLeft}>
+            <span className={styles.demoPillTag}>
+              <Ionicons name="sparkles" size={12} />
+              <span>Interactive Demo Scratch Card</span>
+            </span>
+            <h2 className={styles.demoFeatureTitle}>
+              {DEMO_SCRATCH_CARD.offer.title}
+            </h2>
+            <p className={styles.demoFeatureDesc}>
+              {DEMO_SCRATCH_CARD.status === "unlocked"
+                ? "Tap here to test the metallic foil scratching, real-time particle wipe, and celebratory voucher claim."
+                : "Demo voucher scratched. Tap to view code or scratch again."}
             </p>
-            <Link href="/profile" className={styles.guestSignInBtn}>
-              <Ionicons name="logo-google" size={16} />
-              <span>Sign In with Google</span>
-            </Link>
           </div>
-        ) : (
-          <>
-            {/* ── Daily Milestone Progress Card ──────────────────────────────── */}
-            <section className={styles.progressCard} aria-labelledby="milestone-title">
-              <div className={styles.progressHeader}>
-                <div>
-                  <h2 id="milestone-title" className={styles.progressTitle}>
-                    Today&apos;s Scan Progress
-                  </h2>
-                  <p className={styles.progressSub}>
-                    {wallet?.dailyCapReached
-                      ? "Daily reward cap reached (3 of 3 cards unlocked today)"
-                      : `${dailyScans} of ${nextTarget} eligible scans for next scratch card`}
-                  </p>
-                </div>
-                <span className={styles.progressBadge}>
-                  {wallet?.dailyCardsUnlocked || 0} / 3 Cards Today
-                </span>
-              </div>
 
-              <div
-                className={styles.progressBarTrack}
-                role="progressbar"
-                aria-valuenow={progressPct}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              >
-                <div
-                  className={styles.progressBarFill}
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
+          <button
+            type="button"
+            className={styles.demoFeatureBtn}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpenScratch(DEMO_SCRATCH_CARD);
+            }}
+          >
+            <Ionicons name="sparkles" size={15} color="#003A99" />
+            <span>
+              {DEMO_SCRATCH_CARD.status === "unlocked"
+                ? "Scratch Demo Card"
+                : "View Demo Voucher"}
+            </span>
+          </button>
+        </div>
 
-              <div className={styles.progressMetaRow}>
-                <span className={styles.progressMetaMilestones}>
-                  Milestones: 3 scans · 8 scans · 15 scans
-                </span>
-                <span className={styles.progressMetaStatus}>
-                  {wallet?.dailyCapReached
-                    ? "Max Unlocked"
-                    : wallet?.scansUntilNextCard
-                      ? `${wallet.scansUntilNextCard} more to unlock`
-                      : "Ready"}
-                </span>
-              </div>
-            </section>
-
-            {/* ── Promo Banner Linking to the Separate Referral Page ─────────── */}
-            <Link
-              href="/referrals"
-              className={styles.referralBanner}
-              aria-label="Open Refer and Earn to get Gold VIP Cards"
-            >
-              <div className={styles.referralBannerLeft}>
-                <div className={styles.referralBannerIconWrap}>
-                  <Ionicons name="sparkles" size={22} color="#FFFFFF" />
-                </div>
-                <div>
-                  <h3 className={styles.referralBannerHeading}>
-                    Want a Gold VIP Scratch Card?
-                  </h3>
-                  <p className={styles.referralBannerText}>
-                    Invite a friend. When they complete 1 verified QR scan, you unlock a Gold VIP Card!
-                  </p>
-                </div>
-              </div>
-              <div className={styles.referralBannerCta}>
-                <span>Refer &amp; Earn</span>
-                <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
-              </div>
-            </Link>
-
-            {/* ── Filter Controls ────────────────────────────────────────────── */}
-            <div className={styles.filterBar} role="group" aria-label="Filter scratch cards">
-              <button
-                type="button"
-                onClick={() => setActiveFilter("all")}
-                className={`${styles.filterBtn} ${activeFilter === "all" ? styles.filterBtnActive : ""}`}
-                aria-pressed={activeFilter === "all"}
-              >
-                <span>All Cards ({cards.length})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveFilter("unscratched")}
-                className={`${styles.filterBtn} ${activeFilter === "unscratched" ? styles.filterBtnActive : ""}`}
-                aria-pressed={activeFilter === "unscratched"}
-              >
-                <Ionicons name="sparkles-outline" size={13} />
-                <span>Unscratched ({unscratchedCount})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveFilter("revealed")}
-                className={`${styles.filterBtn} ${activeFilter === "revealed" ? styles.filterBtnActive : ""}`}
-                aria-pressed={activeFilter === "revealed"}
-              >
-                <Ionicons name="checkmark-circle-outline" size={13} />
-                <span>Revealed ({revealedCount})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveFilter("locked")}
-                className={`${styles.filterBtn} ${activeFilter === "locked" ? styles.filterBtnActive : ""}`}
-                aria-pressed={activeFilter === "locked"}
-              >
-                <Ionicons name="lock-closed-outline" size={13} />
-                <span>Locked ({lockedCount})</span>
-              </button>
+        {/* ── Daily Milestone Progress Card ─────────────────────────────────── */}
+        <section className={styles.progressCard} aria-labelledby="milestone-title">
+          <div className={styles.progressHeader}>
+            <div>
+              <h3 id="milestone-title" className={styles.progressTitle}>
+                Daily Scan Progress
+              </h3>
+              <p className={styles.progressSub}>
+                {wallet?.dailyCapReached
+                  ? "Daily card cap reached (3 of 3 unlocked today)"
+                  : `${dailyScans} of ${nextTarget} eligible scans completed`}
+              </p>
             </div>
+            <span className={styles.progressBadge}>
+              {wallet?.dailyCardsUnlocked || 0} / 3 Cards Unlocked
+            </span>
+          </div>
 
-            {/* ── Scratch Cards Deck ─────────────────────────────────────────── */}
-            {cards.length === 0 ? (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyIcon}>
-                  <Ionicons name="gift-outline" size={44} />
+          <div
+            className={styles.progressBarTrack}
+            role="progressbar"
+            aria-valuenow={progressPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div
+              className={styles.progressBarFill}
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </section>
+
+        {/* ── Filter Segment Bar ────────────────────────────────────────────── */}
+        <div className={styles.filterBar} role="group" aria-label="Filter scratch cards">
+          <button
+            type="button"
+            onClick={() => setActiveFilter("all")}
+            className={`${styles.filterBtn} ${activeFilter === "all" ? styles.filterBtnActive : ""}`}
+            aria-pressed={activeFilter === "all"}
+          >
+            <span>All ({activeDeck.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveFilter("unscratched")}
+            className={`${styles.filterBtn} ${
+              activeFilter === "unscratched" ? styles.filterBtnActive : ""
+            }`}
+            aria-pressed={activeFilter === "unscratched"}
+          >
+            <Ionicons name="sparkles-outline" size={13} />
+            <span>Unscratched ({unscratchedCount})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveFilter("revealed")}
+            className={`${styles.filterBtn} ${
+              activeFilter === "revealed" ? styles.filterBtnActive : ""
+            }`}
+            aria-pressed={activeFilter === "revealed"}
+          >
+            <Ionicons name="checkmark-circle-outline" size={13} />
+            <span>Revealed ({revealedCount})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveFilter("locked")}
+            className={`${styles.filterBtn} ${
+              activeFilter === "locked" ? styles.filterBtnActive : ""
+            }`}
+            aria-pressed={activeFilter === "locked"}
+          >
+            <Ionicons name="lock-closed-outline" size={13} />
+            <span>Locked ({lockedCount})</span>
+          </button>
+        </div>
+
+        {/* ── Mature & Professional Cards Grid ──────────────────────────────── */}
+        <div className={styles.cardsGrid} role="list" aria-label="Scratch cards deck">
+          {filteredCards.map((card) => {
+            const isDemo = card.id === DEMO_SCRATCH_CARD.id;
+            const isUnscratched = card.status === "unlocked";
+            const isRevealed = card.status === "scratched" || card.status === "redeemed";
+            const isLocked = card.status === "locked";
+            const offer = card.offer;
+
+            return (
+              <div
+                key={card.id}
+                role="listitem"
+                className={styles.rewardCard}
+                aria-label={`${offer.merchantName} - ${offer.title}`}
+              >
+                {/* Card Top: Merchant & Tier */}
+                <div className={styles.rewardCardTop}>
+                  <span className={styles.merchantTag}>{offer.merchantName}</span>
+
+                  <span
+                    className={`${styles.tierPill} ${
+                      isDemo
+                        ? styles.tierPillDemo
+                        : card.tier === "gold"
+                          ? styles.tierPillGold
+                          : card.tier === "silver"
+                            ? styles.tierPillSilver
+                            : styles.tierPillBronze
+                    }`}
+                  >
+                    {isDemo
+                      ? "Demo Card"
+                      : card.tier === "gold"
+                        ? "Gold VIP"
+                        : card.tier === "silver"
+                          ? "Silver"
+                          : "Bronze"}
+                  </span>
                 </div>
-                <h3 className={styles.emptyTitle}>No scratch cards yet</h3>
-                <p className={styles.emptyText}>
-                  Scan your 1st verified QR code with the BinRo scanner or invite a friend to unlock your first scratch card!
-                </p>
-                <Link href="/scanner" className={styles.emptyScanBtn}>
-                  <Ionicons name="scan" size={16} color="#FFFFFF" />
-                  <span>Open Scanner</span>
-                </Link>
-              </div>
-            ) : filteredCards.length === 0 ? (
-              <div className={styles.emptyState}>
-                <Ionicons name="funnel-outline" size={36} color="var(--text-muted)" />
-                <h3 className={styles.emptyTitle}>No cards in this filter</h3>
-                <p className={styles.emptyText}>
-                  You don&apos;t have any {activeFilter} scratch cards right now.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setActiveFilter("all")}
-                  className={styles.emptyScanBtn}
-                >
-                  Show All Cards
-                </button>
-              </div>
-            ) : (
-              <div className={styles.cardsGrid}>
-                {filteredCards.map((card) => {
-                  const isLocked = card.status === "locked";
-                  const isUnscratched = card.status === "unlocked";
-                  const isRevealed = card.status === "scratched" || card.status === "redeemed";
 
-                  const tierClass =
-                    card.tier === "gold"
-                      ? styles.cardBoxGold
-                      : card.tier === "silver"
-                        ? styles.cardBoxSilver
-                        : styles.cardBoxBronze;
+                {/* Card Body */}
+                <div className={styles.rewardCardBody}>
+                  <h4 className={styles.rewardCardTitle}>{offer.title}</h4>
+                  <p className={styles.rewardCardDesc}>
+                    {offer.description || `Special reward voucher from ${offer.merchantName}`}
+                  </p>
+                </div>
 
-                  const badgeTierClass =
-                    card.tier === "gold"
-                      ? styles.tierBadgeGold
-                      : card.tier === "silver"
-                        ? styles.tierBadgeSilver
-                        : styles.tierBadgeBronze;
+                {/* Card Footer: Status & Action Button */}
+                <div className={styles.rewardCardFooter}>
+                  <span className={styles.statusIndicator}>
+                    {isUnscratched && (
+                      <>
+                        <Ionicons name="sparkles" size={12} color="var(--primary)" />
+                        <span>Ready to scratch</span>
+                      </>
+                    )}
+                    {isRevealed && (
+                      <>
+                        <Ionicons name="checkmark-circle" size={12} color="#10B981" />
+                        <span>Voucher ready</span>
+                      </>
+                    )}
+                    {isLocked && (
+                      <>
+                        <Ionicons name="lock-closed" size={12} color="var(--text-muted)" />
+                        <span>Locked</span>
+                      </>
+                    )}
+                  </span>
 
-                  return (
-                    <article
-                      key={card.id}
-                      className={`${styles.cardBox} ${tierClass}`}
-                      aria-label={`${card.tier} tier scratch card: ${card.offer.title}`}
+                  {/* Action */}
+                  {isUnscratched && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenScratch(card)}
+                      className={`${styles.cardActionBtn} ${styles.cardActionScratch}`}
                     >
-                      {/* Card Header */}
-                      <div className={styles.cardHeaderRow}>
-                        <span className={`${styles.tierBadge} ${badgeTierClass}`}>
-                          {card.tier === "gold" && <Ionicons name="trophy" size={11} />}
-                          <span>{card.tier} Tier</span>
-                        </span>
-                        <span className={styles.sourceLabel}>{card.sourceLabel}</span>
-                      </div>
+                      <Ionicons name="sparkles" size={13} color="#ffffff" />
+                      <span>Scratch</span>
+                    </button>
+                  )}
 
-                      {/* State 1: Locked */}
-                      {isLocked && (
-                        <div className={styles.lockedContent}>
-                          <div className={styles.lockedIconRing}>
-                            <Ionicons name="lock-closed" size={24} />
-                          </div>
-                          <span className={styles.lockedText}>
-                            {card.unlockRequirementText || "Complete 1 scan to unlock"}
-                          </span>
-                          <Link href="/scanner" className={styles.lockedScanBtn}>
-                            <Ionicons name="scan-outline" size={14} />
-                            <span>Scan QR to Unlock</span>
-                          </Link>
-                        </div>
-                      )}
+                  {isRevealed && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenDetail(card)}
+                      className={`${styles.cardActionBtn} ${styles.cardActionRevealed}`}
+                    >
+                      <span>View Code</span>
+                      <Ionicons name="chevron-forward" size={13} />
+                    </button>
+                  )}
 
-                      {/* State 2: Unscratched Interactive Surface */}
-                      {isUnscratched && (
-                        <InteractiveScratchCard
-                          card={card}
-                          onScratchComplete={handleScratchComplete}
-                        />
-                      )}
-
-                      {/* State 3: Scratched / Revealed Offer */}
-                      {isRevealed && (
-                        <div className={styles.revealedContent}>
-                          <span className={styles.merchantName}>
-                            {card.offer.merchantName}
-                          </span>
-                          <h3 className={styles.offerTitle}>{card.offer.title}</h3>
-                          <p className={styles.offerDesc}>{card.offer.description}</p>
-
-                          {card.offer.couponCode && (
-                            <div className={styles.couponBox}>
-                              <span className={styles.couponCodeText}>
-                                {card.offer.couponCode}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleCopyCodeOnly(card)}
-                                className={`${styles.copyBadge} ${
-                                  copiedId === card.id ? styles.copyBadgeActive : ""
-                                }`}
-                                style={{
-                                  background: "none",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  padding: 0,
-                                }}
-                              >
-                                {copiedId === card.id ? "COPIED! ✓" : "COPY CODE"}
-                              </button>
-                            </div>
-                          )}
-
-                          <button
-                            type="button"
-                            onClick={() => handleRedeem(card)}
-                            className={styles.redeemBtn}
-                            aria-label={`Redeem coupon for ${card.offer.merchantName}`}
-                          >
-                            <Ionicons name="open-outline" size={16} />
-                            <span>Copy Code &amp; Redeem Offer</span>
-                          </button>
-                        </div>
-                      )}
-                    </article>
-                  );
-                })}
+                  {isLocked && (
+                    <button
+                      type="button"
+                      onClick={() => router.push("/scanner")}
+                      className={`${styles.cardActionBtn} ${styles.cardActionLocked}`}
+                    >
+                      <span>Scan to Unlock</span>
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
-          </>
-        )}
+            );
+          })}
+        </div>
       </main>
 
+      {/* ── Interactive Scratch Modal ─────────────────────────────────────── */}
+      {scratchModalCard && (
+        <ScratchModal
+          card={scratchModalCard}
+          isDemo={isDemoModal}
+          onClose={() => setScratchModalCard(null)}
+          onScratchComplete={handleScratchComplete}
+          onClaim={handleRedeem}
+        />
+      )}
+
+      {/* ── Voucher Detail Modal ──────────────────────────────────────────── */}
+      {detailModalCard && (
+        <BonusDetailModal
+          card={detailModalCard}
+          onClose={() => setDetailModalCard(null)}
+          onRedeem={handleRedeem}
+        />
+      )}
+
+      {/* ── Automated vCommission Deals Sync Modal ───────────────────────── */}
+      {showSyncModal && (
+        <div
+          className={styles.syncModalOverlay}
+          onClick={() => setShowSyncModal(false)}
+        >
+          <div
+            className={styles.syncModalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.syncModalHeader}>
+              <div>
+                <h3 className={styles.syncModalTitle}>
+                  <Ionicons name="sparkles" size={18} color="#0056D2" />
+                  <span>Automate vCommission Deals</span>
+                </h3>
+                <p className={styles.syncModalSubtitle}>
+                  Instantly pull fresh coupons, merchant logos, and discounts into BinRo and Supabase without typing manually.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSyncModal(false)}
+                className={styles.syncCloseBtn}
+                aria-label="Close"
+              >
+                <Ionicons name="close" size={18} />
+              </button>
+            </div>
+
+            {syncResult && (
+              <div className={`${styles.syncStatusAlert} ${styles.syncStatusSuccess}`}>
+                <Ionicons name="checkmark-circle" size={18} />
+                <span>{syncResult}</span>
+              </div>
+            )}
+
+            {syncError && (
+              <div className={`${styles.syncStatusAlert} ${styles.syncStatusError}`}>
+                <Ionicons name="alert-circle" size={18} />
+                <span>{syncError}</span>
+              </div>
+            )}
+
+            <div className={styles.syncFieldGroup}>
+              <label className={styles.syncLabel}>vCommission API Key</label>
+              <input
+                type="password"
+                className={styles.syncInput}
+                placeholder="Enter your API Key from Tools -> APIs"
+                value={syncApiKey}
+                onChange={(e) => setSyncApiKey(e.target.value)}
+              />
+              <span className={styles.syncHint}>
+                Found in vCommission dashboard under Tools ➔ APIs. If empty, the server checks VCOMMISSION_API_KEY.
+              </span>
+            </div>
+
+            <div className={styles.syncFieldGroup}>
+              <label className={styles.syncLabel}>Affiliate ID (aff_id)</label>
+              <input
+                type="text"
+                className={styles.syncInput}
+                placeholder="132680"
+                value={syncAffiliateId}
+                onChange={(e) => setSyncAffiliateId(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.syncFieldGroup}>
+              <label className={styles.syncLabel}>Or Quick-Paste Table / Feed</label>
+              <textarea
+                className={styles.syncTextarea}
+                placeholder="Optional: Copy rows directly from vCommission Coupons page and paste here..."
+                value={syncPasteText}
+                onChange={(e) => setSyncPasteText(e.target.value)}
+              />
+              <span className={styles.syncHint}>
+                Auto-parses codes (AMEXTCF1010, VC15), auto-attaches Tata CLiQ / Blabliblu brand logos and tracking links.
+              </span>
+            </div>
+
+            <button
+              type="button"
+              className={styles.syncSubmitBtn}
+              onClick={handleRunSync}
+              disabled={isSyncing}
+            >
+              <Ionicons
+                name={isSyncing ? "refresh" : "cloud-download-outline"}
+                size={18}
+              />
+              <span>{isSyncing ? "Connecting to vCommission..." : "Run Automated Sync Now"}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Tab Bar */}
       <BottomTabBar activeTab="rewards" />
     </div>
   );

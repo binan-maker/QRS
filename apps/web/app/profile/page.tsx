@@ -460,33 +460,13 @@ function ProfileContent() {
 
           {/* Right Column (Management Sections) */}
           <section className={styles.mainCol}>
-            {/* Account & Identity Section */}
-            <div className={styles.section} aria-label="Account management">
+            {/* ── Activity & Rewards Section ── */}
+            <div className={styles.section} aria-label="Activity and rewards">
               <div className={styles.sectionHeader}>
-                <span className={styles.sectionLabel}>Account &amp; Activity</span>
+                <span className={styles.sectionLabel}>Activity &amp; Rewards</span>
               </div>
 
               <div className={styles.cardGroup}>
-                {/* Account Details */}
-                <Link href="/settings/account-details" className={styles.menuItem}>
-                  <div className={styles.menuIconWrap}>
-                    <Ionicons name="person-circle-outline" size={20} />
-                  </div>
-                  <div className={styles.menuTextCol}>
-                    <span className={styles.menuLabel}>Account Details</span>
-                    <span className={styles.menuSublabel}>
-                      Display name, @username, and email
-                    </span>
-                  </div>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color="var(--text-muted)"
-                  />
-                </Link>
-
-                <div className={styles.divider} />
-
                 {/* Scan History */}
                 <Link href="/history" className={styles.menuItem}>
                   <div className={styles.menuIconWrap}>
@@ -495,35 +475,7 @@ function ProfileContent() {
                   <div className={styles.menuTextCol}>
                     <span className={styles.menuLabel}>Scan History</span>
                     <span className={styles.menuSublabel}>
-                      Past security scans, safety verdicts, and logs
-                    </span>
-                  </div>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color="var(--text-muted)"
-                  />
-                </Link>
-              </div>
-            </div>
-
-
-            {/* Community & Rewards Section */}
-            <div className={styles.section} aria-label="Community and rewards">
-              <div className={styles.sectionHeader}>
-                <span className={styles.sectionLabel}>Community &amp; Rewards</span>
-              </div>
-
-              <div className={styles.cardGroup}>
-                {/* Rewards */}
-                <Link href="/rewards" className={styles.menuItem}>
-                  <div className={styles.menuIconWrap}>
-                    <Ionicons name="gift-outline" size={19} />
-                  </div>
-                  <div className={styles.menuTextCol}>
-                    <span className={styles.menuLabel}>Milestones &amp; Rewards</span>
-                    <span className={styles.menuSublabel}>
-                      Daily scan milestones and community incentives
+                      Past scans and verdicts
                     </span>
                   </div>
                   <Ionicons
@@ -535,7 +487,27 @@ function ProfileContent() {
 
                 <div className={styles.divider} />
 
-                {/* Referrals */}
+                {/* Milestones & Rewards */}
+                <Link href="/rewards" className={styles.menuItem}>
+                  <div className={styles.menuIconWrap}>
+                    <Ionicons name="gift-outline" size={19} />
+                  </div>
+                  <div className={styles.menuTextCol}>
+                    <span className={styles.menuLabel}>Milestones &amp; Rewards</span>
+                    <span className={styles.menuSublabel}>
+                      Daily milestones and deals
+                    </span>
+                  </div>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color="var(--text-muted)"
+                  />
+                </Link>
+
+                <div className={styles.divider} />
+
+                {/* Refer & Earn */}
                 <Link href="/referrals" className={styles.menuItem}>
                   <div className={styles.menuIconWrap}>
                     <Ionicons name="people-outline" size={19} />
@@ -543,7 +515,7 @@ function ProfileContent() {
                   <div className={styles.menuTextCol}>
                     <span className={styles.menuLabel}>Refer &amp; Earn</span>
                     <span className={styles.menuSublabel}>
-                      Invite friends and earn Gold VIP rewards
+                      Invite friends, earn Gold cards
                     </span>
                   </div>
                   <Ionicons

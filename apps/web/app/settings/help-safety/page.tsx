@@ -37,23 +37,6 @@ function HelpSafetyContent() {
           <div className={styles.navSpacer} aria-hidden="true" />
         </header>
 
-        {/* Executive Overview Hero Card */}
-        <section className={styles.heroCard} aria-label="Help and safety overview">
-          <div className={styles.heroHeaderRow}>
-            <div className={styles.heroIconWrap}>
-              <Ionicons name="shield-checkmark-outline" size={22} />
-            </div>
-            <div className={styles.heroTitleCol}>
-              <h2 className={styles.heroTitle}>Trust &amp; Verification Hub</h2>
-              <span className={styles.heroSubtitle}>Enterprise QR Safety</span>
-            </div>
-          </div>
-          <p className={styles.heroDesc}>
-            BinRo protects millions of physical interactions with deterministic domain
-            heuristics, real-time cryptographic verification, and community-powered trust signals.
-          </p>
-        </section>
-
         {/* Resources & Safety Principles Section */}
         <section className={styles.section} aria-label="Help and resources">
           <div className={styles.sectionHeader}>
@@ -69,7 +52,7 @@ function HelpSafetyContent() {
               <div className={styles.menuTextCol}>
                 <span className={styles.menuLabel}>Safety Guide</span>
                 <span className={styles.menuSublabel}>
-                  How to inspect QR codes and detect scams
+                  Inspect codes and detect scams
                 </span>
               </div>
               <Ionicons
@@ -89,7 +72,7 @@ function HelpSafetyContent() {
               <div className={styles.menuTextCol}>
                 <span className={styles.menuLabel}>Trust Scores</span>
                 <span className={styles.menuSublabel}>
-                  How community safety ratings are calculated
+                  How safety ratings are calculated
                 </span>
               </div>
               <Ionicons
@@ -109,7 +92,7 @@ function HelpSafetyContent() {
               <div className={styles.menuTextCol}>
                 <span className={styles.menuLabel}>Send Feedback</span>
                 <span className={styles.menuSublabel}>
-                  Report an issue or suggest an improvement
+                  Report issues or suggest features
                 </span>
               </div>
               <Ionicons
@@ -129,7 +112,7 @@ function HelpSafetyContent() {
               <div className={styles.menuTextCol}>
                 <span className={styles.menuLabel}>About BinRo</span>
                 <span className={styles.menuSublabel}>
-                  Founder story, mission, and verification principles
+                  Founder story and mission
                 </span>
               </div>
               <Ionicons
@@ -140,15 +123,6 @@ function HelpSafetyContent() {
             </Link>
           </div>
         </section>
-
-        {/* Security Reassurance Card */}
-        <div className={styles.footerCard}>
-          <Ionicons name="lock-closed-outline" size={18} color="var(--primary)" />
-          <p className={styles.footerCardText}>
-            Scans and telemetry are evaluated locally on your device. BinRo never sells
-            browsing data or profile identity records.
-          </p>
-        </div>
       </div>
 
       <BottomTabBar activeTab="profile" />

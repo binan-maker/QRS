@@ -169,11 +169,25 @@ function renderSvgPath(name: string) {
     case "flag-outline":
       return <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />;
     case "help-outline":
+    case "help-circle-outline":
+    case "help-circle":
       return (
         <>
           <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </>
+      );
+    case "help-buoy-outline":
+    case "help-buoy":
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+          <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="2" />
+          <line x1="4.93" y1="4.93" x2="9.17" y2="9.17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="14.83" y1="14.83" x2="19.07" y2="19.07" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="14.83" y1="9.17" x2="19.07" y2="4.93" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="4.93" y1="19.07" x2="9.17" y2="14.83" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </>
       );
     case "information-circle":

@@ -18,28 +18,31 @@ import styles from "./referrals.module.css";
 interface HeroSlide {
   id: string;
   badgeTag: string;
+  badgeIcon: "sparkles" | "gift";
   titleTop: string;
   titleHighlight: string;
   subtitle: string;
-  gradientBg: string;
+  themeType: "gold" | "silver";
 }
 
 const HERO_SLIDES: HeroSlide[] = [
   {
     id: "gold-vip",
     badgeTag: "REFERRER REWARD",
+    badgeIcon: "sparkles",
     titleTop: "Refer a Friend &",
     titleHighlight: "Earn Gold VIP Cards",
     subtitle: "Unlock Gold VIP Scratch Cards when friends complete their first scan.",
-    gradientBg: "linear-gradient(135deg, #061120 0%, #003A99 60%, #1D4ED8 100%)",
+    themeType: "gold",
   },
   {
     id: "silver-welcome",
     badgeTag: "FRIEND'S BENEFIT",
+    badgeIcon: "gift",
     titleTop: "Friends Get a",
     titleHighlight: "Silver Welcome Card",
     subtitle: "Friends get a Silver Welcome Scratch Card right after signing up.",
-    gradientBg: "linear-gradient(135deg, #051428 0%, #0047AB 60%, #0284C7 100%)",
+    themeType: "silver",
   },
 ];
 
@@ -391,25 +394,46 @@ export default function ReferralsPage() {
                   transition: isDragging ? "none" : "transform 0.42s cubic-bezier(0.25, 1, 0.5, 1)",
                 }}
               >
-                {HERO_SLIDES.map((slide) => (
-                  <div
-                    key={slide.id}
-                    className={styles.heroSlide}
-                    style={{ background: slide.gradientBg }}
-                  >
-                    <div className={styles.slideTopRow}>
-                      <span className={styles.slidePillTag}>{slide.badgeTag}</span>
+                {HERO_SLIDES.map((slide) => {
+                  const isGold = slide.themeType === "gold";
+                  return (
+                    <div
+                      key={slide.id}
+                      className={`${styles.heroSlide} ${
+                        isGold ? styles.heroSlideGold : styles.heroSlideSilver
+                      }`}
+                    >
+                      <div className={styles.slideTopRow}>
+                        <span
+                          className={`${styles.slidePillTag} ${
+                            isGold ? styles.slidePillTagGold : styles.slidePillTagSilver
+                          }`}
+                        >
+                          <Ionicons
+                            name={slide.badgeIcon}
+                            size={11}
+                            color={isGold ? "#FDE047" : "#F1F5F9"}
+                          />
+                          <span>{slide.badgeTag}</span>
+                        </span>
+                      </div>
+                      <div className={styles.heroTextCol}>
+                        <h2 className={styles.heroTitle}>
+                          {slide.titleTop}
+                          <br />
+                          <span
+                            className={`${styles.heroHighlight} ${
+                              isGold ? styles.heroHighlightGold : styles.heroHighlightSilver
+                            }`}
+                          >
+                            {slide.titleHighlight}
+                          </span>
+                        </h2>
+                        <p className={styles.heroSubtitle}>{slide.subtitle}</p>
+                      </div>
                     </div>
-                    <div className={styles.heroTextCol}>
-                      <h2 className={styles.heroTitle}>
-                        {slide.titleTop}
-                        <br />
-                        <span className={styles.heroHighlight}>{slide.titleHighlight}</span>
-                      </h2>
-                      <p className={styles.heroSubtitle}>{slide.subtitle}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

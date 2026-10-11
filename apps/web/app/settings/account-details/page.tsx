@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Ionicons } from "@/lib/mobile-icons";
 import { useAuth } from "@/lib/auth-context";
+import { useAvatar, isUserUploadedPhoto } from "@/lib/avatar-context";
+import { UserAvatar } from "@/components/avatar/UserAvatar";
+import { deleteUserAccountPermanently } from "@/lib/user-account";
 import { getWebSupabase, isWebSupabaseConfigured } from "@/lib/supabase";
 import {
   sanitizeUsername,
@@ -26,7 +29,91 @@ function sanitizeTextInput(val: string, maxLen = 40): string {
 
 function AccountDetailsContent() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const { cachedUrl, avatarUrl, uploadAvatar, removeAvatar, uploading } = useAvatar();
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Avatar resolution
+  const [localCustom, setLocalCustom] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && user?.id) {
+      try {
+        const stored =
+          localStorage.getItem(`user_custom_avatar_${user.id}`) ||
+          localStorage.getItem(`user_avatar_${user.id}`);
+        setLocalCustom(stored);
+      } catch {}
+    }
+  }, [user?.id]);
+
+  const photoURL = React.useMemo(() => {
+    return (
+      (cachedUrl && isUserUploadedPhoto(cachedUrl) ? cachedUrl : null) ||
+      (avatarUrl && isUserUploadedPhoto(avatarUrl) ? avatarUrl : null) ||
+      (localCustom && isUserUploadedPhoto(localCustom) ? localCustom : null) ||
+      user?.user_metadata?.custom_avatar_url ||
+      cachedUrl ||
+      avatarUrl ||
+      localCustom ||
+      user?.user_metadata?.avatar_url ||
+      user?.user_metadata?.picture ||
+      user?.user_metadata?.photo_url ||
+      null
+    );
+  }, [cachedUrl, avatarUrl, localCustom, user]);
+
+  const handlePickPhoto = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        await uploadAvatar(file);
+        showToast("Profile photo updated.");
+      } catch {
+        showToast("Failed to upload photo.", "error");
+      }
+    }
+    if (e.target) e.target.value = "";
+  };
+
+  const handleRemovePhoto = async () => {
+    try {
+      await removeAvatar();
+      showToast("Profile photo removed.");
+    } catch {
+      showToast("Could not remove photo.", "error");
+    }
+  };
+
+  // Delete Account State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  const handleDeleteAccountConfirm = async () => {
+    if (deleteConfirmText.trim() !== "DELETE" || !user?.id || deletingAccount) return;
+    setDeletingAccount(true);
+    setDeleteError("");
+    try {
+      await deleteUserAccountPermanently(user.id);
+      await signOut().catch(() => {});
+      setDeleteModalOpen(false);
+      showToast("Account deleted.");
+      router.replace("/");
+    } catch (err: any) {
+      setDeleteError(
+        err?.message || "Failed to delete account. Please try again."
+      );
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
 
   const [displayNameState, setDisplayNameState] = useState("");
   const [usernameState, setUsernameState] = useState("");
@@ -354,6 +441,14 @@ function AccountDetailsContent() {
 
   return (
     <main className={styles.container}>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        style={{ display: "none" }}
+      />
+
       <div className={styles.inner}>
         {/* Navigation Bar */}
         <header className={styles.navBar}>
@@ -382,6 +477,51 @@ function AccountDetailsContent() {
 
         {/* ── Clean Unified Account Details Card ── */}
         <div className={styles.card}>
+          {/* ── Row 0: Profile Photo ── */}
+          <div className={styles.avatarSection}>
+            <div className={styles.avatarLeft}>
+              <div className={styles.avatarWrapper}>
+                <UserAvatar
+                  src={photoURL}
+                  name={displayNameState || "User"}
+                  size={52}
+                  showRing={true}
+                />
+              </div>
+              <div className={styles.avatarMeta}>
+                <h3 className={styles.avatarTitle}>Profile Photo</h3>
+                <p className={styles.avatarSubtext}>
+                  {uploading ? "Uploading..." : "JPG, PNG or WebP image"}
+                </p>
+              </div>
+            </div>
+            <div className={styles.avatarActions}>
+              <button
+                type="button"
+                onClick={handlePickPhoto}
+                disabled={uploading}
+                className={styles.avatarChangeBtn}
+              >
+                <Ionicons name="camera-outline" size={14} />
+                <span>{photoURL ? "Change" : "Upload"}</span>
+              </button>
+              {photoURL && (
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  disabled={uploading}
+                  className={styles.avatarRemoveBtn}
+                  aria-label="Remove profile photo"
+                  title="Remove photo"
+                >
+                  <Ionicons name="trash-outline" size={15} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.divider} />
+
           {/* ── Row 1: Display Name ── */}
           {isEditingName ? (
             <div className={styles.editContainer}>
@@ -608,7 +748,115 @@ function AccountDetailsContent() {
             )}
           </div>
         </div>
+
+        {/* ── Danger Zone (Isolated at bottom) ── */}
+        <section className={styles.dangerSection} aria-label="Danger zone">
+          <div className={styles.dangerSectionHeader}>
+            <span className={styles.dangerSectionLabel}>Danger Zone</span>
+          </div>
+
+          <div className={styles.dangerCard}>
+            <div className={styles.dangerMeta}>
+              <h3 className={styles.dangerTitle}>Delete Account</h3>
+              <p className={styles.dangerDesc}>
+                Permanently delete your profile, scan history, and all associated account data. This action cannot be undone.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteModalOpen(true);
+                setDeleteConfirmText("");
+                setDeleteError("");
+              }}
+              className={styles.dangerBtn}
+            >
+              <Ionicons name="alert-circle-outline" size={16} />
+              <span>Delete Account</span>
+            </button>
+          </div>
+        </section>
       </div>
+
+      {/* ── Delete Account Confirmation Modal ── */}
+      {deleteModalOpen && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-modal-title"
+        >
+          <div className={styles.modalCard}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalIconRing}>
+                <Ionicons name="alert-circle-outline" size={22} />
+              </div>
+              <h2 id="delete-modal-title" className={styles.modalTitle}>
+                Delete Account
+              </h2>
+            </div>
+            <p className={styles.modalDesc}>
+              This will permanently delete your account, scan histories, votes,
+              and reputation data. This action is irreversible.
+            </p>
+
+            {deleteError && (
+              <p style={{ color: "var(--danger)", fontSize: 13, margin: 0 }}>
+                {deleteError}
+              </p>
+            )}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <label
+                htmlFor="confirm-delete-input"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                Type &quot;DELETE&quot; to confirm:
+              </label>
+              <input
+                id="confirm-delete-input"
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                autoComplete="off"
+                disabled={deletingAccount}
+                className={styles.modalInput}
+                autoFocus
+              />
+            </div>
+
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setDeleteConfirmText("");
+                  setDeleteError("");
+                }}
+                disabled={deletingAccount}
+                className={styles.modalCancelBtn}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccountConfirm}
+                disabled={
+                  deleteConfirmText.trim() !== "DELETE" || deletingAccount
+                }
+                className={styles.modalConfirmDangerBtn}
+              >
+                {deletingAccount ? "Deleting..." : "Permanently Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomTabBar activeTab="profile" />
     </main>

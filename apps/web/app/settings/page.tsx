@@ -9,7 +9,6 @@ import { useTheme, type ThemeMode } from "@/lib/theme-context";
 import { useAvatar, isUserUploadedPhoto } from "@/lib/avatar-context";
 import { UserAvatar } from "@/components/avatar/UserAvatar";
 import { clearAllUserScans } from "@/lib/scan-history";
-import { deleteUserAccountPermanently } from "@/lib/user-account";
 import { BottomTabBar } from "@/components/navigation/BottomTabBar";
 import SettingsLoading from "./loading";
 import styles from "./settings.module.css";
@@ -74,11 +73,6 @@ function SettingsContent() {
 
   const [signOutModalOpen, setSignOutModalOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [deletingAccount, setDeletingAccount] = useState(false);
-  const [deleteError, setDeleteError] = useState("");
 
   // Toast feedback state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -154,26 +148,6 @@ function SettingsContent() {
       setSigningOut(false);
     }
   }, [signOut, showToast, router]);
-
-  // Delete account
-  const handleDeleteAccountConfirm = useCallback(async () => {
-    if (deleteConfirmText.trim() !== "DELETE" || !user?.id || deletingAccount) return;
-    setDeletingAccount(true);
-    setDeleteError("");
-    try {
-      await deleteUserAccountPermanently(user.id);
-      await signOut().catch(() => {});
-      setDeleteModalOpen(false);
-      showToast("Account deleted.");
-      router.replace("/");
-    } catch (err: any) {
-      setDeleteError(
-        err?.message || "Failed to delete account. Please try again."
-      );
-    } finally {
-      setDeletingAccount(false);
-    }
-  }, [deleteConfirmText, user?.id, deletingAccount, signOut, showToast, router]);
 
   if (authLoading) {
     return <SettingsLoading />;
@@ -286,92 +260,6 @@ function SettingsContent() {
         </div>
       )}
 
-      {/* Delete Account Modal */}
-      {deleteModalOpen && (
-        <div
-          className={styles.modalOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="delete-modal-title"
-        >
-          <div className={styles.modalCard}>
-            <div className={styles.modalHeader}>
-              <div
-                className={styles.modalIconRing}
-                style={{
-                  backgroundColor: "var(--danger-dim)",
-                  color: "var(--danger)",
-                }}
-              >
-                <Ionicons name="alert-circle-outline" size={22} />
-              </div>
-              <h2 id="delete-modal-title" className={styles.modalTitle}>
-                Delete Account
-              </h2>
-            </div>
-            <p className={styles.modalDesc}>
-              This will permanently delete your account, scan histories, votes,
-              and reputation data. This action is irreversible.
-            </p>
-
-            {deleteError && (
-              <p style={{ color: "var(--danger)", fontSize: 13, margin: 0 }}>
-                {deleteError}
-              </p>
-            )}
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label
-                htmlFor="confirm-delete-input"
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "var(--text-secondary)",
-                }}
-              >
-                Type &quot;DELETE&quot; to confirm:
-              </label>
-              <input
-                id="confirm-delete-input"
-                type="text"
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder="DELETE"
-                autoComplete="off"
-                disabled={deletingAccount}
-                className={styles.modalInput}
-                autoFocus
-              />
-            </div>
-
-            <div className={styles.modalActions}>
-              <button
-                type="button"
-                onClick={() => {
-                  setDeleteModalOpen(false);
-                  setDeleteConfirmText("");
-                  setDeleteError("");
-                }}
-                disabled={deletingAccount}
-                className={styles.modalCancelBtn}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteAccountConfirm}
-                disabled={
-                  deleteConfirmText.trim() !== "DELETE" || deletingAccount
-                }
-                className={styles.modalConfirmDangerBtn}
-              >
-                {deletingAccount ? "Deleting..." : "Permanently Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className={styles.inner}>
         {/* Top Navigation */}
         <header className={styles.navBar}>
@@ -421,26 +309,6 @@ function SettingsContent() {
                   aria-label="Edit account details"
                 >
                   Edit
-                </Link>
-              </div>
-
-              {/* Account Rows */}
-              <div className={styles.cardGroup}>
-                <Link href="/settings/account-details" className={styles.menuItem}>
-                  <div className={styles.menuIconWrap}>
-                    <Ionicons name="person-circle-outline" size={20} />
-                  </div>
-                  <div className={styles.menuTextCol}>
-                    <span className={styles.menuLabel}>Account Details</span>
-                    <span className={styles.menuSublabel}>
-                      Display name, @username, and email
-                    </span>
-                  </div>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color="var(--text-muted)"
-                  />
                 </Link>
               </div>
             </>
@@ -552,7 +420,7 @@ function SettingsContent() {
               <div className={styles.menuTextCol}>
                 <span className={styles.menuLabel}>Clear Local History</span>
                 <span className={styles.menuSublabel}>
-                  Remove cached scan records from this browser
+                  Clear scan records on this device
                 </span>
               </div>
               <Ionicons
@@ -564,42 +432,22 @@ function SettingsContent() {
           </div>
         </section>
 
-        {/* ── SECTION 4: TRUST & SAFETY ── */}
-        <section className={styles.section} aria-label="Trust and safety">
+        {/* ── SECTION 4: HELP & SAFETY HUB ── */}
+        <section className={styles.section} aria-label="Help and safety">
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Trust &amp; Safety</span>
+            <span className={styles.sectionLabel}>Help &amp; Safety</span>
           </div>
 
           <div className={styles.cardGroup}>
-            {/* Trust & Safety Scores */}
-            <Link href="/trust-scores" className={styles.menuItem}>
+            {/* Help & Safety Hub */}
+            <Link href="/settings/help-safety" className={styles.menuItem}>
               <div className={styles.menuIconWrap}>
                 <Ionicons name="shield-checkmark-outline" size={19} />
               </div>
               <div className={styles.menuTextCol}>
-                <span className={styles.menuLabel}>Trust &amp; Safety</span>
-                <span className={styles.menuSublabel}>
-                  Verification metrics and reputation scoring
-                </span>
-              </div>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color="var(--text-muted)"
-              />
-            </Link>
-
-            <div className={styles.divider} />
-
-            {/* Help & Safety Hub */}
-            <Link href="/settings/help-safety" className={styles.menuItem}>
-              <div className={styles.menuIconWrap}>
-                <Ionicons name="help-buoy-outline" size={19} />
-              </div>
-              <div className={styles.menuTextCol}>
                 <span className={styles.menuLabel}>Help &amp; Safety</span>
                 <span className={styles.menuSublabel}>
-                  Safety guide, trust scores, feedback, and about BinRo
+                  Guides, trust scores, and support
                 </span>
               </div>
               <Ionicons
@@ -625,7 +473,7 @@ function SettingsContent() {
               <div className={styles.menuTextCol}>
                 <span className={styles.menuLabel}>Terms of Service</span>
                 <span className={styles.menuSublabel}>
-                  Rules, disclaimers, and service terms
+                  Terms and guidelines
                 </span>
               </div>
               <Ionicons
@@ -644,7 +492,7 @@ function SettingsContent() {
               <div className={styles.menuTextCol}>
                 <span className={styles.menuLabel}>Privacy Policy</span>
                 <span className={styles.menuSublabel}>
-                  Zero data-selling guarantee and local camera processing
+                  Privacy pledge and data handling
                 </span>
               </div>
               <Ionicons
@@ -656,11 +504,11 @@ function SettingsContent() {
           </div>
         </section>
 
-        {/* ── SECTION 6: ACTIONS & DANGER ZONE (Logged In Only) ── */}
+        {/* ── SECTION 6: SESSION (Logged In Only) ── */}
         {user && (
-          <section className={styles.section} aria-label="Account management">
+          <section className={styles.section} aria-label="Session">
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionLabel}>Session &amp; Security</span>
+              <span className={styles.sectionLabel}>Session</span>
             </div>
 
             <div className={styles.cardGroup}>
@@ -676,47 +524,13 @@ function SettingsContent() {
                 <div className={styles.menuTextCol}>
                   <span className={styles.menuLabel}>Sign Out</span>
                   <span className={styles.menuSublabel}>
-                    End your active session on this device
+                    Sign out of this device
                   </span>
                 </div>
                 <Ionicons
                   name="chevron-forward"
                   size={16}
                   color="var(--text-muted)"
-                />
-              </button>
-            </div>
-
-            {/* Danger Zone: Delete Account */}
-            <div className={styles.dangerGroup}>
-              <button
-                type="button"
-                onClick={() => {
-                  setDeleteModalOpen(true);
-                  setDeleteConfirmText("");
-                  setDeleteError("");
-                }}
-                className={styles.menuItem}
-              >
-                <div
-                  className={`${styles.menuIconWrap} ${styles.menuIconWrapDanger}`}
-                >
-                  <Ionicons name="alert-circle-outline" size={19} />
-                </div>
-                <div className={styles.menuTextCol}>
-                  <span
-                    className={`${styles.menuLabel} ${styles.menuLabelDanger}`}
-                  >
-                    Delete Account
-                  </span>
-                  <span className={styles.menuSublabel}>
-                    Permanently delete your profile and all associated data
-                  </span>
-                </div>
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color="var(--danger)"
                 />
               </button>
             </div>

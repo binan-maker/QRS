@@ -264,25 +264,100 @@ export async function getRewardLimits(): Promise<RewardLimitsConfig> {
   return DEFAULT_REWARD_LIMITS;
 }
 
-export async function getApprovedRewardOffers(): Promise<RewardOffer[]> {
-  if (!isWebSupabaseConfigured()) return DEFAULT_REWARD_OFFERS;
+const LOCAL_SYNCED_OFFERS_KEY = "binro_synced_vcommission_offers_v1";
+
+export async function saveSyncedRewardOffers(offers: RewardOffer[]): Promise<void> {
   try {
-    const data = await withTimeout(
-      (async () => {
-        const { data: rows } = await supabase
-          .from("reward_offers")
-          .select("*")
-          .eq("is_active", true)
-          .eq("is_approved", true);
-        return rows;
-      })(),
-      2000,
-      null
-    );
-    if (Array.isArray(data) && data.length > 0) {
-      return data.map(mapRowToOffer);
+    await AsyncStorage.setItem(LOCAL_SYNCED_OFFERS_KEY, JSON.stringify(offers));
+  } catch {}
+}
+
+export async function getSyncedRewardOffers(): Promise<RewardOffer[] | null> {
+  try {
+    const raw = await AsyncStorage.getItem(LOCAL_SYNCED_OFFERS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch {}
+  return null;
+}
+
+export async function syncVCommissionOffersClient(params?: {
+  apiKey?: string;
+  affiliateId?: string;
+  rawText?: string;
+  feedUrl?: string;
+}): Promise<{ success: boolean; count: number; offers: RewardOffer[]; message: string }> {
+  try {
+    const res = await fetch("/api/rewards/vcommission-sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params || {}),
+    });
+    const json = await res.json();
+    if (json.success && Array.isArray(json.coupons) && json.coupons.length > 0) {
+      const mapped = json.coupons.map(mapRowToOffer);
+      await saveSyncedRewardOffers(mapped);
+      return { success: true, count: mapped.length, offers: mapped, message: json.message };
+    }
+    return {
+      success: json.success || false,
+      count: 0,
+      offers: [],
+      message: json.message || json.error || "No coupons found",
+    };
+  } catch (err: any) {
+    return { success: false, count: 0, offers: [], message: err.message };
+  }
+}
+
+export async function getApprovedRewardOffers(): Promise<RewardOffer[]> {
+  // 1. Try Supabase if configured
+  if (isWebSupabaseConfigured()) {
+    try {
+      const data = await withTimeout(
+        (async () => {
+          // Try public.rewards_deals table
+          const { data: deals, error: dealsErr } = await supabase
+            .from("rewards_deals")
+            .select("*")
+            .eq("is_active", true)
+            .eq("is_approved", true);
+
+          if (!dealsErr && Array.isArray(deals) && deals.length > 0) {
+            return deals;
+          }
+
+          // Fallback to reward_offers alias
+          const { data: offers, error: offersErr } = await supabase
+            .from("reward_offers")
+            .select("*")
+            .eq("is_active", true)
+            .eq("is_approved", true);
+
+          if (!offersErr && Array.isArray(offers) && offers.length > 0) {
+            return offers;
+          }
+
+          return null;
+        })(),
+        2500,
+        null
+      );
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map(mapRowToOffer);
+      }
+    } catch {}
+  }
+
+  // 2. Try locally synced automated offers from vCommission
+  const synced = await getSyncedRewardOffers();
+  if (synced && synced.length > 0) {
+    return synced;
+  }
+
+  // 3. Fallback to default catalog
   return DEFAULT_REWARD_OFFERS;
 }
 

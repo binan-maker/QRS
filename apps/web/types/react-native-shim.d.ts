@@ -84,3 +84,5 @@ declare module "@tanstack/react-query" {
   export function useQueryClient(): QueryClient;
 }
 
+declare module "canvas-confetti";
+
