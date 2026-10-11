@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseClient, isWebSupabaseConfigured } from "@/lib/supabase";
-import { extractAndNormalizeImageUrl, VCOMMISSION_NETWORK_LOGO } from "@/lib/rewards-image";
+import { extractAndNormalizeImageUrl, VCOMMISSION_NETWORK_LOGO } from "@/lib/rewards-image-utils";
 
 /**
  * vCommission Automated Ingestion & Sync Engine
@@ -304,7 +304,35 @@ export async function POST(req: NextRequest) {
         supabaseResult = `Successfully synced & upserted ${transformedCoupons.length} deals to public.rewards_deals`;
       }
     } else if (transformedCoupons.length === 0) {
-      supabaseResult = "No coupons were extracted from input (provide vCommission API Key, CSV rows, or Feed URL)";
+      if (supabase) {
+        const { data: existingRows } = await supabase
+          .from("rewards_deals")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (Array.isArray(existingRows) && existingRows.length > 0) {
+          return NextResponse.json({
+            success: true,
+            message: `Retrieved ${existingRows.length} coupons from Supabase rewards_deals`,
+            count: existingRows.length,
+            affiliateId,
+            networkId,
+            supabaseStatus: "Live coupons retrieved from Supabase rewards_deals",
+            coupons: existingRows,
+          });
+        }
+      }
+
+      supabaseResult = "No active coupons found from vCommission feed or input";
+      return NextResponse.json({
+        success: true,
+        message: "No live coupons available from vCommission or Supabase",
+        count: 0,
+        affiliateId,
+        networkId,
+        supabaseStatus: supabaseResult,
+        coupons: [],
+      });
     }
 
     return NextResponse.json({

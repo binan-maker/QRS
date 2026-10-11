@@ -73,16 +73,13 @@ CREATE INDEX IF NOT EXISTS idx_rewards_deals_coupon
 -- 3. Row Level Security (RLS)
 ALTER TABLE public.rewards_deals ENABLE ROW LEVEL SECURITY;
 
--- Allow anyone (anonymous or authenticated) to read active deals
+-- Allow anyone (anonymous or authenticated) to read approved deals
 DROP POLICY IF EXISTS "Allow public read access to active deals" ON public.rewards_deals;
-CREATE POLICY "Allow public read access to active deals"
+DROP POLICY IF EXISTS "Allow public read access to approved deals" ON public.rewards_deals;
+CREATE POLICY "Allow public read access to approved deals"
   ON public.rewards_deals
   FOR SELECT
-  USING (
-    is_active = TRUE 
-    AND is_approved = TRUE
-    AND (expires_at IS NULL OR expires_at > NOW())
-  );
+  USING (is_approved = TRUE);
 
 -- Only service role / admin can insert, update, or delete
 DROP POLICY IF EXISTS "Service role full access on rewards_deals" ON public.rewards_deals;
@@ -91,3 +88,5 @@ CREATE POLICY "Service role full access on rewards_deals"
   FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
+
+-- End of schema definition. All coupons must be dynamically fetched from vCommission into Supabase.

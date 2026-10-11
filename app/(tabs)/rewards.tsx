@@ -20,7 +20,6 @@ import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import {
   getUserScratchCards,
   getApprovedRewardOffers,
-  DEFAULT_REWARD_OFFERS,
   type ScratchCardItem,
   type RewardOffer,
 } from "@/services/rewards";
@@ -41,7 +40,7 @@ export default function RewardsScreen() {
   const { onTabScroll, resetTabBar } = useTabBarScroll();
 
   const [userScratchCards, setUserScratchCards] = useState<ScratchCardItem[]>([]);
-  const [approvedOffers, setApprovedOffers] = useState<RewardOffer[]>(DEFAULT_REWARD_OFFERS);
+  const [approvedOffers, setApprovedOffers] = useState<RewardOffer[]>([]);
   const [scratchedCardIds, setScratchedCardIds] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
 
@@ -72,17 +71,17 @@ export default function RewardsScreen() {
     });
   }, []);
 
-  // Background auto-load: fetch both user's earned scratch cards and all approved coupons from Supabase
+  // Background auto-load: fetch both user's earned scratch cards and all approved coupons dynamically from Supabase
   const loadData = useCallback(async () => {
     try {
       const [cards, liveCoupons] = await Promise.all([
         user?.id ? getUserScratchCards(user.id).catch(() => []) : Promise.resolve([]),
-        getApprovedRewardOffers().catch(() => DEFAULT_REWARD_OFFERS),
+        getApprovedRewardOffers().catch(() => []),
       ]);
       if (Array.isArray(cards)) {
         setUserScratchCards(cards);
       }
-      if (Array.isArray(liveCoupons) && liveCoupons.length > 0) {
+      if (Array.isArray(liveCoupons)) {
         setApprovedOffers(liveCoupons);
       }
     } catch {}
@@ -131,8 +130,9 @@ export default function RewardsScreen() {
       if (uc.offer?.id) addedOfferIds.add(uc.offer.id);
     }
 
-    // 2. Real approved coupons fetched from Supabase (rewards_deals table) & catalog
-    for (const offer of approvedOffers) {
+    // 2. Original vCommission coupons pulled from Supabase (rewards_deals table) & catalog
+    for (let i = 0; i < approvedOffers.length; i++) {
+      const offer = approvedOffers[i];
       if (!addedOfferIds.has(offer.id)) {
         const cardId = `card_${offer.id}`;
         const isLocallyScratched = scratchedCardIds.has(cardId);
@@ -140,15 +140,13 @@ export default function RewardsScreen() {
           ? new Date(offer.expiresAt).getTime() < Date.now()
           : false;
 
-        // If offer is specifically the unscratched welcome card and not yet scratched:
-        // status remains "unlocked" (unscratched).
-        // Otherwise: scratched or expired.
         let status: "unlocked" | "scratched" | "expired" = "scratched";
         if (isOfferExpired) {
           status = "expired";
         } else if (isLocallyScratched) {
           status = "scratched";
-        } else if (offer.id === "vc_welcome_unscratched") {
+        } else if (i === 0) {
+          // First active card is an unscratched card (covered with BinRo sapphire foil)
           status = "unlocked";
         }
 
@@ -266,17 +264,27 @@ export default function RewardsScreen() {
         }
       >
         {/* ── 2-Column Responsive Scratch Cards Grid ── */}
-        <View style={styles.cardsGrid}>
-          {cardsDeck.map((card) => (
-            <RewardCard
-              key={card.id}
-              card={card}
-              onPress={handleCardClick}
-              isDark={isDark}
-              colors={colors}
-            />
-          ))}
-        </View>
+        {cardsDeck.length > 0 ? (
+          <View style={styles.cardsGrid}>
+            {cardsDeck.map((card) => (
+              <RewardCard
+                key={card.id}
+                card={card}
+                onPress={handleCardClick}
+                isDark={isDark}
+                colors={colors}
+              />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="gift-outline" size={44} color={colors.primary} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Partner Bonuses Yet</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+              Active scratch cards and affiliate deals will appear here dynamically once loaded from Supabase & vCommission.
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
       {/* ── Interactive Scratch Modal ── */}
@@ -350,5 +358,23 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 12,
     justifyContent: "space-between",
+  },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 56,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    textAlign: "center",
+    marginTop: 6,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
   },
 });

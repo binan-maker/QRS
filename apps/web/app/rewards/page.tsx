@@ -14,7 +14,6 @@ import {
   recordOfferRedemption,
   getApprovedRewardOffers,
   syncVCommissionOffersClient,
-  DEFAULT_REWARD_OFFERS,
   type RewardOffer,
   type RewardWallet,
   type ScratchCardItem,
@@ -28,286 +27,14 @@ interface DisplayBonusCard {
   merchantName: string;
   status: "unlocked" | "scratched" | "expired" | "locked";
   validityText: string;
-  bannerUrl: string;
+  bannerUrl?: string | null;
   creativeUrls?: string[];
   badgeType: "lock" | "pink" | "citrus" | "wog" | "arena" | "scissors" | "visa" | "brand";
   isWide?: boolean;
   offer: RewardOffer;
 }
 
-const INITIAL_IMAGE_CARDS: DisplayBonusCard[] = [
-  {
-    id: "card_citrus_5",
-    headline: "5% in Citrus",
-    merchantName: "Citrus",
-    status: "expired",
-    validityText: "Not applicable",
-    bannerUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80",
-    badgeType: "citrus",
-    offer: {
-      id: "offer_citrus_5",
-      networkProvider: "vcommission",
-      campaignId: "citrus_01",
-      merchantName: "Citrus",
-      merchantLogoUrl: null,
-      bannerUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80",
-      title: "5% in Citrus",
-      description: "Exclusive consumer tech and electronics cash reward program across partner retail stores.",
-      couponCode: "CITRUS5",
-      destinationUrl: "https://vcommission.com",
-      tier: "bronze",
-      category: "Electronics",
-      termsText: "Offer validity ended. Standard store terms apply.",
-      isApproved: true,
-      isActive: false,
-      dailyAllocationLimit: 500,
-      totalAllocated: 0,
-    },
-  },
-  {
-    id: "card_wog_5",
-    headline: "5% in WOG",
-    merchantName: "WOG",
-    status: "expired",
-    validityText: "Not applicable",
-    bannerUrl: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80",
-    badgeType: "wog",
-    offer: {
-      id: "offer_wog_5",
-      networkProvider: "vcommission",
-      campaignId: "wog_01",
-      merchantName: "WOG",
-      merchantLogoUrl: null,
-      bannerUrl: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80",
-      title: "5% in WOG",
-      description: "Fuel and convenience marketplace rewards with digital contactless redemption.",
-      couponCode: "WOG5",
-      destinationUrl: "https://vcommission.com",
-      tier: "bronze",
-      category: "Auto & Travel",
-      termsText: "Promotion campaign has completed.",
-      isApproved: true,
-      isActive: false,
-      dailyAllocationLimit: 500,
-      totalAllocated: 0,
-    },
-  },
-  {
-    id: "card_dutyfree_50",
-    headline: "50 Cash in Duty Fr...",
-    merchantName: "Duty Free",
-    status: "locked",
-    validityText: "Not applicable",
-    bannerUrl: "https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=600&q=80",
-    badgeType: "lock",
-    offer: {
-      id: "offer_dutyfree_50",
-      networkProvider: "vcommission",
-      campaignId: "dutyfree_01",
-      merchantName: "Duty Free",
-      merchantLogoUrl: null,
-      bannerUrl: "https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=600&q=80",
-      title: "50 Cash in Duty Free",
-      description: "Airport terminal travel retail cash bonus. Scan verified QR codes to unlock this card.",
-      couponCode: "DUTY50",
-      destinationUrl: "https://vcommission.com",
-      tier: "silver",
-      category: "Duty Free",
-      termsText: "Locked bonus. Complete daily scan milestone to unlock.",
-      isApproved: true,
-      isActive: true,
-      dailyAllocationLimit: 300,
-      totalAllocated: 0,
-    },
-  },
-  {
-    id: "card_delicious_cashback",
-    headline: "Delicious cashback",
-    merchantName: "Sense Bank & ATB",
-    status: "unlocked",
-    validityText: "Valid for 3 days",
-    bannerUrl: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=600&q=80",
-    badgeType: "pink",
-    offer: {
-      id: "offer_delicious_cashback",
-      networkProvider: "vcommission",
-      campaignId: "delicious_01",
-      merchantName: "Sense Bank & ATB",
-      merchantLogoUrl: null,
-      bannerUrl: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=600&q=80",
-      title: "Delicious cashback",
-      description: "Delicious shopping, pleasant discounts and everything you need — always nearby at ATB. And the profitable cashback with your partner card makes every trip even more enjoyable.",
-      couponCode: "YUMMY20",
-      destinationUrl: "https://vcommission.com",
-      tier: "gold",
-      category: "Food & Dining",
-      termsText: "For purchases over 350 UAH in the network of stores or on the website, an additional 2% cashback is credited. The maximum cashback amount is 200 Cash'U bonus points per month during the promotion period.",
-      isApproved: true,
-      isActive: true,
-      dailyAllocationLimit: 999,
-      totalAllocated: 0,
-    },
-  },
-  {
-    id: "card_kachorovska_6",
-    headline: "6% cashback at K...",
-    merchantName: "Kachorovska",
-    status: "unlocked",
-    validityText: "Valid for 3 days",
-    bannerUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80",
-    badgeType: "scissors",
-    offer: {
-      id: "offer_kachorovska_6",
-      networkProvider: "vcommission",
-      campaignId: "kachorovska_01",
-      merchantName: "Kachorovska",
-      merchantLogoUrl: null,
-      bannerUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80",
-      title: "6% cashback at Kachorovska",
-      description: "Artisan footwear, handcrafted leather bags, and designer accessories cashback.",
-      couponCode: "KACH6",
-      destinationUrl: "https://vcommission.com",
-      tier: "gold",
-      category: "Fashion & Footwear",
-      termsText: "Valid on all seasonal collections online and in boutique stores.",
-      isApproved: true,
-      isActive: true,
-      dailyAllocationLimit: 400,
-      totalAllocated: 0,
-    },
-  },
-  {
-    id: "card_arena_15",
-    headline: "15% in Arena",
-    merchantName: "Arena",
-    status: "unlocked",
-    validityText: "Valid for 2 days",
-    bannerUrl: "https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=600&q=80",
-    badgeType: "arena",
-    offer: {
-      id: "offer_arena_15",
-      networkProvider: "vcommission",
-      campaignId: "arena_01",
-      merchantName: "Arena",
-      merchantLogoUrl: null,
-      bannerUrl: "https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=600&q=80",
-      title: "15% in Arena",
-      description: "Professional swimwear, goggles, training equipment, and athletic apparel discount.",
-      couponCode: "ARENA15",
-      destinationUrl: "https://vcommission.com",
-      tier: "silver",
-      category: "Sports & Swim",
-      termsText: "Valid on purchases at Arena brand stores and digital checkout.",
-      isApproved: true,
-      isActive: true,
-      dailyAllocationLimit: 500,
-      totalAllocated: 0,
-    },
-  },
-  {
-    id: "card_tatacliq_125",
-    headline: "12.5% in Tata CLiQ",
-    merchantName: "Tata CLiQ",
-    status: "scratched",
-    validityText: "Valid for 5 days",
-    bannerUrl: "https://media.hasoffers.com/brand/10240/banner.jpg",
-    creativeUrls: [
-      "https://media.hasoffers.com/brand/10240/banner.jpg",
-      "https://media.hasoffers.com/network_images/vcommission/10240_banner.jpg",
-      "https://tracking.vcommission.com/media/offer_10240.png",
-    ],
-    badgeType: "brand",
-    offer: {
-      id: "offer_tatacliq_125",
-      networkProvider: "vcommission",
-      campaignId: "10240",
-      merchantName: "Tata CLiQ",
-      merchantLogoUrl: "https://media.hasoffers.com/brand/10240/logo.png",
-      bannerUrl: "https://media.hasoffers.com/brand/10240/banner.jpg",
-      creativeUrls: [
-        "https://media.hasoffers.com/brand/10240/banner.jpg",
-        "https://media.hasoffers.com/network_images/vcommission/10240_banner.jpg",
-        "https://tracking.vcommission.com/media/offer_10240.png",
-      ],
-      title: "12.5% Instant Discount on Tata CLiQ",
-      description: "Instant cardholder savings on luxury fashion, footwear, watches, and electronics.",
-      couponCode: "AMEXTCF1010",
-      destinationUrl: "https://tracking.vcommission.com/aff_c?offer_id=10240&aff_id=132680",
-      tier: "gold",
-      category: "Fashion & Lifestyle",
-      termsText: "Redeemable on partner checkout. Standard merchant terms apply.",
-      isApproved: true,
-      isActive: true,
-      dailyAllocationLimit: 500,
-      totalAllocated: 0,
-    },
-  },
-  {
-    id: "card_tenxyou_18",
-    headline: "Flat 18% in Tenxyou",
-    merchantName: "Tenxyou",
-    status: "unlocked",
-    validityText: "Valid for 7 days",
-    bannerUrl: "https://media.hasoffers.com/brand/13667/banner.jpg",
-    creativeUrls: [
-      "https://media.hasoffers.com/brand/13667/banner.jpg",
-      "https://media.hasoffers.com/network_images/vcommission/13667_banner.jpg",
-    ],
-    badgeType: "brand",
-    offer: {
-      id: "offer_tenxyou_18",
-      networkProvider: "vcommission",
-      campaignId: "13667",
-      merchantName: "Tenxyou",
-      merchantLogoUrl: "https://media.hasoffers.com/brand/13667/logo.png",
-      bannerUrl: "https://media.hasoffers.com/brand/13667/banner.jpg",
-      creativeUrls: [
-        "https://media.hasoffers.com/brand/13667/banner.jpg",
-        "https://media.hasoffers.com/network_images/vcommission/13667_banner.jpg",
-      ],
-      title: "Flat 18% OFF on Tenxyou",
-      description: "Trending streetwear, graphic tees, and apparel collection partner deal.",
-      couponCode: "VC18",
-      destinationUrl: "https://tracking.vcommission.com/aff_c?offer_id=13667&aff_id=132680",
-      tier: "gold",
-      category: "Fashion",
-      termsText: "Flat 18% off up to ₹600 on qualifying Tenxyou merchandise.",
-      isApproved: true,
-      isActive: true,
-      dailyAllocationLimit: 250,
-      totalAllocated: 0,
-    },
-  },
-  {
-    id: "card_visa_10x",
-    headline: "10x Bonus on Visa",
-    merchantName: "Sense Bank & Visa",
-    status: "unlocked",
-    validityText: "Valid for 14 days",
-    isWide: true,
-    bannerUrl: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=80",
-    badgeType: "visa",
-    offer: {
-      id: "offer_visa_10x",
-      networkProvider: "vcommission",
-      campaignId: "visa_10x",
-      merchantName: "Sense Bank & Visa",
-      merchantLogoUrl: null,
-      bannerUrl: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=80",
-      title: "10x Bonus on Visa Cards",
-      description: "Earn 10x reward multiplier on shopping, travel, and lifestyle purchases with Visa.",
-      couponCode: "VISA10X",
-      destinationUrl: "https://vcommission.com",
-      tier: "gold",
-      category: "Finance",
-      termsText: "Applies to contactless Visa card purchases during promotion window.",
-      isApproved: true,
-      isActive: true,
-      dailyAllocationLimit: 500,
-      totalAllocated: 0,
-    },
-  },
-];
+
 
 export default function ScratchCardsPage() {
   const router = useRouter();
@@ -350,10 +77,10 @@ export default function ScratchCardsPage() {
     try {
       const [w, o] = await Promise.all([
         user?.id ? getUserRewardWallet(user.id).catch(() => null) : Promise.resolve(null),
-        getApprovedRewardOffers().catch(() => DEFAULT_REWARD_OFFERS),
+        getApprovedRewardOffers().catch(() => []),
       ]);
       if (w) setWallet(w);
-      if (Array.isArray(o) && o.length > 0) {
+      if (Array.isArray(o)) {
         setLiveOffers(o);
       }
     } catch {}
@@ -372,17 +99,43 @@ export default function ScratchCardsPage() {
     void loadData();
   }, [loadData]);
 
-  // Build deck merging reference image cards and live offers
-  const cardsDeck = useMemo(() => {
-    return INITIAL_IMAGE_CARDS.map((c) => {
-      const isAlreadyScratched = scratchedCardIds.has(c.id);
+  // Build deck from authentic vCommission partner offers loaded dynamically from Supabase
+  const cardsDeck = useMemo((): DisplayBonusCard[] => {
+    const offers = liveOffers;
+    return offers.map((offer, index) => {
+      const cardId = `card_${offer.id}`;
+      const isAlreadyScratched = scratchedCardIds.has(cardId);
+      const isExpired = offer.expiresAt
+        ? new Date(offer.expiresAt).getTime() < Date.now()
+        : false;
+
+      let status: "unlocked" | "scratched" | "expired" = "scratched";
+      if (isExpired) {
+        status = "expired";
+      } else if (isAlreadyScratched) {
+        status = "scratched";
+      } else if (index === 0) {
+        status = "unlocked";
+      }
+
       return {
-        ...c,
-        status: isAlreadyScratched ? ("scratched" as const) : c.status,
-        validityText: isAlreadyScratched ? "Code ready · View" : c.validityText,
+        id: cardId,
+        headline: offer.title,
+        merchantName: offer.merchantName,
+        status,
+        validityText:
+          status === "scratched"
+            ? "Code ready · View"
+            : status === "expired"
+            ? "Not applicable"
+            : "Valid for 7 days",
+        bannerUrl: offer.bannerUrl,
+        creativeUrls: offer.creativeUrls,
+        badgeType: "brand",
+        offer,
       };
     });
-  }, [scratchedCardIds]);
+  }, [liveOffers, scratchedCardIds]);
 
   // Convert DisplayBonusCard to ScratchCardItem
   const toScratchCardItem = (card: DisplayBonusCard): ScratchCardItem => {
@@ -468,8 +221,9 @@ export default function ScratchCardsPage() {
           <div className={styles.topBarSpacer} />
         </header>
 
-        {/* ── 2-Column Responsive Scratch Cards Grid (Matching Left Phone) ────────────── */}
-        <div className={styles.cardsGrid} role="list" aria-label="My bonuses scratch cards">
+        {/* ── 2-Column Responsive Scratch Cards Grid ─────────────────────────────── */}
+        {cardsDeck.length > 0 ? (
+          <div className={styles.cardsGrid} role="list" aria-label="My bonuses scratch cards">
           {cardsDeck.map((card) => {
             const isExpired = card.status === "expired";
             const isLocked = card.status === "locked";
@@ -506,7 +260,7 @@ export default function ScratchCardsPage() {
                     </div>
                   ) : (
                     <img
-                      src={card.bannerUrl}
+                      src={card.bannerUrl || undefined}
                       alt={card.headline}
                       className={`${styles.cardMediaImg} ${
                         isExpired ? styles.cardMediaImgExpired : ""
@@ -574,6 +328,17 @@ export default function ScratchCardsPage() {
             );
           })}
         </div>
+      ) : (
+          <div style={{ textAlign: "center", padding: "64px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name="gift-outline" size={44} color="#3b82f6" />
+            <h3 style={{ color: "#ffffff", fontSize: "17px", fontWeight: 700, marginTop: "14px", marginBottom: "6px" }}>
+              No Partner Bonuses Yet
+            </h3>
+            <p style={{ fontSize: "13px", color: "#94a3b8", maxWidth: "300px", lineHeight: 1.5, margin: 0 }}>
+              Active partner coupons and scratch cards will appear here dynamically once loaded from Supabase &amp; vCommission.
+            </p>
+          </div>
+        )}
       </main>
 
       {/* ── Interactive Scratch Foil Modal (When scratching unlocked card) ─────────── */}

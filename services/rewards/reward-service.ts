@@ -264,11 +264,34 @@ export async function getRewardLimits(): Promise<RewardLimitsConfig> {
   return DEFAULT_REWARD_LIMITS;
 }
 
-const LOCAL_SYNCED_OFFERS_KEY = "binro_synced_vcommission_offers_v1";
+const LOCAL_SYNCED_OFFERS_KEY = "binro_synced_vcommission_offers_v2";
+
+const FAKE_OFFER_IDS = new Set([
+  "vc_welcome_unscratched",
+  "vc_tatacliq_amex_1010",
+  "vc_tenxyou_beauty_20",
+  "vc_bellavita_500",
+  "vc_minimalist_200",
+  "vc_foxtale_400",
+  "vc_mcaffeine_15",
+  "vc_tatacliq_weekend_expired",
+  "vc_mcaffeine_b2g5",
+  "vc_zomato_cashback",
+  "vc_bigbasket_cashback",
+  "vc_confirmtkt_cashback",
+  "vc_citrus_expired",
+  "vc_wog_expired",
+]);
 
 export async function saveSyncedRewardOffers(offers: RewardOffer[]): Promise<void> {
   try {
-    await AsyncStorage.setItem(LOCAL_SYNCED_OFFERS_KEY, JSON.stringify(offers));
+    const cleanOffers = (offers || []).filter(
+      (o) =>
+        o &&
+        !FAKE_OFFER_IDS.has(o.id) &&
+        !String(o.title || "").toLowerCase().includes("flat 20%")
+    );
+    await AsyncStorage.setItem(LOCAL_SYNCED_OFFERS_KEY, JSON.stringify(cleanOffers));
   } catch {}
 }
 
@@ -277,7 +300,15 @@ export async function getSyncedRewardOffers(): Promise<RewardOffer[] | null> {
     const raw = await AsyncStorage.getItem(LOCAL_SYNCED_OFFERS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const clean = parsed.filter(
+          (o) =>
+            o &&
+            !FAKE_OFFER_IDS.has(o.id) &&
+            !String(o.title || "").toLowerCase().includes("flat 20%")
+        );
+        if (clean.length > 0) return clean;
+      }
     }
   } catch {}
   return null;
@@ -290,7 +321,17 @@ export async function syncVCommissionOffersClient(params?: {
   feedUrl?: string;
 }): Promise<{ success: boolean; count: number; offers: RewardOffer[]; message: string }> {
   try {
-    const res = await fetch("/api/rewards/vcommission-sync", {
+    const origin =
+      typeof window !== "undefined" && window.location?.origin
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_APP_URL ||
+          process.env.EXPO_PUBLIC_API_URL ||
+          "";
+    const endpoint = origin
+      ? `${origin.replace(/\/$/, "")}/api/rewards/vcommission-sync`
+      : "/api/rewards/vcommission-sync";
+
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params || {}),
@@ -313,7 +354,7 @@ export async function syncVCommissionOffersClient(params?: {
 }
 
 export async function getApprovedRewardOffers(): Promise<RewardOffer[]> {
-  // 1. Try Supabase if configured
+  // 1. Fetch dynamically from Supabase public.rewards_deals table
   if (isWebSupabaseConfigured()) {
     try {
       const data = await withTimeout(
@@ -322,8 +363,7 @@ export async function getApprovedRewardOffers(): Promise<RewardOffer[]> {
           const { data: deals, error: dealsErr } = await supabase
             .from("rewards_deals")
             .select("*")
-            .eq("is_active", true)
-            .eq("is_approved", true);
+            .order("created_at", { ascending: false });
 
           if (!dealsErr && Array.isArray(deals) && deals.length > 0) {
             return deals;
@@ -333,8 +373,7 @@ export async function getApprovedRewardOffers(): Promise<RewardOffer[]> {
           const { data: offers, error: offersErr } = await supabase
             .from("reward_offers")
             .select("*")
-            .eq("is_active", true)
-            .eq("is_approved", true);
+            .order("created_at", { ascending: false });
 
           if (!offersErr && Array.isArray(offers) && offers.length > 0) {
             return offers;
@@ -342,22 +381,32 @@ export async function getApprovedRewardOffers(): Promise<RewardOffer[]> {
 
           return null;
         })(),
-        2500,
+        3500,
         null
       );
       if (Array.isArray(data) && data.length > 0) {
-        return data.map(mapRowToOffer);
+        const mapped = data.map(mapRowToOffer);
+        await saveSyncedRewardOffers(mapped);
+        return mapped;
       }
     } catch {}
   }
 
-  // 2. Try locally synced automated offers from vCommission
+  // 2. Automated sync with live vCommission API / feed
+  try {
+    const syncResult = await syncVCommissionOffersClient();
+    if (syncResult.success && Array.isArray(syncResult.offers) && syncResult.offers.length > 0) {
+      return syncResult.offers;
+    }
+  } catch {}
+
+  // 3. Try locally cached dynamic offers from previous sync
   const synced = await getSyncedRewardOffers();
   if (synced && synced.length > 0) {
     return synced;
   }
 
-  // 3. Fallback to default catalog
+  // 4. Return dynamic pool (zero hardcoded coupons)
   return DEFAULT_REWARD_OFFERS;
 }
 
