@@ -4,6 +4,7 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { getUserScansPaginated } from "@/lib/data-service";
+import { isWebSupabaseConfigured } from "@/lib/supabase";
 import { queryClient as globalQueryClient } from "@/lib/query-client";
 import { mergeAndDeduplicateScans } from "@/services/scan-history/dedup";
 import {
@@ -74,12 +75,12 @@ export function useHistoryData() {
     queryKey:        ["history", user?.id],
     queryFn:         async ({ pageParam }) => {
       const result = await getUserScansPaginated(user!.id, PAGE_SIZE, pageParam ?? undefined);
-      if (!pageParam) {
-        setCachedHistoryPage(user!.id, { items: result.items, hasMore: result.hasMore }).catch(() => {});
+      if (!pageParam && result?.items) {
+        setCachedHistoryPage(user!.id, { items: result.items, hasMore: !!result.hasMore }).catch(() => {});
       }
-      return result;
+      return result || { items: [], cursor: null, hasMore: false };
     },
-    getNextPageParam: (lastPage) => lastPage.cursor ?? null,
+    getNextPageParam: (lastPage) => lastPage?.cursor ?? null,
     initialPageParam: null,
     staleTime:        STALE_MS,
     gcTime:           60 * 60 * 1000,
@@ -116,15 +117,52 @@ export function useHistoryData() {
   const loadLocalHistory = useCallback(async (userId?: string | null) => {
     localLoadTimestampRef.current = Date.now();
     try {
-      if (!userId) { setLocalHistory([]); setLocalLoaded(true); return; }
-      const stored = await AsyncStorage.getItem(`local_scan_history_${userId}`);
-      if (stored) {
-        const local: any[] = JSON.parse(stored);
-        setLocalHistory(local.map((s) => ({ ...s, source: "local" as const })));
-      } else {
-        setLocalHistory([]);
+      const keysToTry = [
+        userId ? `local_scan_history_${userId}` : null,
+        "local_scan_history",
+        "binro_recent_scans",
+        "binro_scan_history",
+        "binro_scans",
+      ].filter(Boolean) as string[];
+
+      const combined: HistoryItem[] = [];
+      const seen = new Set<string>();
+
+      for (const key of keysToTry) {
+        const stored = await AsyncStorage.getItem(key);
+        if (stored) {
+          const list: any[] = JSON.parse(stored);
+          if (Array.isArray(list)) {
+            for (const item of list) {
+              if (item.isDeleted === true || item.is_deleted === true) continue;
+              const qrId = item.qrCodeId || item.qrId || item.id;
+              const content = item.content || "";
+              const dedupKey = qrId || content;
+              if (seen.has(dedupKey)) continue;
+              seen.add(dedupKey);
+
+              combined.push({
+                id: String(item.id || qrId || Date.now()),
+                content,
+                contentType: item.contentType || item.content_type || "url",
+                scannedAt: item.scannedAt || item.scanned_at || new Date().toISOString(),
+                qrCodeId: qrId,
+                source: "local" as const,
+              });
+            }
+          }
+        }
       }
-    } catch { setLocalHistory([]); }
+
+      setLocalHistory(combined);
+
+      // If user is logged in and found scans in fallback keys, persist to user's local key
+      if (userId && combined.length > 0) {
+        AsyncStorage.setItem(`local_scan_history_${userId}`, JSON.stringify(combined)).catch(() => {});
+      }
+    } catch {
+      setLocalHistory([]);
+    }
     setLocalLoaded(true);
   }, []);
 
@@ -154,7 +192,7 @@ export function useHistoryData() {
     cloudHasMore:   cloudHasMore ?? false,
     loadingMore,
     cloudLoading,
-    cloudError:     cloudError as boolean,
+    cloudError:     isWebSupabaseConfigured() ? (cloudError as boolean) : false,
     fetchNextPage,
     refetchCloud,
     history,

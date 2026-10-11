@@ -44,26 +44,16 @@ export async function fetchUserScans(
   if (userId && isWebSupabaseConfigured()) {
     try {
       const supabase = getWebSupabase();
-      // Primary targeted query: fetch only needed columns for faster transfer
       const { data, error } = await supabase
         .from("qr_scans")
-        .select("id, user_id, qr_code_id, content, content_type, scanned_at, is_deleted")
+        .select("*")
         .eq("user_id", userId)
         .order("scanned_at", { ascending: false })
         .limit(100);
 
       let rows: any[] = (data as any[]) || [];
       if (error) {
-        console.warn("[scan-history] Primary query error, retrying fallback:", error.message);
-        const fallback = await supabase
-          .from("qr_scans")
-          .select("*")
-          .eq("user_id", userId)
-          .order("scanned_at", { ascending: false })
-          .limit(100);
-        if (!fallback.error && Array.isArray(fallback.data)) {
-          rows = fallback.data;
-        }
+        console.warn("[scan-history] Query error:", error.message);
       }
 
       if (Array.isArray(rows)) {
@@ -145,13 +135,19 @@ export async function fetchUserScans(
   }
 
   // 2. Fetch Local Storage Scans
-  // When user is authenticated, isolate strictly to their user-namespaced local key
-  // to prevent shared-device cross-account pollution.
+  // Check user-namespaced storage plus all client fallback keys to ensure
+  // scans are never lost across auth state transitions.
   const localItems: ScanItem[] = [];
   if (typeof window !== "undefined") {
     try {
       const localKeys = userId
-        ? [`local_scan_history_${userId}`]
+        ? [
+            `local_scan_history_${userId}`,
+            "local_scan_history",
+            "binro_recent_scans",
+            "binro_scan_history",
+            "binro_scans",
+          ]
         : [
             "local_scan_history",
             "binro_recent_scans",
@@ -241,9 +237,22 @@ export async function fetchUserScans(
 
               if (isUuid) {
                 payload.id = item.id;
-                await supabase.from("qr_scans").upsert(payload, { onConflict: "id" });
+                const { error: upErr } = await supabase.from("qr_scans").upsert(payload, { onConflict: "id" });
+                if (upErr) {
+                  delete payload.is_deleted;
+                  delete payload.id;
+                  try {
+                    await supabase.from("qr_scans").insert(payload);
+                  } catch {}
+                }
               } else {
-                await supabase.from("qr_scans").insert(payload);
+                const { error: inErr } = await supabase.from("qr_scans").insert(payload);
+                if (inErr) {
+                  delete payload.is_deleted;
+                  try {
+                    await supabase.from("qr_scans").insert(payload);
+                  } catch {}
+                }
               }
             } catch {}
           })

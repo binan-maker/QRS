@@ -120,6 +120,9 @@ function RootLayoutNav() {
       <Stack.Screen name="(legal)/trust-scores" options={{ headerShown: false }} />
       <Stack.Screen name="(legal)/how-it-works" options={{ headerShown: false }} />
       <Stack.Screen name="profile/[username]" options={{ headerShown: false }} />
+      {/* Referral screens */}
+      <Stack.Screen name="referrals" options={{ headerShown: false, title: "Referral" }} />
+      <Stack.Screen name="refer" options={{ headerShown: false, title: "Referral" }} />
     </Stack>
   );
 }

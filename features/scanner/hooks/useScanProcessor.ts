@@ -135,12 +135,10 @@ export function useScanProcessor({
       JSON.stringify({ content, contentType })
     ).catch(() => {});
 
-    if (user?.id) {
-      appendToLocalScanHistory(
-        user.id,
-        makeScanEntry(content, contentType, qrId, true)
-      ).catch(() => {});
-    }
+    appendToLocalScanHistory(
+      user?.id ?? null,
+      makeScanEntry(content, contentType, qrId, true)
+    ).catch(() => {});
 
     setProcessing(false);
 
@@ -200,22 +198,31 @@ export function useScanProcessor({
     verdict:     "safe" | "flagged" | "unknown" = "safe"
   ) {
     (async () => {
+      // Instantly append to local scan history first so the scan is never lost
+      try {
+        await appendToLocalScanHistory(
+          user?.id ?? null,
+          makeScanEntry(content, contentType, localQrId)
+        );
+      } catch {}
+
       try {
         const qr = await getOrCreateQrCode(content);
+        const resolvedId = qr?.id || localQrId;
+        const resolvedType = qr?.contentType || contentType;
+
         await AsyncStorage.setItem(
-          `qr_content_${qr.id}`,
-          JSON.stringify({ content: qr.content, contentType: qr.contentType })
+          `qr_content_${resolvedId}`,
+          JSON.stringify({ content: qr?.content || content, contentType: resolvedType })
         ).catch(() => {});
+
         if (user?.id) {
-          recordScan(qr.id, content, qr.contentType, user.id, false).catch(() => {});
-          await appendToLocalScanHistory(
-            user.id,
-            makeScanEntry(content, qr.contentType, qr.id)
-          );
+          recordScan(resolvedId, content, resolvedType, user.id, false).catch(() => {});
         }
-        emitScanEvent(qr.id, {
+
+        emitScanEvent(resolvedId, {
           platform: PLATFORM,
-          contentType: qr.contentType,
+          contentType: resolvedType,
           verdict,
         });
       } catch {}

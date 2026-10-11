@@ -62,17 +62,23 @@ export function createPageMetadata({
   description,
   path,
   noIndex = false,
+  absoluteTitle = false,
 }: {
-  title: string;
+  title: string | { absolute: string };
   description: string;
   path: string;
   noIndex?: boolean;
+  absoluteTitle?: boolean;
 }): Metadata {
   const canonicalUrl = path === "/" ? SITE_URL : `${SITE_URL}${path}`;
-  const fullTitle = `${title} | ${SITE_NAME}`;
+  const isAbsolute =
+    absoluteTitle || (typeof title === "object" && title !== null && "absolute" in title);
+  const rawTitle = typeof title === "string" ? title : title.absolute;
+  const fullTitle = isAbsolute ? rawTitle : `${rawTitle} | ${SITE_NAME}`;
+  const pageTitle = isAbsolute ? { absolute: rawTitle } : title;
 
   return {
-    title,
+    title: pageTitle,
     description,
     alternates: {
       canonical: path,

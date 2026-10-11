@@ -313,11 +313,11 @@ function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </Pressable>
 
-          {/* 3. Refer & Earn */}
+          {/* 3. Referral */}
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setReferralModalOpen(true);
+              safePush("/referrals");
             }}
             style={({ pressed }) => [
               styles.separateCard,
@@ -328,7 +328,7 @@ function ProfileScreen() {
               },
             ]}
             accessibilityRole="button"
-            accessibilityLabel="Refer & Earn"
+            accessibilityLabel="Referral"
           >
             <View
               style={[
@@ -340,7 +340,7 @@ function ProfileScreen() {
             </View>
             <View style={styles.menuTextCol}>
               <Text style={[styles.menuLabel, { color: colors.text }]}>
-                Refer &amp; Earn
+                Referral
               </Text>
               <Text style={[styles.menuSublabel, { color: colors.textSecondary }]}>
                 Invite friends, earn Gold cards

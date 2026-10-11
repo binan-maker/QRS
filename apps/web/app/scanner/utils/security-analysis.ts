@@ -149,7 +149,14 @@ export async function recordScan(
       if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
         scanPayload.id = crypto.randomUUID();
       }
-      await supabase.from("qr_scans").insert(scanPayload);
+      const { error: insErr } = await supabase.from("qr_scans").insert(scanPayload);
+      if (insErr) {
+        delete scanPayload.is_deleted;
+        delete scanPayload.id;
+        try {
+          await supabase.from("qr_scans").insert(scanPayload);
+        } catch {}
+      }
 
       // Increment user's scan_count in public.users
       try {

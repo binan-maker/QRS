@@ -229,36 +229,40 @@ export function useScanProcessor({
   // ─── Background sync (fire-and-forget) ────────────────────────────────────────
   function _backgroundSync(
     content:      string,
-    _localQrId:   string,
-    _contentType: string,
+    localQrId:    string,
+    contentType:  string,
     verdict:      "safe" | "flagged" | "unknown" = "safe"
   ) {
     const currentUser = userRef.current;
     const isAnon      = anonymousModeRef.current;
     (async () => {
+      // Instantly append to local scan history first
+      try {
+        await appendToLocalScanHistory(
+          currentUser?.id && !isAnon ? currentUser.id : null,
+          makeScanEntry(content, contentType, localQrId)
+        );
+      } catch {}
+
       try {
         const qr = await getOrCreateQrCode(content, currentUser);
+        const resolvedId = qr?.id || localQrId;
+        const resolvedType = qr?.contentType || contentType;
+
         try {
           localStorage.setItem(
-            `qr_content_${qr.id}`,
-            JSON.stringify({ content: qr.content, contentType: qr.contentType })
+            `qr_content_${resolvedId}`,
+            JSON.stringify({ content: qr?.content || content, contentType: resolvedType })
           );
         } catch {}
+
         if (currentUser?.id && !isAnon) {
-          recordScan(qr.id, content, qr.contentType, currentUser.id, false).catch(() => {});
-          await appendToLocalScanHistory(
-            currentUser.id,
-            makeScanEntry(content, qr.contentType, qr.id)
-          );
-        } else {
-          await appendToLocalScanHistory(
-            null,
-            makeScanEntry(content, qr.contentType, qr.id)
-          );
+          recordScan(resolvedId, content, resolvedType, currentUser.id, false).catch(() => {});
         }
-        emitScanEvent(qr.id, {
+
+        emitScanEvent(resolvedId, {
           platform: PLATFORM,
-          contentType: qr.contentType,
+          contentType: resolvedType,
           verdict,
         });
       } catch {}

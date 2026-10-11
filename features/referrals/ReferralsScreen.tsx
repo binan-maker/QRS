@@ -17,6 +17,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Clipboard from "expo-clipboard";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
@@ -68,6 +69,7 @@ export function ReferralsScreen() {
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const { width: screenWidth } = Dimensions.get("window");
+  const slideWidth = screenWidth - 32;
 
   const [wallet, setWallet] = useState<RewardWallet | null>(null);
   const [refDashboard, setRefDashboard] = useState<UserReferralsDashboard | null>(null);
@@ -95,10 +97,18 @@ export function ReferralsScreen() {
 
   const loadData = useCallback(async () => {
     if (!user?.id) {
+      let guestCode = "krzryn4";
+      try {
+        const cached =
+          (await AsyncStorage.getItem("binro_guest_ref_code")) ||
+          (await AsyncStorage.getItem("binro_user_ref_code"));
+        if (cached) guestCode = cached;
+      } catch {}
+
       setRefDashboard({
-        referralCode: "krzryn4",
-        referralLink: "https://www.binro.in/register?ref=krzryn4",
-        shortLink: "https://www.binro.in/register?ref=krzryn4",
+        referralCode: guestCode,
+        referralLink: `https://www.binro.in/register?ref=${guestCode}`,
+        shortLink: `https://www.binro.in/register?ref=${guestCode}`,
         totalInvited: 0,
         totalQualified: 0,
         totalPending: 0,
@@ -138,12 +148,12 @@ export function ReferralsScreen() {
     const timer = setInterval(() => {
       setActiveSlide((prev) => {
         const next = (prev + 1) % HERO_SLIDES.length;
-        carouselScrollRef.current?.scrollTo({ x: next * (screenWidth - 32), animated: true });
+        carouselScrollRef.current?.scrollTo({ x: next * slideWidth, animated: true });
         return next;
       });
     }, 5000);
     return () => clearInterval(timer);
-  }, [screenWidth]);
+  }, [slideWidth]);
 
   // Compute referee status
   const refereeStatus = useMemo((): "already_referred" | "expired" | "eligible" => {
@@ -239,9 +249,17 @@ export function ReferralsScreen() {
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const slide = Math.round(event.nativeEvent.contentOffset.x / (screenWidth - 32));
+    const slide = Math.round(event.nativeEvent.contentOffset.x / slideWidth);
     if (slide !== activeSlide && slide >= 0 && slide < HERO_SLIDES.length) {
       setActiveSlide(slide);
+    }
+  };
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)");
     }
   };
 
@@ -258,24 +276,32 @@ export function ReferralsScreen() {
       {/* Top Header */}
       <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 16) }]}>
         <Pressable
-          onPress={() => router.back()}
+          onPress={handleBack}
           hitSlop={12}
           style={({ pressed }) => [
             styles.circleBtn,
-            { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#F1F5F9", opacity: pressed ? 0.7 : 1 },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.surfaceBorder,
+              opacity: pressed ? 0.7 : 1,
+            },
           ]}
         >
           <Ionicons name="chevron-back" size={20} color={colors.text} />
         </Pressable>
 
-        <Text style={[styles.topBarTitle, { color: colors.text }]}>Refer &amp; earn</Text>
+        <Text style={[styles.topBarTitle, { color: colors.text }]}>Referral</Text>
 
         <Pressable
           onPress={handleNativeShare}
           hitSlop={12}
           style={({ pressed }) => [
             styles.circleBtn,
-            { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#F1F5F9", opacity: pressed ? 0.7 : 1 },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.surfaceBorder,
+              opacity: pressed ? 0.7 : 1,
+            },
           ]}
         >
           <Ionicons name="share-social-outline" size={19} color={colors.text} />
@@ -284,9 +310,12 @@ export function ReferralsScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 110 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 90 },
+        ]}
       >
-        {/* ── 2-Card Hero Carousel ── */}
+        {/* ── 2-Card Hero Carousel (Matches Black & White Themes) ── */}
         <View style={styles.carouselWrapper}>
           <ScrollView
             ref={carouselScrollRef}
@@ -299,167 +328,239 @@ export function ReferralsScreen() {
             {HERO_SLIDES.map((item) => {
               const isGold = item.themeType === "gold";
               return (
-                <View key={item.id} style={[styles.slideCardWrap, { width: screenWidth - 32 }]}>
+                <View key={item.id} style={[styles.slideCardWrap, { width: slideWidth }]}>
                   <LinearGradient
                     colors={
-                      isGold
-                        ? ["#854D0E", "#CA8A04", "#EAB308"]
-                        : ["#334155", "#475569", "#64748B"]
+                      isDark
+                        ? ["#18181B", "#121214", "#0A0A0C"]
+                        : ["#FFFFFF", "#F9FAFB", "#F1F5F9"]
                     }
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={styles.heroSlide}
+                    style={[
+                      styles.heroSlide,
+                      {
+                        borderColor: isDark
+                          ? "rgba(255, 255, 255, 0.12)"
+                          : "rgba(0, 0, 0, 0.08)",
+                        shadowColor: isDark ? "#000000" : "#64748B",
+                      },
+                    ]}
                   >
+                    {/* Top Row: Clickable Slide Dots (Left) and Tag Pill (Right) */}
                     <View style={styles.slideTopRow}>
+                      <View style={styles.dotsRow}>
+                        {HERO_SLIDES.map((slide, idx) => (
+                          <Pressable
+                            key={slide.id}
+                            onPress={() => {
+                              carouselScrollRef.current?.scrollTo({
+                                x: idx * slideWidth,
+                                animated: true,
+                              });
+                              setActiveSlide(idx);
+                            }}
+                            hitSlop={8}
+                            style={[
+                              styles.dot,
+                              activeSlide === idx
+                                ? [
+                                    styles.activeDot,
+                                    { backgroundColor: isDark ? "#FFFFFF" : "#09090B" },
+                                  ]
+                                : [
+                                    styles.inactiveDot,
+                                    {
+                                      backgroundColor: isDark
+                                        ? "rgba(255, 255, 255, 0.28)"
+                                        : "rgba(0, 0, 0, 0.2)",
+                                    },
+                                  ],
+                            ]}
+                          />
+                        ))}
+                      </View>
+
                       <View
                         style={[
                           styles.slideTagPill,
-                          { backgroundColor: isGold ? "rgba(254, 240, 138, 0.25)" : "rgba(241, 245, 249, 0.2)" },
+                          {
+                            backgroundColor: isDark
+                              ? isGold
+                                ? "rgba(245, 158, 11, 0.16)"
+                                : "rgba(255, 255, 255, 0.08)"
+                              : isGold
+                              ? "rgba(245, 158, 11, 0.12)"
+                              : "rgba(0, 0, 0, 0.05)",
+                            borderColor: isDark
+                              ? isGold
+                                ? "rgba(245, 158, 11, 0.35)"
+                                : "rgba(255, 255, 255, 0.2)"
+                              : isGold
+                              ? "rgba(245, 158, 11, 0.25)"
+                              : "rgba(0, 0, 0, 0.1)",
+                          },
                         ]}
                       >
                         <Ionicons
                           name={item.badgeIcon}
                           size={11}
-                          color={isGold ? "#FEF08A" : "#FFFFFF"}
+                          color={
+                            isGold
+                              ? isDark
+                                ? "#FDE047"
+                                : "#D97706"
+                              : isDark
+                              ? "#F8FAFC"
+                              : "#09090B"
+                          }
                         />
-                        <Text style={[styles.slideTagText, { color: isGold ? "#FEF08A" : "#FFFFFF" }]}>
+                        <Text
+                          style={[
+                            styles.slideTagText,
+                            {
+                              color: isGold
+                                ? isDark
+                                  ? "#FDE047"
+                                  : "#D97706"
+                                : isDark
+                                ? "#F8FAFC"
+                                : "#09090B",
+                            },
+                          ]}
+                        >
                           {item.badgeTag}
                         </Text>
                       </View>
                     </View>
 
-                    <Text style={styles.slideTitleTop}>{item.titleTop}</Text>
-                    <Text
-                      style={[
-                        styles.slideTitleHighlight,
-                        { color: isGold ? "#FEF08A" : "#F8FAFC" },
-                      ]}
-                    >
-                      {item.titleHighlight}
-                    </Text>
-                    <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
+                    <View style={styles.slideBodyWrap}>
+                      <Text
+                        style={[
+                          styles.slideTitleTop,
+                          { color: isDark ? "#FFFFFF" : "#09090B" },
+                        ]}
+                      >
+                        {item.titleTop}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.slideTitleHighlight,
+                          {
+                            color: isGold
+                              ? isDark
+                                ? "#FDE047"
+                                : "#D97706"
+                              : isDark
+                              ? "#FFFFFF"
+                              : "#09090B",
+                          },
+                        ]}
+                      >
+                        {item.titleHighlight}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.slideSubtitle,
+                          {
+                            color: isDark
+                              ? "rgba(255, 255, 255, 0.72)"
+                              : "#64748B",
+                          },
+                        ]}
+                      >
+                        {item.subtitle}
+                      </Text>
+                    </View>
                   </LinearGradient>
                 </View>
               );
             })}
           </ScrollView>
-
-          {/* Carousel Dots */}
-          <View style={styles.dotsRow}>
-            {HERO_SLIDES.map((slide, idx) => (
-              <Pressable
-                key={slide.id}
-                onPress={() => {
-                  carouselScrollRef.current?.scrollTo({ x: idx * (screenWidth - 32), animated: true });
-                  setActiveSlide(idx);
-                }}
-                style={[
-                  styles.dot,
-                  activeSlide === idx
-                    ? [styles.activeDot, { backgroundColor: colors.primary }]
-                    : { backgroundColor: isDark ? "rgba(255,255,255,0.2)" : "#CBD5E1" },
-                ]}
-              />
-            ))}
-          </View>
         </View>
 
-        {/* ── Clean 2-Stat Row (0 Invite friends, 0 Cards Earned) ── */}
-        <View style={styles.statsRow}>
-          <View
-            style={[
-              styles.statPill,
-              {
-                backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "#F8FAFC",
-                borderColor: isDark ? "rgba(255,255,255,0.08)" : "#E2E8F0",
-              },
-            ]}
-          >
-            <View style={[styles.statIconWrap, { backgroundColor: `${colors.primary}18` }]}>
-              <Ionicons name="people-outline" size={18} color={colors.primary} />
-            </View>
-            <View>
-              <Text style={[styles.statNumber, { color: colors.text }]}>
-                {refDashboard?.totalInvited ?? 0}
+        {/* ── VIP Referral Code Card ── */}
+        <View
+          style={[
+            styles.vipCodeCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.surfaceBorder,
+            },
+          ]}
+        >
+          <View style={styles.codeHeaderRow}>
+            <View style={styles.codeLabelWrap}>
+              <Ionicons name="sparkles" size={13} color={colors.primary} />
+              <Text style={[styles.codeLabel, { color: colors.textMuted }]}>
+                YOUR REFERRAL CODE
               </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Invite friends</Text>
+            </View>
+            <View
+              style={[
+                styles.codeActiveBadge,
+                { backgroundColor: `${colors.primary}14` },
+              ]}
+            >
+              <Text style={[styles.codeActiveText, { color: colors.primary }]}>
+                ACTIVE
+              </Text>
             </View>
           </View>
 
+          {/* Monospace Code & Copy Button */}
           <View
             style={[
-              styles.statPill,
+              styles.codeBox,
               {
-                backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "#F8FAFC",
-                borderColor: isDark ? "rgba(255,255,255,0.08)" : "#E2E8F0",
+                backgroundColor: colors.inputBackground || colors.surfaceLight,
+                borderColor: colors.surfaceBorder,
               },
             ]}
           >
-            <View style={[styles.statIconWrap, { backgroundColor: `${colors.primary}18` }]}>
-              <Ionicons name="gift-outline" size={18} color={colors.primary} />
-            </View>
-            <View>
-              <Text style={[styles.statNumber, { color: colors.text }]}>
-                {refDashboard?.goldCardsEarned ?? 0}
-              </Text>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Cards Earned</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* ── Invitation Method Section ── */}
-        <View style={styles.sectionBlock}>
-          <Text style={[styles.sectionHeading, { color: colors.text }]}>Invitation Method</Text>
-
-          {/* Referral Code Row */}
-          <View
-            style={[
-              styles.methodCard,
-              {
-                backgroundColor: isDark ? "rgba(255,255,255,0.04)" : "#F8FAFC",
-                borderColor: isDark ? "rgba(255,255,255,0.08)" : "#E2E8F0",
-              },
-            ]}
-          >
-            <View style={styles.methodMeta}>
-              <Text style={[styles.methodLabel, { color: colors.textMuted }]}>Referral code</Text>
-              <Text style={[styles.methodValue, { color: colors.text }]}>
-                {inviteCode.toUpperCase()}
-              </Text>
-            </View>
+            <Text style={[styles.codeText, { color: colors.primary }]}>
+              {inviteCode.toUpperCase()}
+            </Text>
 
             <Pressable
               onPress={handleCopyCode}
               style={({ pressed }) => [
-                styles.copyCircleBtn,
+                styles.copyActionBtn,
                 {
                   backgroundColor: codeCopied ? "#10B981" : colors.primary,
-                  opacity: pressed ? 0.85 : 1,
+                  opacity: pressed ? 0.88 : 1,
                 },
               ]}
             >
               <Ionicons
                 name={codeCopied ? "checkmark" : "copy-outline"}
-                size={16}
+                size={15}
                 color="#FFFFFF"
               />
+              <Text style={styles.copyActionBtnText}>
+                {codeCopied ? "Copied" : "Copy"}
+              </Text>
             </Pressable>
           </View>
 
           {/* Signup Link Row */}
           <View
             style={[
-              styles.methodCard,
+              styles.linkBox,
               {
-                backgroundColor: isDark ? "rgba(255,255,255,0.04)" : "#F8FAFC",
-                borderColor: isDark ? "rgba(255,255,255,0.08)" : "#E2E8F0",
+                backgroundColor: isDark
+                  ? "rgba(255, 255, 255, 0.03)"
+                  : "rgba(0, 0, 0, 0.02)",
+                borderColor: colors.surfaceBorder,
               },
             ]}
           >
-            <View style={styles.methodMeta}>
-              <Text style={[styles.methodLabel, { color: colors.textMuted }]}>Signup link</Text>
+            <View style={styles.linkInfo}>
+              <Text style={[styles.linkLabel, { color: colors.textMuted }]}>
+                SIGNUP LINK
+              </Text>
               <Text
-                style={[styles.methodValueLink, { color: colors.primary }]}
+                style={[styles.linkValue, { color: colors.text }]}
                 numberOfLines={1}
               >
                 {displaySignupLink}
@@ -468,192 +569,184 @@ export function ReferralsScreen() {
 
             <Pressable
               onPress={handleCopyLink}
+              hitSlop={8}
               style={({ pressed }) => [
-                styles.copyCircleBtn,
+                styles.linkCopyIconBtn,
                 {
-                  backgroundColor: linkCopied ? "#10B981" : colors.primary,
-                  opacity: pressed ? 0.85 : 1,
+                  backgroundColor: linkCopied
+                    ? "#10B981"
+                    : isDark
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "#E2E8F0",
+                  opacity: pressed ? 0.8 : 1,
                 },
               ]}
             >
               <Ionicons
-                name={linkCopied ? "checkmark" : "copy-outline"}
+                name={linkCopied ? "checkmark" : "link-outline"}
                 size={16}
-                color="#FFFFFF"
+                color={linkCopied ? "#FFFFFF" : colors.text}
               />
             </Pressable>
           </View>
-        </View>
 
-        {/* ── How to Refer Section ── */}
-        <View style={styles.sectionBlock}>
-          <Text style={[styles.sectionHeading, { color: colors.text }]}>How to Refer</Text>
-
-          <View style={styles.stepsList}>
-            {/* Step 1 */}
-            <View
-              style={[
-                styles.stepCard,
-                {
-                  backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "#F8FAFC",
-                  borderColor: isDark ? "rgba(255,255,255,0.06)" : "#E2E8F0",
-                },
-              ]}
-            >
-              <View style={[styles.stepBadge, { backgroundColor: colors.primary }]}>
-                <Text style={styles.stepBadgeText}>1</Text>
-              </View>
-              <View style={styles.stepContent}>
-                <Text style={[styles.stepTitle, { color: colors.text }]}>Share</Text>
-                <Text style={[styles.stepDesc, { color: colors.textSecondary }]}>
-                  Send your referral link or code to friends
-                </Text>
-              </View>
-            </View>
-
-            {/* Step 2 */}
-            <View
-              style={[
-                styles.stepCard,
-                {
-                  backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "#F8FAFC",
-                  borderColor: isDark ? "rgba(255,255,255,0.06)" : "#E2E8F0",
-                },
-              ]}
-            >
-              <View style={[styles.stepBadge, { backgroundColor: colors.primary }]}>
-                <Text style={styles.stepBadgeText}>2</Text>
-              </View>
-              <View style={styles.stepContent}>
-                <Text style={[styles.stepTitle, { color: colors.text }]}>Register</Text>
-                <Text style={[styles.stepDesc, { color: colors.textSecondary }]}>
-                  Friends sign up using your link or code
-                </Text>
-              </View>
-            </View>
-
-            {/* Step 3 */}
-            <View
-              style={[
-                styles.stepCard,
-                {
-                  backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "#F8FAFC",
-                  borderColor: isDark ? "rgba(255,255,255,0.06)" : "#E2E8F0",
-                },
-              ]}
-            >
-              <View style={[styles.stepBadge, { backgroundColor: colors.primary }]}>
-                <Text style={styles.stepBadgeText}>3</Text>
-              </View>
-              <View style={styles.stepContent}>
-                <Text style={[styles.stepTitle, { color: colors.text }]}>Earn</Text>
-                <Text style={[styles.stepDesc, { color: colors.textSecondary }]}>
-                  Get Gold VIP Scratch Cards when they scan
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* ── Invited Friends List (if any exist) ── */}
-        {refDashboard?.referrals && refDashboard.referrals.length > 0 ? (
-          <View style={styles.sectionBlock}>
-            <Text style={[styles.sectionHeading, { color: colors.text }]}>
-              Invited Friends ({refDashboard.referrals.length})
+          {/* Single Clean Share Action Button (No WhatsApp, No Telegram) */}
+          <Pressable
+            onPress={handleNativeShare}
+            style={({ pressed }) => [
+              styles.singleShareBtn,
+              {
+                backgroundColor: isDark
+                  ? "rgba(255, 255, 255, 0.06)"
+                  : "#F1F5F9",
+                borderColor: colors.surfaceBorder,
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+          >
+            <Ionicons name="share-social-outline" size={17} color={colors.text} />
+            <Text style={[styles.singleShareBtnText, { color: colors.text }]}>
+              Share Code
             </Text>
-            <View style={styles.referralsList}>
-              {refDashboard.referrals.map((item) => {
-                const isQualified = item.status === "qualified";
-                const initial = (item.invitedUserDisplayName || item.invitedUserUsername || "F")
-                  .charAt(0)
-                  .toUpperCase();
-                return (
-                  <View
-                    key={item.id}
-                    style={[
-                      styles.referralItemCard,
-                      {
-                        backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "#F8FAFC",
-                        borderColor: isDark ? "rgba(255,255,255,0.06)" : "#E2E8F0",
-                      },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.referralAvatar,
-                        { backgroundColor: `${colors.primary}18` },
-                      ]}
-                    >
-                      <Text style={[styles.referralAvatarText, { color: colors.primary }]}>
-                        {initial}
-                      </Text>
-                    </View>
-                    <View style={styles.referralInfo}>
-                      <Text style={[styles.referralName, { color: colors.text }]} numberOfLines={1}>
-                        {item.invitedUserDisplayName || `@${item.invitedUserUsername || "friend"}`}
-                      </Text>
-                      <Text style={[styles.referralDate, { color: colors.textSecondary }]}>
-                        {new Date(item.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </Text>
-                    </View>
-                    <View
-                      style={[
-                        styles.referralStatusBadge,
-                        {
-                          backgroundColor: isQualified
-                            ? "rgba(16, 185, 129, 0.12)"
-                            : "rgba(245, 158, 11, 0.12)",
-                          borderColor: isQualified
-                            ? "rgba(16, 185, 129, 0.3)"
-                            : "rgba(245, 158, 11, 0.3)",
-                        },
-                      ]}
-                    >
-                      <Ionicons
-                        name={isQualified ? "checkmark-circle" : "time-outline"}
-                        size={12}
-                        color={isQualified ? "#10B981" : "#F59E0B"}
-                      />
-                      <Text
-                        style={[
-                          styles.referralStatusText,
-                          { color: isQualified ? "#10B981" : "#F59E0B" },
-                        ]}
-                      >
-                        {isQualified ? "Qualified" : "Pending Scan"}
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        ) : null}
+          </Pressable>
+        </View>
 
-        {/* ── Have a friend's referral code button ── */}
+        {/* ── Have a friend's referral code banner ── */}
         <Pressable
           onPress={() => setClaimModalOpen(true)}
           style={({ pressed }) => [
-            styles.haveCodeBtn,
-            { opacity: pressed ? 0.75 : 1 },
+            styles.haveCodeCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.surfaceBorder,
+              opacity: pressed ? 0.9 : 1,
+            },
           ]}
         >
-          <Text style={[styles.haveCodeBtnText, { color: colors.primary }]}>
-            Have a friend&apos;s referral code? Tap to enter
-          </Text>
+          <View
+            style={[
+              styles.haveCodeIconWrap,
+              { backgroundColor: `${colors.primary}12` },
+            ]}
+          >
+            <Ionicons name="gift-outline" size={20} color={colors.primary} />
+          </View>
+          <View style={styles.haveCodeContent}>
+            <Text style={[styles.haveCodeTitle, { color: colors.text }]}>
+              Have a friend&apos;s code?
+            </Text>
+            <Text style={[styles.haveCodeSubtitle, { color: colors.textSecondary }]}>
+              Enter before your 1st scan to claim Silver Card
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.haveCodeArrowWrap,
+              { backgroundColor: colors.surfaceLight },
+            ]}
+          >
+            <Ionicons name="chevron-forward" size={15} color={colors.primary} />
+          </View>
         </Pressable>
+
+        {/* ── How to Refer Section (Simple, Brand-Consistent, Short Text, No Green Arrows) ── */}
+        <View style={styles.sectionBlock}>
+          <Text style={[styles.sectionHeading, { color: colors.text }]}>
+            How it works
+          </Text>
+
+          <View
+            style={[
+              styles.stepsCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.surfaceBorder,
+              },
+            ]}
+          >
+            {/* Step 1 */}
+            <View style={styles.stepItemRow}>
+              <View
+                style={[
+                  styles.stepBadge,
+                  {
+                    backgroundColor: isDark ? "rgba(255, 255, 255, 0.08)" : "#F1F5F9",
+                    borderColor: colors.surfaceBorder,
+                  },
+                ]}
+              >
+                <Text style={[styles.stepBadgeText, { color: colors.text }]}>1</Text>
+              </View>
+              <View style={styles.stepTextWrap}>
+                <Text style={[styles.stepTitle, { color: colors.text }]}>
+                  Share invite link
+                </Text>
+                <Text style={[styles.stepDesc, { color: colors.textSecondary }]}>
+                  Send your code or link to friends
+                </Text>
+              </View>
+            </View>
+
+            <View style={[styles.stepDivider, { backgroundColor: colors.surfaceBorder }]} />
+
+            {/* Step 2 */}
+            <View style={styles.stepItemRow}>
+              <View
+                style={[
+                  styles.stepBadge,
+                  {
+                    backgroundColor: isDark ? "rgba(255, 255, 255, 0.08)" : "#F1F5F9",
+                    borderColor: colors.surfaceBorder,
+                  },
+                ]}
+              >
+                <Text style={[styles.stepBadgeText, { color: colors.text }]}>2</Text>
+              </View>
+              <View style={styles.stepTextWrap}>
+                <Text style={[styles.stepTitle, { color: colors.text }]}>
+                  Friend scans QR
+                </Text>
+                <Text style={[styles.stepDesc, { color: colors.textSecondary }]}>
+                  Friend signs up and completes 1st scan
+                </Text>
+              </View>
+            </View>
+
+            <View style={[styles.stepDivider, { backgroundColor: colors.surfaceBorder }]} />
+
+            {/* Step 3 */}
+            <View style={styles.stepItemRow}>
+              <View
+                style={[
+                  styles.stepBadge,
+                  {
+                    backgroundColor: isDark ? "rgba(255, 255, 255, 0.08)" : "#F1F5F9",
+                    borderColor: colors.surfaceBorder,
+                  },
+                ]}
+              >
+                <Text style={[styles.stepBadgeText, { color: colors.text }]}>3</Text>
+              </View>
+              <View style={styles.stepTextWrap}>
+                <Text style={[styles.stepTitle, { color: colors.text }]}>
+                  Get rewards
+                </Text>
+                <Text style={[styles.stepDesc, { color: colors.textSecondary }]}>
+                  You get Gold VIP, friend gets Silver
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
       </ScrollView>
 
-      {/* ── Fixed Bottom CTA Bar ── */}
+      {/* ── Fixed Bottom CTA Bar ("Invite Now" Button) ── */}
       <View
         style={[
           styles.bottomFixedBar,
           {
             backgroundColor: colors.background,
-            borderTopColor: isDark ? "rgba(255,255,255,0.08)" : "#E2E8F0",
+            borderTopColor: colors.surfaceBorder,
             paddingBottom: Math.max(insets.bottom, 14),
           },
         ]}
@@ -665,42 +758,55 @@ export function ReferralsScreen() {
             { backgroundColor: colors.primary, opacity: pressed ? 0.9 : 1 },
           ]}
         >
-          <Text style={styles.inviteNowBtnText}>Invite now</Text>
-          <Ionicons name="arrow-forward" size={17} color="#FFFFFF" />
+          <Ionicons name="share-social-outline" size={18} color="#FFFFFF" />
+          <Text style={styles.inviteNowBtnText}>Invite Now</Text>
         </Pressable>
       </View>
 
-      {/* ── Claim Friend's Code Modal ── */}
+      {/* ── Claim Friend's Code Modal (Smooth Fade Animation, Professional Card) ── */}
       <Modal
         visible={claimModalOpen}
         transparent
-        animationType="slide"
+        animationType="fade"
+        statusBarTranslucent
         onRequestClose={() => {
           setClaimModalOpen(false);
           setReferralStatus(null);
         }}
       >
-        <View style={styles.modalBackdrop}>
-          <View
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => {
+            setClaimModalOpen(false);
+            setReferralStatus(null);
+          }}
+        >
+          <Pressable
             style={[
-              styles.modalSheet,
+              styles.modalCard,
               {
-                backgroundColor: isDark ? "#0F172A" : "#FFFFFF",
-                paddingBottom: Math.max(insets.bottom + 16, 24),
+                backgroundColor: colors.surface,
+                borderColor: colors.surfaceBorder,
               },
             ]}
+            onPress={(e) => e.stopPropagation()}
           >
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Enter referee code</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>
+                Enter Invite Code
+              </Text>
               <Pressable
                 onPress={() => {
                   setClaimModalOpen(false);
                   setReferralStatus(null);
                 }}
                 hitSlop={12}
-                style={styles.modalCloseBtn}
+                style={[
+                  styles.modalCloseBtn,
+                  { backgroundColor: colors.surfaceLight },
+                ]}
               >
-                <Ionicons name="close" size={20} color={colors.text} />
+                <Ionicons name="close" size={18} color={colors.text} />
               </Pressable>
             </View>
 
@@ -711,10 +817,10 @@ export function ReferralsScreen() {
                   <Ionicons name="checkmark-circle" size={36} color="#10B981" />
                 </View>
                 <Text style={[styles.modalStateTitle, { color: colors.text }]}>
-                  You are already referred!
+                  Already referred!
                 </Text>
                 <Text style={[styles.modalStateDesc, { color: colors.textSecondary }]}>
-                  A referral code has already been linked to your account. Enjoy your rewards!
+                  A referral code has already been linked to your account.
                 </Text>
                 <Pressable
                   onPress={() => setClaimModalOpen(false)}
@@ -730,10 +836,10 @@ export function ReferralsScreen() {
                   <Ionicons name="alert-circle" size={36} color="#F59E0B" />
                 </View>
                 <Text style={[styles.modalStateTitle, { color: colors.text }]}>
-                  You can&apos;t enter, code expired!
+                  Code claim window closed
                 </Text>
                 <Text style={[styles.modalStateDesc, { color: colors.textSecondary }]}>
-                  Referral bonus codes must be entered before scanning your first QR code. Because you have already scanned a QR code, the code claim window is closed.
+                  Referral bonus codes must be entered before scanning your first QR code.
                 </Text>
                 <Pressable
                   onPress={() => setClaimModalOpen(false)}
@@ -746,7 +852,7 @@ export function ReferralsScreen() {
               /* Eligible Case */
               <View style={styles.modalEligibleBody}>
                 <Text style={[styles.modalDesc, { color: colors.textSecondary }]}>
-                  Enter your friend&apos;s 7-character invite code before making your first scan to unlock your welcome reward.
+                  Enter a friend&apos;s 7-character invite code before your first scan to unlock your welcome reward.
                 </Text>
 
                 <TextInput
@@ -763,9 +869,9 @@ export function ReferralsScreen() {
                   style={[
                     styles.modalInput,
                     {
-                      backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F1F5F9",
+                      backgroundColor: colors.inputBackground || colors.surfaceLight,
                       color: colors.text,
-                      borderColor: isDark ? "rgba(255,255,255,0.1)" : "#CBD5E1",
+                      borderColor: colors.surfaceBorder,
                     },
                   ]}
                 />
@@ -774,9 +880,29 @@ export function ReferralsScreen() {
                   <View
                     style={[
                       styles.modalStatusBox,
-                      { backgroundColor: referralError ? "#EF444415" : "#10B98115" },
+                      {
+                        backgroundColor: referralError
+                          ? isDark
+                            ? "rgba(239, 68, 68, 0.15)"
+                            : "#FEF2F2"
+                          : isDark
+                          ? "rgba(16, 185, 129, 0.15)"
+                          : "#ECFDF5",
+                        borderColor: referralError
+                          ? isDark
+                            ? "rgba(239, 68, 68, 0.3)"
+                            : "#FECACA"
+                          : isDark
+                          ? "rgba(16, 185, 129, 0.3)"
+                          : "#A7F3D0",
+                      },
                     ]}
                   >
+                    <Ionicons
+                      name={referralError ? "alert-circle" : "checkmark-circle"}
+                      size={15}
+                      color={referralError ? "#EF4444" : "#10B981"}
+                    />
                     <Text
                       style={[
                         styles.modalStatusText,
@@ -829,7 +955,8 @@ export function ReferralsScreen() {
                       styles.modalSubmitBtn,
                       {
                         backgroundColor: colors.primary,
-                        opacity: !referralInput.trim() || applyingCode ? 0.5 : pressed ? 0.85 : 1,
+                        opacity:
+                          !referralInput.trim() || applyingCode ? 0.45 : pressed ? 0.85 : 1,
                       },
                     ]}
                   >
@@ -840,8 +967,8 @@ export function ReferralsScreen() {
                 )}
               </View>
             )}
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );
@@ -885,12 +1012,14 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
   topBarTitle: {
     fontSize: 18,
     fontWeight: "800",
+    letterSpacing: -0.3,
   },
   scrollContent: {
     paddingHorizontal: 16,
@@ -900,92 +1029,222 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   slideCardWrap: {
-    paddingRight: 6,
+    paddingRight: 0,
   },
   heroSlide: {
     borderRadius: 22,
     padding: 20,
-    minHeight: 175,
+    minHeight: 160,
     justifyContent: "space-between",
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   slideTopRow: {
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  dotsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  dot: {
+    height: 6,
+    borderRadius: 3,
+  },
+  inactiveDot: {
+    width: 6,
+  },
+  activeDot: {
+    width: 20,
   },
   slideTagPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    paddingHorizontal: 9,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 100,
+    borderWidth: 1,
   },
   slideTagText: {
     fontSize: 10,
     fontWeight: "800",
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
-  slideTitleTop: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "800",
-    lineHeight: 25,
+  slideBodyWrap: {
     marginTop: 8,
   },
+  slideTitleTop: {
+    fontSize: 17,
+    fontWeight: "700",
+    lineHeight: 22,
+  },
   slideTitleHighlight: {
-    fontSize: 22,
-    fontWeight: "900",
-    lineHeight: 27,
+    fontSize: 21,
+    fontWeight: "800",
+    lineHeight: 26,
   },
   slideSubtitle: {
-    color: "rgba(255, 255, 255, 0.85)",
-    fontSize: 12,
+    fontSize: 12.5,
     lineHeight: 17,
-    marginTop: 6,
+    marginTop: 4,
   },
-  dotsRow: {
+
+  /* ── VIP Referral Code Card ── */
+  vipCodeCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  codeHeaderRow: {
     flexDirection: "row",
-    justifyContent: "center",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  codeLabelWrap: {
+    flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: 12,
   },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+  codeLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.6,
   },
-  activeDot: {
-    width: 20,
+  codeActiveBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
-  statsRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 20,
+  codeActiveText: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.5,
   },
-  statPill: {
-    flex: 1,
+  codeBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  codeText: {
+    fontSize: 20,
+    fontWeight: "800",
+    letterSpacing: 2,
+    fontFamily: "Inter_700Bold",
+  },
+  copyActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  copyActionBtnText: {
+    color: "#FFFFFF",
+    fontSize: 12.5,
+    fontWeight: "700",
+  },
+  linkBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  linkInfo: {
+    flex: 1,
+    marginRight: 10,
+  },
+  linkLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+    marginBottom: 2,
+  },
+  linkValue: {
+    fontSize: 12.5,
+    fontWeight: "600",
+  },
+  linkCopyIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  singleShareBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    paddingVertical: 11,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  singleShareBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+
+  /* ── Have Code Card ── */
+  haveCodeCard: {
+    flexDirection: "row",
+    alignItems: "center",
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
+    marginBottom: 18,
+    gap: 12,
   },
-  statIconWrap: {
+  haveCodeIconWrap: {
     width: 38,
     height: 38,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: "800",
+  haveCodeContent: {
+    flex: 1,
   },
-  statLabel: {
-    fontSize: 12,
-    marginTop: 1,
+  haveCodeTitle: {
+    fontSize: 14,
+    fontWeight: "700",
   },
+  haveCodeSubtitle: {
+    fontSize: 11.5,
+    marginTop: 2,
+  },
+  haveCodeArrowWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  /* ── How It Works (Brand-Consistent, Simple Short Text, No Green Arrows) ── */
   sectionBlock: {
     marginBottom: 20,
   },
@@ -993,65 +1252,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "800",
     marginBottom: 12,
+    letterSpacing: -0.2,
   },
-  methodCard: {
+  stepsCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  stepItemRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 10,
-  },
-  methodMeta: {
-    flex: 1,
-    marginRight: 10,
-  },
-  methodLabel: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  methodValue: {
-    fontSize: 16,
-    fontWeight: "800",
-    marginTop: 3,
-  },
-  methodValueLink: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginTop: 3,
-  },
-  copyCircleBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepsList: {
-    gap: 10,
-  },
-  stepCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
     gap: 14,
+    paddingVertical: 8,
   },
   stepBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
   stepBadgeText: {
-    color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "800",
   },
-  stepContent: {
+  stepTextWrap: {
     flex: 1,
   },
   stepTitle: {
@@ -1061,28 +1293,24 @@ const styles = StyleSheet.create({
   stepDesc: {
     fontSize: 12,
     marginTop: 2,
-    lineHeight: 16,
   },
-  haveCodeBtn: {
-    alignItems: "center",
-    paddingVertical: 14,
-    marginBottom: 20,
+  stepDivider: {
+    height: 1,
+    marginVertical: 4,
   },
-  haveCodeBtnText: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
+
+  /* ── Bottom Fixed Bar ── */
   bottomFixedBar: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    paddingTop: 12,
+    paddingTop: 10,
     paddingHorizontal: 16,
     borderTopWidth: 1,
   },
   inviteNowBtn: {
-    height: 52,
+    height: 48,
     borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
@@ -1094,56 +1322,71 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
   },
+
+  /* ── Modal (Clean Fade Backdrop & Centered Sheet) ── */
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.65)",
-    justifyContent: "flex-end",
-  },
-  modalSheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 22,
+    borderWidth: 1,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
   },
   modalHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 14,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "800",
   },
   modalCloseBtn: {
-    padding: 4,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalBlockedState: {
     alignItems: "center",
-    paddingVertical: 18,
-    paddingHorizontal: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
   },
   modalStateIconWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
   },
   modalStateTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "800",
     textAlign: "center",
   },
   modalStateDesc: {
     fontSize: 13,
     textAlign: "center",
-    lineHeight: 19,
-    marginTop: 8,
-    marginBottom: 20,
+    lineHeight: 18,
+    marginTop: 6,
+    marginBottom: 18,
   },
   modalDismissBtn: {
-    height: 48,
+    height: 46,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -1155,15 +1398,15 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   modalEligibleBody: {
-    marginTop: 4,
+    marginTop: 2,
   },
   modalDesc: {
     fontSize: 13,
     lineHeight: 18,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   modalInput: {
-    height: 50,
+    height: 48,
     borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 16,
@@ -1172,35 +1415,39 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   modalStatusBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     padding: 10,
     borderRadius: 10,
+    borderWidth: 1,
     marginTop: 10,
   },
   modalStatusText: {
     fontSize: 12,
     fontWeight: "600",
-    textAlign: "center",
+    flex: 1,
   },
   modalSubmitBtn: {
-    height: 50,
-    borderRadius: 14,
+    height: 48,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 16,
   },
   modalSubmitBtnText: {
     color: "#FFFFFF",
-    fontSize: 15,
+    fontSize: 14.5,
     fontWeight: "700",
   },
   modalSecondaryBtn: {
-    height: 44,
+    height: 42,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
   modalSecondaryBtnText: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: "700",
   },
 });

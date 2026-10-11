@@ -1,2 +1,3 @@
-export * from "../referrals";
-export { default } from "../referrals";
+export { ReferralsScreen } from "./ReferralsScreen";
+export { ReferralsScreen as default } from "./ReferralsScreen";
+

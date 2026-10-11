@@ -286,6 +286,12 @@ function applyDocumentIdentity(q: any, parsed: ParsedPath): any {
     return applyExtraFilters(q, parsed.extraFilters);
   }
   const idField = parsed.table === "usernames" ? "username" : "id";
+  if (
+    parsed.table === "qr_scans" &&
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(parsed.id))
+  ) {
+    return applyExtraFilters(q, parsed.extraFilters);
+  }
   let next = q.eq(idField, parsed.id);
   return applyExtraFilters(next, parsed.extraFilters);
 }
@@ -492,6 +498,12 @@ async function setDocumentRow(parsed: ParsedPath, data: Record<string, any>): Pr
       const { error: reinsertErr } = await supabase.from(parsed.table).insert(row);
       if (!reinsertErr) return;
     }
+  }
+
+  if (parsed.table === "qr_scans" && !row.id) {
+    const { error: insErr } = await supabase.from(parsed.table).insert(row);
+    if (insErr) throw toDbError(insErr);
+    return;
   }
 
   const onConflict = conflictTargetForTable(parsed.table);

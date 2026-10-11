@@ -9,8 +9,15 @@ import { processEligibleScanReward } from "../rewards/reward-service";
 
 const SCAN_SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-function generateDocId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+function generateUUID(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
 export async function recordScan(
@@ -23,30 +30,88 @@ export async function recordScan(
   if (userId && isAnonymous) return;
 
   try {
-    const qrData = await db.get([COLLECTIONS.QR_CODES, qrId]);
-    const currentScanCount = qrData?.scanCount ?? 0;
-    await incrementSmartCounter(qrId, currentScanCount, 1);
-  } catch (e) {
-    console.warn("[db] recordScan: failed to check/increment scanCount:", e);
+    const { error: rpcErr } = await supabase.rpc("increment_field", {
+      p_table: "qr_codes",
+      p_id: qrId,
+      p_field: "scan_count",
+      p_delta: 1,
+    });
+    if (rpcErr) {
+      const qrData = await db.get([COLLECTIONS.QR_CODES, qrId]).catch(() => null);
+      const currentScanCount = qrData?.scanCount ?? 0;
+      await incrementSmartCounter(qrId, currentScanCount, 1).catch(() => {});
+    }
+  } catch {
+    try {
+      const qrData = await db.get([COLLECTIONS.QR_CODES, qrId]).catch(() => null);
+      const currentScanCount = qrData?.scanCount ?? 0;
+      await incrementSmartCounter(qrId, currentScanCount, 1).catch(() => {});
+    } catch {}
   }
 
   if (userId && !isAnonymous) {
+    const scanId = generateUUID();
+    const scannedAt = new Date().toISOString();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(scanId);
+
+    const basePayload: Record<string, any> = {
+      user_id: userId,
+      qr_code_id: qrId,
+      content: content || "",
+      content_type: contentType || "url",
+      verdict: "unknown",
+      scanned_at: scannedAt,
+    };
+    if (isUuid) basePayload.id = scanId;
+
     try {
-      // Atomically write the scan record and increment personalScanCount together
-      // so the counter never drifts from the actual number of stored scan documents.
-      const scanId = generateDocId();
-      const batch = db.batch();
-      batch.set([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, scanId], {
-        qrCodeId: qrId,
-        content,
-        contentType,
-        isAnonymous: false,
-        scannedAt: db.timestamp(),
-        counted: true,
+      const { error: insertErr } = await supabase.from("qr_scans").insert({
+        ...basePayload,
+        is_deleted: false,
       });
-      batch.increment([COLLECTIONS.USERS, userId], "personalScanCount", 1);
-      await batch.commit();
-    } catch {}
+
+      if (insertErr) {
+        // Retry without is_deleted in case column is absent in database
+        delete basePayload.id;
+        const { error: retryErr } = await supabase.from("qr_scans").insert(basePayload);
+        if (retryErr) {
+          await db.set([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, scanId], {
+            qrCodeId: qrId,
+            content,
+            contentType,
+            isDeleted: false,
+            scannedAt,
+          }).catch(() => {});
+        }
+      }
+    } catch {
+      try {
+        delete basePayload.id;
+        await supabase.from("qr_scans").insert(basePayload);
+      } catch {
+        await db.set([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, scanId], {
+          qrCodeId: qrId,
+          content,
+          contentType,
+          isDeleted: false,
+          scannedAt,
+        }).catch(() => {});
+      }
+    }
+
+    try {
+      const { error: userRpcErr } = await supabase.rpc("increment_field", {
+        p_table: "users",
+        p_id: userId,
+        p_field: "scan_count",
+        p_delta: 1,
+      });
+      if (userRpcErr) {
+        await db.increment([COLLECTIONS.USERS, userId], "personalScanCount", 1).catch(() => {});
+      }
+    } catch {
+      await db.increment([COLLECTIONS.USERS, userId], "personalScanCount", 1).catch(() => {});
+    }
 
     // Evaluate eligible scan reward (Welcome Card + 3/8/15 daily milestones + referral unlock)
     processEligibleScanReward(userId, qrId, isAnonymous).catch(() => {});
@@ -54,17 +119,45 @@ export async function recordScan(
 }
 
 export async function getUserScans(userId: string): Promise<any[]> {
-  const { docs } = await db.query(
-    [COLLECTIONS.USERS, userId, COLLECTIONS.SCANS],
-    { orderBy: { field: "scannedAt", direction: "desc" }, limit: 100 }
-  );
-  return docs
-    .filter((d) => d.data.isDeleted !== true)
-    .map((d) => ({
-      id: d.id,
-      ...d.data,
-      scannedAt: tsToString(d.data.scannedAt),
-    }));
+  if (!userId) return [];
+  try {
+    const { data: rows, error } = await supabase
+      .from("qr_scans")
+      .select("*")
+      .eq("user_id", userId)
+      .order("scanned_at", { ascending: false })
+      .limit(100);
+
+    if (!error && Array.isArray(rows)) {
+      return rows
+        .filter((r) => r.is_deleted !== true && r.isDeleted !== true)
+        .map((r) => ({
+          id: String(r.id),
+          qrCodeId: r.qr_code_id || r.qrCodeId,
+          content: r.content || "",
+          contentType: r.content_type || r.contentType || "url",
+          scannedAt: r.scanned_at || r.scannedAt || new Date().toISOString(),
+          source: "cloud" as const,
+        }));
+    }
+  } catch {}
+
+  try {
+    const { docs } = await db.query(
+      [COLLECTIONS.USERS, userId, COLLECTIONS.SCANS],
+      { orderBy: { field: "scannedAt", direction: "desc" }, limit: 100 }
+    );
+    return docs
+      .filter((d) => d.data.isDeleted !== true && d.data.is_deleted !== true)
+      .map((d) => ({
+        id: d.id,
+        ...d.data,
+        scannedAt: tsToString(d.data.scannedAt || d.data.scanned_at),
+        source: "cloud" as const,
+      }));
+  } catch {
+    return [];
+  }
 }
 
 export async function getUserScansPaginated(
@@ -72,54 +165,127 @@ export async function getUserScansPaginated(
   pageSize: number = 20,
   cursor?: any
 ): Promise<{ items: any[]; cursor: any; hasMore: boolean }> {
-  // FIX: "Empty First Page" bug caused by soft-deletion interacting with pagination.
-  //
-  // Root cause of the old single-fetch approach:
-  //   When the user deletes their N most recent scans, the first Firestore page
-  //   returns N docs that are ALL marked isDeleted:true. After filtering, items=[]
-  //   even though hasMore=true (there are more pages). Because the list is empty,
-  //   the user can never scroll to trigger onEndReached, so page 2+ (which has
-  //   their real scans) is never fetched → blank history forever.
-  //
-  // Fix: loop fetching batches of pageSize raw docs until we have collected at
-  // least pageSize visible (non-deleted) items OR we exhaust all documents.
-  // The cursor always advances to the end of the last fetched batch, so
-  // subsequent page calls start from the correct Firestore position — no gaps,
-  // no duplicates.
-  //
-  // Worst case: MAX_LOOPS * pageSize deleted docs before finding anything.
-  // In practice this is 1 extra round-trip per "run" of deleted docs.
-  const visibleItems: any[] = [];
-  let currentCursor: any = cursor ?? null;
-  let exhausted = false;
-  const MAX_LOOPS = 15; // handles up to 15×pageSize consecutive deleted docs safely
-
-  for (let loops = 0; loops < MAX_LOOPS && visibleItems.length < pageSize && !exhausted; loops++) {
-    const { docs, cursor: newCursor } = await db.query(
-      [COLLECTIONS.USERS, userId, COLLECTIONS.SCANS],
-      { orderBy: { field: "scannedAt", direction: "desc" }, limit: pageSize, cursor: currentCursor }
-    );
-
-    for (const d of docs) {
-      if (d.data.isDeleted !== true) visibleItems.push(d);
-    }
-
-    if (docs.length < pageSize) {
-      exhausted = true; // Firestore returned fewer than requested → no more docs
-    }
-
-    if (docs.length > 0) currentCursor = newCursor;
+  if (!userId) {
+    return { items: [], cursor: null, hasMore: false };
   }
 
-  return {
-    items: visibleItems.map((d) => ({
-      id: d.id,
-      ...d.data,
-      scannedAt: tsToString(d.data.scannedAt),
-    })),
-    cursor: exhausted ? null : currentCursor,
-    hasMore: !exhausted,
-  };
+  // 1. Direct Supabase query
+  try {
+    let query = supabase
+      .from("qr_scans")
+      .select("*")
+      .eq("user_id", userId)
+      .order("scanned_at", { ascending: false })
+      .limit(pageSize);
+
+    if (cursor) {
+      query = query.lt("scanned_at", cursor);
+    }
+
+    const { data: rows, error: qErr } = await query;
+    let scanRows = rows;
+
+    if (!qErr && Array.isArray(scanRows) && scanRows.length > 0) {
+      const filtered = scanRows.filter((r) => r.is_deleted !== true && r.isDeleted !== true);
+
+      // Check if any rows are missing content and batch-resolve from qr_codes
+      const missingQrIds: string[] = [];
+      for (const row of filtered) {
+        const qrId = row.qr_code_id || row.qrCodeId;
+        const content = row.content || "";
+        if (!content && qrId) {
+          missingQrIds.push(qrId);
+        }
+      }
+
+      const qrMap = new Map<string, { content: string; contentType: string }>();
+      if (missingQrIds.length > 0) {
+        try {
+          const { data: qrs } = await supabase
+            .from("qr_codes")
+            .select("id, content, content_type")
+            .in("id", missingQrIds);
+          if (Array.isArray(qrs)) {
+            for (const q of qrs) {
+              qrMap.set(q.id, { content: q.content || "", contentType: q.content_type || "url" });
+            }
+          }
+        } catch {}
+      }
+
+      const items = filtered.map((r) => {
+        const rawQrId = r.qr_code_id || r.qrCodeId || r.id;
+        let content = r.content || "";
+        let contentType = r.content_type || r.contentType || "url";
+        if (!content && rawQrId && qrMap.has(rawQrId)) {
+          const mapped = qrMap.get(rawQrId)!;
+          content = mapped.content;
+          contentType = mapped.contentType;
+        }
+
+        return {
+          id: String(r.id),
+          qrCodeId: rawQrId,
+          content,
+          contentType,
+          scannedAt: r.scanned_at || r.scannedAt || new Date().toISOString(),
+          source: "cloud" as const,
+        };
+      });
+
+      const lastRow = scanRows[scanRows.length - 1];
+      const nextCursor = scanRows.length >= pageSize && lastRow ? (lastRow.scanned_at || lastRow.scannedAt) : null;
+
+      return {
+        items,
+        cursor: nextCursor,
+        hasMore: scanRows.length >= pageSize,
+      };
+    } else if (!qErr && Array.isArray(scanRows)) {
+      return { items: [], cursor: null, hasMore: false };
+    }
+  } catch (err) {
+    console.warn("[scan-crud] Supabase direct query failed:", err);
+  }
+
+  // 2. Fallback via database adapter
+  try {
+    const visibleItems: any[] = [];
+    let currentCursor: any = cursor ?? null;
+    let exhausted = false;
+    const MAX_LOOPS = 5;
+
+    for (let loops = 0; loops < MAX_LOOPS && visibleItems.length < pageSize && !exhausted; loops++) {
+      const { docs, cursor: newCursor } = await db.query(
+        [COLLECTIONS.USERS, userId, COLLECTIONS.SCANS],
+        { orderBy: { field: "scannedAt", direction: "desc" }, limit: pageSize, cursor: currentCursor }
+      );
+
+      for (const d of docs) {
+        if (d.data.isDeleted !== true && d.data.is_deleted !== true) visibleItems.push(d);
+      }
+
+      if (docs.length < pageSize) {
+        exhausted = true;
+      }
+      if (docs.length > 0) currentCursor = newCursor;
+    }
+
+    return {
+      items: visibleItems.map((d) => ({
+        id: d.id,
+        ...d.data,
+        content: d.data.content || "",
+        contentType: d.data.contentType || d.data.content_type || "url",
+        scannedAt: tsToString(d.data.scannedAt || d.data.scanned_at),
+        source: "cloud" as const,
+      })),
+      cursor: exhausted ? null : currentCursor,
+      hasMore: !exhausted,
+    };
+  } catch {
+    return { items: [], cursor: null, hasMore: false };
+  }
 }
 
 export async function deleteUserScan(
@@ -127,6 +293,24 @@ export async function deleteUserScan(
   scanId: string,
   qrCodeId?: string
 ): Promise<void> {
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(scanId);
+    if (isUuid) {
+      await supabase
+        .from("qr_scans")
+        .update({ is_deleted: true })
+        .eq("user_id", userId)
+        .eq("id", scanId);
+    }
+    if (qrCodeId) {
+      await supabase
+        .from("qr_scans")
+        .update({ is_deleted: true })
+        .eq("user_id", userId)
+        .eq("qr_code_id", qrCodeId);
+    }
+  } catch {}
+
   try {
     const batch = db.batch();
     batch.update([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, scanId], { isDeleted: true, deletedAt: db.timestamp() });

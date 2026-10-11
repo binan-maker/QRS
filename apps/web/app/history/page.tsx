@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Ionicons } from "@/lib/mobile-icons";
 import { useAuth } from "@/lib/auth-context";
+import { isWebSupabaseConfigured } from "@/lib/supabase";
 import {
   fetchUserScans,
   deleteUserScan,
@@ -64,7 +65,9 @@ export default function HistoryPage() {
         const items = await fetchUserScans(user?.id, force);
         setScans(items);
       } catch {
-        setCloudError(true);
+        if (isWebSupabaseConfigured()) {
+          setCloudError(true);
+        }
       } finally {
         setLoading(false);
       }
@@ -82,6 +85,7 @@ export default function HistoryPage() {
         "binro_recent_scans",
         "local_scan_history",
         "binro_scan_history",
+        "binro_scans",
       ].filter(Boolean) as string[];
 
       for (const k of keys) {

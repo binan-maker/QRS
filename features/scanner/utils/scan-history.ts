@@ -17,25 +17,36 @@ export interface LocalScanEntry {
  * Caps the list at 100 entries. Fire-and-forget safe.
  */
 export async function appendToLocalScanHistory(
-  userId: string,
-  entry: LocalScanEntry
+  userId?: string | null,
+  entry?: LocalScanEntry
 ): Promise<void> {
-  const historyKey = `local_scan_history_${userId}`;
+  if (!entry) return;
+
   try {
-    const stored = await AsyncStorage.getItem(historyKey);
-    const history: LocalScanEntry[] = stored ? JSON.parse(stored) : [];
+    const keys = [
+      userId ? `local_scan_history_${userId}` : null,
+      "local_scan_history",
+      "binro_recent_scans",
+      "binro_scan_history",
+    ].filter(Boolean) as string[];
 
-    // Remove any older duplicate entry for the same QR code or destination
     const normEntryContent = normalizeScanContent(entry.content);
-    const filtered = history.filter((item) => {
-      if (entry.qrCodeId && item.qrCodeId && entry.qrCodeId === item.qrCodeId) return false;
-      if (normEntryContent && item.content && normalizeScanContent(item.content) === normEntryContent) return false;
-      return true;
-    });
 
-    filtered.unshift(entry);
-    if (filtered.length > 100) filtered.pop();
-    await AsyncStorage.setItem(historyKey, JSON.stringify(filtered));
+    for (const historyKey of keys) {
+      const stored = await AsyncStorage.getItem(historyKey);
+      const history: LocalScanEntry[] = stored ? JSON.parse(stored) : [];
+
+      // Remove any older duplicate entry for the same QR code or destination
+      const filtered = history.filter((item) => {
+        if (entry.qrCodeId && item.qrCodeId && entry.qrCodeId === item.qrCodeId) return false;
+        if (normEntryContent && item.content && normalizeScanContent(item.content) === normEntryContent) return false;
+        return true;
+      });
+
+      filtered.unshift(entry);
+      if (filtered.length > 100) filtered.pop();
+      await AsyncStorage.setItem(historyKey, JSON.stringify(filtered));
+    }
   } catch {}
 }
 

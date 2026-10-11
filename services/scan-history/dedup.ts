@@ -56,14 +56,24 @@ export function mergeAndDeduplicateScans<T extends ScanLike>(
 
   for (let i = 0; i < localItems.length; i++) {
     const item = localItems[i];
-    if (item && item.scannedAt) {
-      allItems.push({ item, ts: Date.parse(item.scannedAt) || 0 });
+    if (item) {
+      const rawDate = item.scannedAt || (item as any).scanned_at || (item as any).timestamp;
+      const ts = rawDate ? (Date.parse(rawDate) || 0) : 0;
+      allItems.push({
+        item: item.scannedAt ? item : ({ ...item, scannedAt: rawDate || new Date().toISOString() } as T),
+        ts,
+      });
     }
   }
   for (let i = 0; i < cloudItems.length; i++) {
     const item = cloudItems[i];
-    if (item && item.scannedAt) {
-      allItems.push({ item, ts: Date.parse(item.scannedAt) || 0 });
+    if (item) {
+      const rawDate = item.scannedAt || (item as any).scanned_at || (item as any).timestamp;
+      const ts = rawDate ? (Date.parse(rawDate) || 0) : 0;
+      allItems.push({
+        item: item.scannedAt ? item : ({ ...item, scannedAt: rawDate || new Date().toISOString() } as T),
+        ts,
+      });
     }
   }
 

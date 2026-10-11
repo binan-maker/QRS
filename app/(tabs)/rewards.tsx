@@ -227,7 +227,25 @@ export default function RewardsScreen() {
 
           <Text style={[styles.headerTitle, { color: colors.text }]}>Rewards</Text>
 
-          <View style={styles.headerRightGroup} />
+          <View style={styles.headerRightGroup}>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/referrals");
+              }}
+              hitSlop={8}
+              style={({ pressed }) => [
+                styles.referPillBtn,
+                {
+                  backgroundColor: isDark ? "rgba(59, 130, 246, 0.15)" : "rgba(0, 82, 204, 0.1)",
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <Ionicons name="people-outline" size={14} color={colors.primary} />
+              <Text style={[styles.referPillText, { color: colors.primary }]}>Referral</Text>
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.guestWrap}>
@@ -278,6 +296,23 @@ export default function RewardsScreen() {
         <Text style={[styles.headerTitle, { color: colors.text }]}>Rewards</Text>
 
         <View style={styles.headerRightGroup}>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/referrals");
+            }}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.referPillBtn,
+              {
+                backgroundColor: isDark ? "rgba(59, 130, 246, 0.15)" : "rgba(0, 82, 204, 0.1)",
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}
+          >
+            <Ionicons name="people-outline" size={14} color={colors.primary} />
+            <Text style={[styles.referPillText, { color: colors.primary }]}>Referral</Text>
+          </Pressable>
           <Pressable
             onPress={handleNativeShare}
             hitSlop={12}
