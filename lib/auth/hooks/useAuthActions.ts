@@ -111,6 +111,16 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
       // If user requires email verification:
       // Supabase already sends the confirmation email on sign-up automatically.
       if (!adapterUser.emailVerified) {
+        // Pre-create user profile and apply referral code in Supabase
+        syncUserToDb(
+          adapterUser.uid,
+          adapterUser.email,
+          displayName || adapterUser.displayName,
+          adapterUser.photoURL,
+          undefined,
+          false,
+        ).catch(() => {});
+
         // Keep the unverified session so refreshUser() can detect confirmation when user taps "I've verified my email"
         const err = new Error("VERIFICATION_SENT") as any;
         err.code = "auth/verification-sent";

@@ -23,8 +23,11 @@ import { useAuth } from "@/shared/contexts/AuthContext";
 import {
   getUserRewardWallet,
   getUserReferralsDashboard,
+  getOrCreateUserReferralCode,
   applyReferralCodeForUser,
   buildReferralShareMessage,
+  verifyReferralCode,
+  savePendingReferralCode,
   type RewardWallet,
   type UserReferralsDashboard,
 } from "@/services/rewards";
@@ -106,18 +109,41 @@ export function ReferralsScreen() {
     }
 
     try {
-      const [w, rd] = await Promise.all([
+      const [w, rd, userCode] = await Promise.all([
         getUserRewardWallet(user.id).catch(() => null),
         getUserReferralsDashboard(user.id).catch(() => null),
+        getOrCreateUserReferralCode(user.id).catch(() => null),
       ]);
-      if (w) setWallet(w);
-      if (rd) setRefDashboard(rd);
+      if (w) {
+        if (userCode && !w.ownReferralCode) w.ownReferralCode = userCode;
+        setWallet(w);
+      }
+      if (rd) {
+        if (userCode && (!rd.referralCode || rd.referralCode === "krzryn4")) {
+          rd.referralCode = userCode;
+          rd.referralLink = `https://www.binro.in/register?ref=${userCode}`;
+          rd.shortLink = `https://www.binro.in/register?ref=${userCode}`;
+        }
+        setRefDashboard(rd);
+      }
     } catch {}
   }, [user?.id]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  // Auto-slide carousel every 5s
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => {
+        const next = (prev + 1) % HERO_SLIDES.length;
+        carouselScrollRef.current?.scrollTo({ x: next * (screenWidth - 32), animated: true });
+        return next;
+      });
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [screenWidth]);
 
   // Compute referee status
   const refereeStatus = useMemo((): "already_referred" | "expired" | "eligible" => {
@@ -168,8 +194,27 @@ export function ReferralsScreen() {
     if (!code) return;
 
     if (!user?.id) {
+      setApplyingCode(true);
+      setReferralStatus(null);
       setReferralError(false);
-      setReferralStatus("Please sign in to link your code.");
+      try {
+        const check = await verifyReferralCode(code);
+        if (check.valid) {
+          await savePendingReferralCode(check.code || code);
+          setReferralError(false);
+          setReferralStatus("Saved! Create an account to claim your Silver Welcome Card.");
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else {
+          setReferralError(true);
+          setReferralStatus(check.error || "Invalid referral code.");
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+      } catch {
+        setReferralError(true);
+        setReferralStatus("Could not verify referral code.");
+      } finally {
+        setApplyingCode(false);
+      }
       return;
     }
 
@@ -510,6 +555,84 @@ export function ReferralsScreen() {
           </View>
         </View>
 
+        {/* ── Invited Friends List (if any exist) ── */}
+        {refDashboard?.referrals && refDashboard.referrals.length > 0 ? (
+          <View style={styles.sectionBlock}>
+            <Text style={[styles.sectionHeading, { color: colors.text }]}>
+              Invited Friends ({refDashboard.referrals.length})
+            </Text>
+            <View style={styles.referralsList}>
+              {refDashboard.referrals.map((item) => {
+                const isQualified = item.status === "qualified";
+                const initial = (item.invitedUserDisplayName || item.invitedUserUsername || "F")
+                  .charAt(0)
+                  .toUpperCase();
+                return (
+                  <View
+                    key={item.id}
+                    style={[
+                      styles.referralItemCard,
+                      {
+                        backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "#F8FAFC",
+                        borderColor: isDark ? "rgba(255,255,255,0.06)" : "#E2E8F0",
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.referralAvatar,
+                        { backgroundColor: `${colors.primary}18` },
+                      ]}
+                    >
+                      <Text style={[styles.referralAvatarText, { color: colors.primary }]}>
+                        {initial}
+                      </Text>
+                    </View>
+                    <View style={styles.referralInfo}>
+                      <Text style={[styles.referralName, { color: colors.text }]} numberOfLines={1}>
+                        {item.invitedUserDisplayName || `@${item.invitedUserUsername || "friend"}`}
+                      </Text>
+                      <Text style={[styles.referralDate, { color: colors.textSecondary }]}>
+                        {new Date(item.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.referralStatusBadge,
+                        {
+                          backgroundColor: isQualified
+                            ? "rgba(16, 185, 129, 0.12)"
+                            : "rgba(245, 158, 11, 0.12)",
+                          borderColor: isQualified
+                            ? "rgba(16, 185, 129, 0.3)"
+                            : "rgba(245, 158, 11, 0.3)",
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name={isQualified ? "checkmark-circle" : "time-outline"}
+                        size={12}
+                        color={isQualified ? "#10B981" : "#F59E0B"}
+                      />
+                      <Text
+                        style={[
+                          styles.referralStatusText,
+                          { color: isQualified ? "#10B981" : "#F59E0B" },
+                        ]}
+                      >
+                        {isQualified ? "Qualified" : "Pending Scan"}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
+
         {/* ── Have a friend's referral code button ── */}
         <Pressable
           onPress={() => setClaimModalOpen(true)}
@@ -665,21 +788,56 @@ export function ReferralsScreen() {
                   </View>
                 )}
 
-                <Pressable
-                  onPress={handleApplyReferral}
-                  disabled={!referralInput.trim() || applyingCode}
-                  style={({ pressed }) => [
-                    styles.modalSubmitBtn,
-                    {
-                      backgroundColor: colors.primary,
-                      opacity: !referralInput.trim() || applyingCode ? 0.5 : pressed ? 0.85 : 1,
-                    },
-                  ]}
-                >
-                  <Text style={styles.modalSubmitBtnText}>
-                    {applyingCode ? "Verifying..." : "Apply Code"}
-                  </Text>
-                </Pressable>
+                {!user && referralStatus && !referralError ? (
+                  <View style={{ gap: 10, marginTop: 14 }}>
+                    <Pressable
+                      onPress={() => {
+                        setClaimModalOpen(false);
+                        router.push("/(auth)/register");
+                      }}
+                      style={({ pressed }) => [
+                        styles.modalSubmitBtn,
+                        {
+                          backgroundColor: "#10B981",
+                          opacity: pressed ? 0.85 : 1,
+                          marginTop: 0,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.modalSubmitBtnText}>Create Account to Claim</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        setClaimModalOpen(false);
+                        router.push("/(auth)/login");
+                      }}
+                      style={({ pressed }) => [
+                        styles.modalSecondaryBtn,
+                        { opacity: pressed ? 0.75 : 1 },
+                      ]}
+                    >
+                      <Text style={[styles.modalSecondaryBtnText, { color: colors.primary }]}>
+                        Already have an account? Sign In
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={handleApplyReferral}
+                    disabled={!referralInput.trim() || applyingCode}
+                    style={({ pressed }) => [
+                      styles.modalSubmitBtn,
+                      {
+                        backgroundColor: colors.primary,
+                        opacity: !referralInput.trim() || applyingCode ? 0.5 : pressed ? 0.85 : 1,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.modalSubmitBtnText}>
+                      {applyingCode ? "Verifying..." : "Apply Code"}
+                    </Text>
+                  </Pressable>
+                )}
               </View>
             )}
           </View>
@@ -1033,6 +1191,16 @@ const styles = StyleSheet.create({
   modalSubmitBtnText: {
     color: "#FFFFFF",
     fontSize: 15,
+    fontWeight: "700",
+  },
+  modalSecondaryBtn: {
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalSecondaryBtnText: {
+    fontSize: 14,
     fontWeight: "700",
   },
 });

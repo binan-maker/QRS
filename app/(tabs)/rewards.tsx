@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Share,
 } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { router, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -36,7 +37,7 @@ export default function RewardsScreen() {
   const insets = useSafeAreaInsets();
   const topInset = useTopInset();
   const { colors, isDark } = useTheme();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { onTabScroll, resetTabBar } = useTabBarScroll();
 
   const [userScratchCards, setUserScratchCards] = useState<ScratchCardItem[]>([]);
@@ -204,9 +205,64 @@ export default function RewardsScreen() {
     } catch {}
   };
 
+  if (authLoading) {
+    return <View style={[styles.container, { backgroundColor: colors.background }]} />;
+  }
+
+  if (!user) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* ── Header ("Rewards") ── */}
+        <View style={[styles.header, { paddingTop: topInset + 8 }]}>
+          <Pressable
+            onPress={() => router.push("/(tabs)")}
+            hitSlop={12}
+            style={({ pressed }) => [
+              styles.headerCircleBtn,
+              { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#F1F5F9", opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            <Ionicons name="chevron-back" size={20} color={colors.text} />
+          </Pressable>
+
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Rewards</Text>
+
+          <View style={styles.headerRightGroup} />
+        </View>
+
+        <View style={styles.guestWrap}>
+          <Animated.View entering={FadeInDown.duration(260)} style={styles.guestInner}>
+            <View style={[styles.guestIconRing, { backgroundColor: colors.primaryDim }]}>
+              <Ionicons name="gift-outline" size={40} color={colors.primary} />
+            </View>
+            <Text style={[styles.guestTitle, { color: colors.text }]}>Not signed in</Text>
+            <Text style={[styles.guestSub, { color: colors.textSecondary }]}>
+              Sign in to earn rewards
+            </Text>
+            <Pressable
+              onPress={() => router.push("/(auth)/login")}
+              style={({ pressed }) => [
+                styles.guestSignInBtn,
+                { backgroundColor: colors.primary, opacity: pressed ? 0.88 : 1 },
+              ]}
+            >
+              <Text style={[styles.guestSignInText, { color: colors.primaryText }]}>Sign In</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/(auth)/register")}
+              style={styles.guestRegBtn}
+            >
+              <Text style={[styles.guestRegText, { color: colors.primary }]}>Create Account</Text>
+            </Pressable>
+          </Animated.View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* ── Header ("My Bonuses") ── */}
+      {/* ── Header ("Rewards") ── */}
       <View style={[styles.header, { paddingTop: topInset + 8 }]}>
         <Pressable
           onPress={() => router.push("/(tabs)")}
@@ -219,23 +275,9 @@ export default function RewardsScreen() {
           <Ionicons name="chevron-back" size={20} color={colors.text} />
         </Pressable>
 
-        <Text style={[styles.headerTitle, { color: colors.text }]}>My Bonuses</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Rewards</Text>
 
         <View style={styles.headerRightGroup}>
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/refer");
-            }}
-            style={({ pressed }) => [
-              styles.referPillBtn,
-              { backgroundColor: `${colors.primary}18`, opacity: pressed ? 0.8 : 1 },
-            ]}
-          >
-            <Ionicons name="people" size={14} color={colors.primary} />
-            <Text style={[styles.referPillText, { color: colors.primary }]}>Refer &amp; Earn</Text>
-          </Pressable>
-
           <Pressable
             onPress={handleNativeShare}
             hitSlop={12}
@@ -376,5 +418,55 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     textAlign: "center",
+  },
+  // ── Guest / unauthenticated ──
+  guestWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 32,
+  },
+  guestInner: {
+    alignItems: "center",
+    gap: 12,
+    width: "100%",
+  },
+  guestIconRing: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  guestTitle: {
+    fontSize: 19,
+    fontFamily: "Inter_700Bold",
+    textAlign: "center",
+  },
+  guestSub: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    lineHeight: 19,
+  },
+  guestSignInBtn: {
+    paddingVertical: 13,
+    paddingHorizontal: 40,
+    borderRadius: 14,
+    marginTop: 6,
+    width: "100%",
+    alignItems: "center",
+  },
+  guestSignInText: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+  },
+  guestRegBtn: {
+    paddingVertical: 10,
+  },
+  guestRegText: {
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
   },
 });

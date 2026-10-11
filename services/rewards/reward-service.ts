@@ -54,83 +54,179 @@ export function generate7CharReferralCode(): string {
 
 /**
  * Retrieves the user's permanent, immutable 7-character referral code or generates one.
- * Once assigned, the referral code is permanently locked and CANNOT be changed or replaced.
+ * Once assigned, the referral code is permanently locked in Supabase and CANNOT be changed or replaced.
  */
 export async function getOrCreateUserReferralCode(userId: string): Promise<string> {
+  if (!userId) return "krzryn4";
   const localKey = `binro_user_ref_code_v1_${userId}`;
+
+  // 1. Check Supabase first (single source of truth for Web & Mobile)
+  if (isWebSupabaseConfigured()) {
+    try {
+      const userRow = await withTimeout(
+        (async () => {
+          const { data } = await supabase
+            .from("users")
+            .select("referral_code")
+            .eq("id", userId)
+            .maybeSingle();
+          return data;
+        })(),
+        2500,
+        null
+      );
+
+      if (userRow?.referral_code && String(userRow.referral_code).trim().length > 0) {
+        const code = String(userRow.referral_code).trim().toLowerCase();
+        await AsyncStorage.setItem(localKey, code).catch(() => {});
+        return code;
+      }
+    } catch {}
+  }
+
+  // 2. Check local storage cache if Supabase query was not available
   try {
     const cached = await AsyncStorage.getItem(localKey);
-    if (cached && cached.trim().length > 0) return cached.trim();
+    if (cached && cached.trim().length > 0) {
+      const cleanCached = cached.trim().toLowerCase();
+      if (isWebSupabaseConfigured()) {
+        try {
+          await supabase
+            .from("users")
+            .update({ referral_code: cleanCached })
+            .eq("id", userId)
+            .is("referral_code", null);
+        } catch {}
+      }
+      return cleanCached;
+    }
   } catch {}
 
+  // 3. Generate a unique 7-character candidate with zero collision guarantee
+  let candidate = generate7CharReferralCode().toLowerCase();
+  if (isWebSupabaseConfigured()) {
+    try {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const clash = await withTimeout(
+          (async () => {
+            const { data } = await supabase
+              .from("users")
+              .select("id")
+              .ilike("referral_code", candidate)
+              .maybeSingle();
+            return data;
+          })(),
+          1500,
+          null
+        );
+        if (!clash) break;
+        candidate = generate7CharReferralCode().toLowerCase();
+      }
+
+      await withTimeout(
+        (async () => {
+          const { error: updateErr } = await supabase
+            .from("users")
+            .update({ referral_code: candidate })
+            .eq("id", userId);
+
+          if (updateErr) {
+            await supabase
+              .from("users")
+              .upsert({ id: userId, referral_code: candidate }, { onConflict: "id" });
+          }
+        })(),
+        2000,
+        undefined
+      );
+    } catch {}
+  }
+
+  await AsyncStorage.setItem(localKey, candidate).catch(() => {});
+  return candidate;
+}
+
+/**
+ * Centrally verifies a referral code against Supabase users.
+ * Used by both mobile and web to ensure 100% unified logic and single source of truth.
+ */
+export async function verifyReferralCode(
+  rawCode: string,
+  currentUserId?: string | null
+): Promise<{ valid: boolean; code?: string; error?: string; referrerUserId?: string }> {
+  const clean = (rawCode || "").trim().replace(/[^a-zA-Z0-9]/g, "").slice(0, 7).toLowerCase();
+  if (!clean || clean.length !== 7) {
+    return { valid: false, error: "Referral code must be 7 characters." };
+  }
+
   if (!isWebSupabaseConfigured()) {
-    const candidate = generate7CharReferralCode();
-    await AsyncStorage.setItem(localKey, candidate).catch(() => {});
-    return candidate;
+    return { valid: true, code: clean };
   }
 
   try {
-    const userRow = await withTimeout(
-      (async () => {
-        const { data } = await supabase
-          .from("users")
-          .select("referral_code")
-          .eq("id", userId)
-          .maybeSingle();
-        return data;
-      })(),
-      2000,
-      null
-    );
+    // 1. Look up user by referral_code (case-insensitive)
+    const { data: userByCode } = await supabase
+      .from("users")
+      .select("id, referral_code, username, is_deleted")
+      .ilike("referral_code", clean)
+      .eq("is_deleted", false)
+      .maybeSingle();
 
-    if (userRow?.referral_code && String(userRow.referral_code).trim().length > 0) {
-      const code = String(userRow.referral_code).trim();
-      await AsyncStorage.setItem(localKey, code).catch(() => {});
-      return code;
+    if (userByCode?.id) {
+      if (currentUserId && String(userByCode.id) === String(currentUserId)) {
+        return { valid: false, error: "You cannot use your own referral code." };
+      }
+      return {
+        valid: true,
+        code: userByCode.referral_code ? String(userByCode.referral_code).toLowerCase() : clean,
+        referrerUserId: String(userByCode.id),
+      };
     }
-  } catch {}
 
-  // Generate unique 7-character candidate with zero collision guarantee
-  let candidate = generate7CharReferralCode();
-  try {
-    const clash = await withTimeout(
-      (async () => {
-        const { data } = await supabase
-          .from("users")
-          .select("id")
-          .ilike("referral_code", candidate)
-          .maybeSingle();
-        return data;
-      })(),
-      1500,
-      null
-    );
-    if (clash) {
-      candidate = generate7CharReferralCode();
+    // 2. Fallback check by username (if an older link or username was used)
+    const { data: userByUname } = await supabase
+      .from("users")
+      .select("id, referral_code, username, is_deleted")
+      .ilike("username", clean)
+      .eq("is_deleted", false)
+      .maybeSingle();
+
+    if (userByUname?.id) {
+      if (currentUserId && String(userByUname.id) === String(currentUserId)) {
+        return { valid: false, error: "You cannot use your own referral code." };
+      }
+      return {
+        valid: true,
+        code: userByUname.referral_code
+          ? String(userByUname.referral_code).toLowerCase()
+          : String(userByUname.username || clean).toLowerCase(),
+        referrerUserId: String(userByUname.id),
+      };
     }
-  } catch {}
 
-  try {
-    await withTimeout(
-      (async () => {
-        const { error: updateErr } = await supabase
-          .from("users")
-          .update({ referral_code: candidate })
-          .eq("id", userId);
+    // 3. Fallback check in referrals table
+    const { data: refRow } = await supabase
+      .from("referrals")
+      .select("referrer_user_id, referrer_code")
+      .ilike("referrer_code", clean)
+      .limit(1)
+      .maybeSingle();
 
-        if (updateErr) {
-          await supabase
-            .from("users")
-            .upsert({ id: userId, referral_code: candidate }, { onConflict: "id" });
-        }
-      })(),
-      2000,
-      undefined
-    );
-    await AsyncStorage.setItem(localKey, candidate);
-  } catch {}
+    if (refRow?.referrer_user_id) {
+      if (currentUserId && String(refRow.referrer_user_id) === String(currentUserId)) {
+        return { valid: false, error: "You cannot use your own referral code." };
+      }
+      return {
+        valid: true,
+        code: String(refRow.referrer_code || clean).toLowerCase(),
+        referrerUserId: String(refRow.referrer_user_id),
+      };
+    }
 
-  return candidate;
+    return { valid: false, error: "Invalid referral code. Please check and try again." };
+  } catch {
+    return { valid: false, error: "Unable to verify referral code right now." };
+  }
 }
 
 function getTodayDateString(): string {
@@ -1068,15 +1164,26 @@ export async function savePendingReferralCode(code: string): Promise<void> {
   if (!cleaned) return;
   try {
     await AsyncStorage.setItem(PENDING_REFERRAL_CODE_KEY, cleaned);
+    await AsyncStorage.setItem("binro_pending_referral_code", cleaned);
   } catch {}
 }
 
 export async function getPendingReferralCode(): Promise<string | null> {
   try {
-    return await AsyncStorage.getItem(PENDING_REFERRAL_CODE_KEY);
+    const code =
+      (await AsyncStorage.getItem(PENDING_REFERRAL_CODE_KEY)) ||
+      (await AsyncStorage.getItem("binro_pending_referral_code"));
+    return code ? code.trim().toLowerCase() : null;
   } catch {
     return null;
   }
+}
+
+export async function clearPendingReferralCode(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(PENDING_REFERRAL_CODE_KEY);
+    await AsyncStorage.removeItem("binro_pending_referral_code");
+  } catch {}
 }
 
 export async function applyReferralCodeForUser(
@@ -1190,9 +1297,7 @@ export async function applyReferralCodeForUser(
   wallet.referredByUserId = referrerUserId;
   await persistWalletToSupabase(wallet);
 
-  try {
-    await AsyncStorage.removeItem(PENDING_REFERRAL_CODE_KEY);
-  } catch {}
+  await clearPendingReferralCode();
 
   const isAlreadyActiveScanner = (wallet.lifetimeEligibleScans || 0) > 0;
   const friendCard = await allocateScratchCard({

@@ -654,7 +654,7 @@ function RegisterContent() {
                     >
                       <input
                         type="text"
-                        placeholder="Enter 7-character code (e.g. KRZRYN4)"
+                        placeholder="Enter referal code"
                         value={tempReferralInput.toUpperCase()}
                         maxLength={7}
                         onChange={(e) => {

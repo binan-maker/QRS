@@ -78,9 +78,10 @@ export async function syncUserToDb(
         syncAvatarFromOutside(initialPhoto);
       }
 
-      // Auto-apply pending referral code from invite link or deep link
+      // Ensure user has permanent lifetime referral code and auto-apply pending referral
       import("@/services/rewards")
-        .then(async ({ getPendingReferralCode, applyReferralCodeForUser }) => {
+        .then(async ({ getOrCreateUserReferralCode, getPendingReferralCode, applyReferralCodeForUser }) => {
+          await getOrCreateUserReferralCode(uid).catch(() => {});
           const pending = await getPendingReferralCode();
           if (pending) {
             await applyReferralCodeForUser(uid, pending);
@@ -155,6 +156,17 @@ export async function syncUserToDb(
       if (effectivePhoto) {
         syncAvatarFromOutside(effectivePhoto);
       }
+
+      // Ensure user has lifetime referral code and auto-apply pending referral if eligible
+      import("@/services/rewards")
+        .then(async ({ getOrCreateUserReferralCode, getPendingReferralCode, applyReferralCodeForUser }) => {
+          await getOrCreateUserReferralCode(uid).catch(() => {});
+          const pending = await getPendingReferralCode();
+          if (pending) {
+            await applyReferralCodeForUser(uid, pending).catch(() => {});
+          }
+        })
+        .catch(() => {});
 
       return {
         displayName: effectiveDisplayName,

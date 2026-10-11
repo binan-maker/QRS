@@ -8,6 +8,7 @@ import { BottomTabBar } from "@/components/navigation/BottomTabBar";
 import {
   getUserRewardWallet,
   getUserReferralsDashboard,
+  getOrCreateUserReferralCode,
   applyReferralCodeForUser,
   buildReferralShareMessage,
   type RewardWallet,
@@ -126,12 +127,23 @@ export default function ReferralsPage() {
     }
 
     try {
-      const [w, rd] = await Promise.all([
+      const [w, rd, userCode] = await Promise.all([
         getUserRewardWallet(user.id).catch(() => null),
         getUserReferralsDashboard(user.id).catch(() => null),
+        getOrCreateUserReferralCode(user.id).catch(() => null),
       ]);
-      if (w) setWallet(w);
-      if (rd) setRefDashboard(rd);
+      if (w) {
+        if (userCode && !w.ownReferralCode) w.ownReferralCode = userCode;
+        setWallet(w);
+      }
+      if (rd) {
+        if (userCode && (!rd.referralCode || rd.referralCode === "krzryn4")) {
+          rd.referralCode = userCode;
+          rd.referralLink = `https://www.binro.in/register?ref=${userCode}`;
+          rd.shortLink = `https://www.binro.in/register?ref=${userCode}`;
+        }
+        setRefDashboard(rd);
+      }
     } catch {}
   }, [user?.id]);
 

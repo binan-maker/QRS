@@ -1,8 +1,8 @@
-import { View, Text, Modal, StyleSheet, ActivityIndicator } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import { View, Text, Modal, StyleSheet, ActivityIndicator, Image } from "react-native";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import GoogleIcon from "@/shared/components/ui/GoogleIcon";
+
+const BINRO_ICON = require("@/assets/images/icon.png");
 
 interface Props {
   visible: boolean;
@@ -22,14 +22,21 @@ export default function GoogleAuthLoading({ visible }: Props) {
           },
         ]}>
           <View style={styles.logoRow}>
-            <LinearGradient
-              colors={[colors.primary, colors.primaryShade ?? colors.primary]}
-              style={styles.appIconWrap}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+            <View
+              style={[
+                styles.appIconWrap,
+                {
+                  backgroundColor: isDark ? colors.surfaceLight : "#f8f9fa",
+                  borderColor: isDark ? colors.surfaceBorder : "#e8eaed",
+                },
+              ]}
             >
-              <Ionicons name="shield-checkmark" size={22} color="#fff" />
-            </LinearGradient>
+              <Image
+                source={BINRO_ICON}
+                style={styles.appLogoImage}
+                resizeMode="cover"
+              />
+            </View>
 
             <View style={styles.connectorLine}>
               <View style={[styles.dot, { backgroundColor: colors.primary + "60" }]} />
@@ -90,6 +97,13 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  appLogoImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
   },
   connectorLine: {
     flexDirection: "row",

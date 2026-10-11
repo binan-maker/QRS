@@ -87,7 +87,6 @@ function ProfileScreen() {
   const onCamera        = useCallback(() => handlePickPhoto("camera"),  [handlePickPhoto]);
   const onGallery       = useCallback(() => handlePickPhoto("gallery"), [handlePickPhoto]);
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const [referralModalOpen, setReferralModalOpen] = useState(false);
   const [rewardWallet, setRewardWallet] = useState<RewardWallet | null>(null);
 
@@ -145,140 +144,38 @@ function ProfileScreen() {
           />
         }
       >
-        {/* ── TOP BAR ──────────────────────────────────────────── */}
+        {/* ── TOP BAR (Three dots removed, settings preserved) ── */}
         <Animated.View entering={ENTER_TOP_BAR} style={styles.topBar}>
           <Text style={[styles.pageTitle, { color: colors.text }]}>Profile</Text>
           <View style={styles.topBarActions}>
-            {/* Google Pay Style Three Dots (⋮) Menu Button */}
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setMenuOpen((prev) => !prev);
-              }}
-              style={[
-                styles.iconBtn,
-                { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
-              ]}
-              hitSlop={8}
-              accessibilityLabel="More options"
-            >
-              <Ionicons name="ellipsis-vertical" size={17} color={colors.textSecondary} />
-            </Pressable>
-
             <Animated.View entering={ENTER_SETTINGS_BTN}>
               <Pressable
                 onPress={goToSettings}
-                style={[styles.iconBtn, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+                style={[
+                  styles.iconBtn,
+                  { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
+                ]}
                 hitSlop={8}
+                accessibilityLabel="Settings"
               >
-                <Ionicons name="settings-outline" size={17} color={colors.textSecondary} />
+                <Ionicons name="settings-outline" size={18} color={colors.text} />
               </Pressable>
             </Animated.View>
           </View>
         </Animated.View>
 
-        {/* Google Pay Style Dropdown Popover */}
-        {menuOpen && (
-          <View
-            style={{
-              position: "absolute",
-              top: topInset + 46,
-              right: 18,
-              backgroundColor: colors.surface,
-              borderColor: colors.surfaceBorder,
-              borderWidth: 1,
-              borderRadius: 16,
-              padding: 6,
-              minWidth: 200,
-              zIndex: 9999,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.25,
-              shadowRadius: 12,
-              elevation: 10,
-            }}
-          >
+        {/* ── IDENTITY SECTION (Seamless background, no white/surface card box) ── */}
+        <Animated.View
+          entering={ENTER_AVATAR_SEC}
+          style={styles.heroSection}
+        >
+          <View style={styles.avatarContainer}>
             <Pressable
-              onPress={() => {
-                setMenuOpen(false);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setReferralModalOpen(true);
-              }}
-              style={({ pressed }) => ({
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                paddingVertical: 10,
-                paddingHorizontal: 12,
-                borderRadius: 10,
-                backgroundColor: pressed ? `${colors.primary}15` : "transparent",
-              })}
+              onPress={openPhotoModal}
+              style={styles.avatarPressable}
+              accessibilityLabel="Change profile photo"
             >
-              <Ionicons name="gift-outline" size={18} color={colors.primary} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13, fontWeight: "700", color: colors.text }}>
-                  Referral code
-                </Text>
-                <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                  {rewardWallet?.isReferralEligible
-                    ? "Enter code"
-                    : rewardWallet?.referredByCode
-                      ? "Applied"
-                      : "Window closed"}
-                </Text>
-              </View>
-            </Pressable>
-
-            <Pressable
-              onPress={() => {
-                setMenuOpen(false);
-                safePush("/(tabs)/rewards");
-              }}
-              style={({ pressed }) => ({
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                paddingVertical: 10,
-                paddingHorizontal: 12,
-                borderRadius: 10,
-                backgroundColor: pressed ? `${colors.primary}15` : "transparent",
-              })}
-            >
-              <Ionicons name="sparkles-outline" size={18} color="#F59E0B" />
-              <Text style={{ fontSize: 13, fontWeight: "600", color: colors.text }}>
-                Rewards &amp; Offers
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => {
-                setMenuOpen(false);
-                goToSettings();
-              }}
-              style={({ pressed }) => ({
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                paddingVertical: 10,
-                paddingHorizontal: 12,
-                borderRadius: 10,
-                backgroundColor: pressed ? `${colors.primary}15` : "transparent",
-              })}
-            >
-              <Ionicons name="settings-outline" size={18} color={colors.textSecondary} />
-              <Text style={{ fontSize: 13, fontWeight: "600", color: colors.text }}>
-                Settings
-              </Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* ── AVATAR + IDENTITY ─────────────────────────────────── */}
-        <Animated.View entering={ENTER_AVATAR_SEC} style={styles.avatarSection}>
-          {/* Avatar */}
-          <Animated.View entering={ENTER_AVATAR_WRAP}>
-            <Pressable onPress={openPhotoModal} style={styles.avatarPressable}>
-              <View style={[styles.avatarRing, { borderColor: colors.primary + "50" }]}>
+              <View style={[styles.avatarRing, { borderColor: colors.primary }]}>
                 <View style={[styles.avatarInner, { backgroundColor: colors.surfaceLight }]}>
                   {photoURL ? (
                     <Image
@@ -289,7 +186,9 @@ function ProfileScreen() {
                       transition={200}
                     />
                   ) : (
-                    <Text style={[styles.avatarInitials, { color: colors.primary }]}>{initials}</Text>
+                    <Text style={[styles.avatarInitials, { color: colors.primary }]}>
+                      {initials}
+                    </Text>
                   )}
                   {uploadingPhoto && (
                     <View style={styles.avatarUploadOverlay}>
@@ -298,79 +197,176 @@ function ProfileScreen() {
                   )}
                 </View>
               </View>
-              <View style={[styles.cameraBtn, { backgroundColor: colors.primary, borderColor: colors.background }]}>
-                <Ionicons name="camera" size={11} color={colors.primaryText} />
+              <View
+                style={[
+                  styles.cameraBtn,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.surfaceBorder,
+                  },
+                ]}
+              >
+                <Ionicons name="camera-outline" size={14} color={colors.text} />
               </View>
             </Pressable>
-          </Animated.View>
+          </View>
 
-          {/* Name */}
-          <Animated.Text
-            entering={ENTER_NAME}
-            style={[styles.displayName, { color: colors.text }]}
-            numberOfLines={1}
-          >
-            {user.displayName}
-          </Animated.Text>
+          <View style={styles.identityMeta}>
+            <Text style={[styles.displayName, { color: colors.text }]} numberOfLines={1}>
+              {user.displayName || "User"}
+            </Text>
+            {currentUsername ? (
+              <View style={styles.identitySubRow}>
+                <Text style={[styles.usernameText, { color: colors.primary }]}>
+                  @{currentUsername}
+                </Text>
+              </View>
+            ) : null}
+          </View>
 
-          {/* Username */}
-          {currentUsername ? (
-            <Animated.Text
-              entering={ENTER_USERNAME}
-              style={[styles.usernameText, { color: colors.primary }]}
-            >
-              @{currentUsername}
-            </Animated.Text>
-          ) : null}
-
-          {/* Edit profile button */}
-          <Animated.View entering={ENTER_EDIT_BTN}>
+          {/* Edit Profile Quick Action */}
+          <View style={styles.heroActions}>
             <Pressable
               onPress={goToEditProfile}
               style={({ pressed }) => [
-                styles.editProfileBtn,
-                { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.8 : 1 },
+                styles.heroActionBtn,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.surfaceBorder,
+                  opacity: pressed ? 0.75 : 1,
+                },
               ]}
+              accessibilityRole="button"
+              accessibilityLabel="Edit Profile"
             >
-              <Text style={[styles.editProfileText, { color: colors.text }]}>Edit Profile</Text>
+              <Ionicons name="create-outline" size={14} color={colors.text} />
+              <Text style={[styles.heroActionText, { color: colors.text }]}>Edit Profile</Text>
             </Pressable>
-          </Animated.View>
+          </View>
         </Animated.View>
 
-        {/* ── HISTORY ────────────────────────────────────────────── */}
-        <View style={styles.profileActions}>
+        {/* ── SEPARATE BUTTONS / TILES (No "Activity & Rewards" heading, distinct cards) ── */}
+        <Animated.View entering={ENTER_EDIT_BTN} style={styles.actionsList}>
+          {/* 1. Scan History */}
           <Pressable
             onPress={goToHistory}
-            accessibilityRole="button"
-            accessibilityLabel="History"
             style={({ pressed }) => [
-              styles.profileActionBtn,
-              { backgroundColor: colors.surface, borderColor: colors.surfaceBorder, opacity: pressed ? 0.78 : 1 },
+              styles.separateCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.surfaceBorder,
+                opacity: pressed ? 0.85 : 1,
+              },
             ]}
+            accessibilityRole="button"
+            accessibilityLabel="Scan History"
           >
-            <View style={[styles.profileActionIcon, { backgroundColor: colors.accentDim }]}>
-              <Ionicons name="time-outline" size={18} color={colors.accent} />
+            <View
+              style={[
+                styles.menuIconWrap,
+                { backgroundColor: colors.surfaceLight },
+              ]}
+            >
+              <Ionicons name="time-outline" size={20} color={colors.primary} />
             </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[styles.profileActionLabel, { color: colors.text }]} numberOfLines={1}>History</Text>
-              <Text style={[styles.profileActionSubtext, { color: colors.textMuted }]} numberOfLines={1}>Review or remove scans</Text>
+            <View style={styles.menuTextCol}>
+              <Text style={[styles.menuLabel, { color: colors.text }]}>
+                Scan History
+              </Text>
+              <Text style={[styles.menuSublabel, { color: colors.textSecondary }]}>
+                Past scans and verdicts
+              </Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </Pressable>
-        </View>
 
-        {/* ── SIGN OUT ──────────────────────────────────────────── */}
+          {/* 2. Milestones & Rewards */}
+          <Pressable
+            onPress={() => safePush("/(tabs)/rewards")}
+            style={({ pressed }) => [
+              styles.separateCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.surfaceBorder,
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Milestones & Rewards"
+          >
+            <View
+              style={[
+                styles.menuIconWrap,
+                { backgroundColor: colors.surfaceLight },
+              ]}
+            >
+              <Ionicons name="gift-outline" size={20} color={colors.primary} />
+            </View>
+            <View style={styles.menuTextCol}>
+              <Text style={[styles.menuLabel, { color: colors.text }]}>
+                Milestones &amp; Rewards
+              </Text>
+              <Text style={[styles.menuSublabel, { color: colors.textSecondary }]}>
+                Daily milestones and deals
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </Pressable>
+
+          {/* 3. Refer & Earn */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setReferralModalOpen(true);
+            }}
+            style={({ pressed }) => [
+              styles.separateCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.surfaceBorder,
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Refer & Earn"
+          >
+            <View
+              style={[
+                styles.menuIconWrap,
+                { backgroundColor: colors.surfaceLight },
+              ]}
+            >
+              <Ionicons name="people-outline" size={20} color={colors.primary} />
+            </View>
+            <View style={styles.menuTextCol}>
+              <Text style={[styles.menuLabel, { color: colors.text }]}>
+                Refer &amp; Earn
+              </Text>
+              <Text style={[styles.menuSublabel, { color: colors.textSecondary }]}>
+                Invite friends, earn Gold cards
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </Pressable>
+        </Animated.View>
+
+        {/* ── SIGN OUT (Matches website) ────────────────────────── */}
         <Animated.View entering={ENTER_SIGNOUT}>
           <Pressable
             onPress={handleSignOut}
             style={({ pressed }) => [
               styles.signOutBtn,
-              { borderColor: colors.danger + "30", backgroundColor: colors.dangerDim, opacity: pressed ? 0.8 : 1 },
+              {
+                borderColor: colors.surfaceBorder,
+                backgroundColor: pressed ? `${colors.danger}15` : colors.surface,
+              },
             ]}
             hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel="Sign Out"
           >
-            <Ionicons name="log-out-outline" size={16} color={colors.danger} />
-            <Text style={[styles.signOutText, { color: colors.danger }]}>Sign Out</Text>
+            <Ionicons name="log-out-outline" size={16} color={colors.textSecondary} />
+            <Text style={[styles.signOutText, { color: colors.textSecondary }]}>Sign Out</Text>
           </Pressable>
         </Animated.View>
       </ScrollView>

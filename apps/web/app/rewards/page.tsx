@@ -206,7 +206,7 @@ export default function ScratchCardsPage() {
   return (
     <div className={styles.pageFrame}>
       <main className={styles.container}>
-        {/* ── Top Header (Exact Match for Image 1: Back chevron & Centered "My bonuses") ── */}
+        {/* ── Top Header (Exact Match for Image 1: Back chevron & Centered "Rewards") ── */}
         <header className={styles.topBar}>
           <button
             type="button"
@@ -217,13 +217,13 @@ export default function ScratchCardsPage() {
           >
             <Ionicons name="chevron-back" size={20} color="#ffffff" />
           </button>
-          <h1 className={styles.pageTitle}>My bonuses</h1>
+          <h1 className={styles.pageTitle}>Rewards</h1>
           <div className={styles.topBarSpacer} />
         </header>
 
         {/* ── 2-Column Responsive Scratch Cards Grid ─────────────────────────────── */}
         {cardsDeck.length > 0 ? (
-          <div className={styles.cardsGrid} role="list" aria-label="My bonuses scratch cards">
+          <div className={styles.cardsGrid} role="list" aria-label="Rewards scratch cards">
           {cardsDeck.map((card) => {
             const isExpired = card.status === "expired";
             const isLocked = card.status === "locked";

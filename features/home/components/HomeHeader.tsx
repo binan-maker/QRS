@@ -47,16 +47,6 @@ export function HomeHeader({ user, photoURL }: Props) {
       </View>
 
       <View style={styles.headerRight}>
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.push("/(tabs)/rewards");
-          }}
-          style={[styles.signInPill, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "50" }]}
-        >
-          <Ionicons name="gift-outline" size={16} color={colors.primary} />
-          <Text style={[styles.signInPillText, { color: colors.primary }]}>Rewards</Text>
-        </Pressable>
         {user ? (
           <Pressable onPress={() => router.push("/(tabs)/profile")} style={styles.avatarRing}>
             <LinearGradient
