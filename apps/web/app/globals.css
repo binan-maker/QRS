@@ -1,4 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+/* ── Mobile 1:1 Font Name Aliases (Matching React Native @expo-google-fonts/inter) ── */
+@font-face {
+  font-family: 'Inter_400Regular';
+  src: local('Inter Regular'), local('Inter-Regular'), local('Inter');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter_500Medium';
+  src: local('Inter Medium'), local('Inter-Medium'), local('Inter');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter_600SemiBold';
+  src: local('Inter SemiBold'), local('Inter-SemiBold'), local('Inter');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter_700Bold';
+  src: local('Inter Bold'), local('Inter-Bold'), local('Inter');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root,
 html[data-theme="light"] {
@@ -53,10 +86,15 @@ html[data-theme="light"] {
   --amber-soft: rgba(217, 119, 6, 0.09);
   --green: #059669;
 
-  /* Premium Modern Typography System */
-  --font-heading-family: var(--font-heading), 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-inter: var(--font-inter), var(--font-heading), 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-sans: var(--font-heading), var(--font-inter), 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Mobile 1:1 Inter Typography System */
+  --font-inter: 'Inter', 'Inter_400Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: 'Inter', 'Inter_400Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-heading: 'Inter', 'Inter_700Bold', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-heading-family: 'Inter', 'Inter_700Bold', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-regular: 'Inter_400Regular', 'Inter', sans-serif;
+  --font-medium: 'Inter_500Medium', 'Inter', sans-serif;
+  --font-semibold: 'Inter_600SemiBold', 'Inter', sans-serif;
+  --font-bold: 'Inter_700Bold', 'Inter', sans-serif;
 
   /* Fluid Responsive Typography Scale (Width vw + Height/Resolution vmin -> Exact Desktop Max) */
   --fs-2xs: clamp(8.5px, calc(7.8px + 0.14vw + 0.1vmin), 10px);
@@ -124,10 +162,15 @@ html.dark {
   --amber-soft: rgba(251, 191, 36, 0.10);
   --green: #34D399;
 
-  /* Premium Modern Typography System */
-  --font-heading-family: var(--font-heading), 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-inter: var(--font-inter), var(--font-heading), 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-sans: var(--font-heading), var(--font-inter), 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Mobile 1:1 Inter Typography System */
+  --font-inter: 'Inter', 'Inter_400Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: 'Inter', 'Inter_400Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-heading: 'Inter', 'Inter_700Bold', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-heading-family: 'Inter', 'Inter_700Bold', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-regular: 'Inter_400Regular', 'Inter', sans-serif;
+  --font-medium: 'Inter_500Medium', 'Inter', sans-serif;
+  --font-semibold: 'Inter_600SemiBold', 'Inter', sans-serif;
+  --font-bold: 'Inter_700Bold', 'Inter', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -214,8 +257,9 @@ body {
   margin: 0;
   color: var(--text);
   background: var(--background);
-  font-family: var(--font-sans);
+  font-family: var(--font-inter);
   font-size: var(--fs-md);
+  font-weight: 400;
   line-height: 1.5;
   letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
@@ -225,14 +269,14 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading-family);
+  font-family: var(--font-inter);
   letter-spacing: -0.024em;
   font-weight: 700;
   text-wrap: balance;
 }
 
 button, input, select, textarea {
-  font-family: var(--font-sans);
+  font-family: var(--font-inter);
   letter-spacing: -0.01em;
 }
 
