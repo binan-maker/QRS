@@ -88,11 +88,11 @@
 }
 
 .brandText {
-  font-family: var(--font-heading), var(--font-sans), sans-serif;
+  font-family: var(--font-inter), "Inter", sans-serif;
   font-size: clamp(17px, calc(13.5px + 0.4vw + 0.25vmin), 20px);
   font-weight: 700;
   color: var(--text);
-  letter-spacing: -0.025em;
+  letter-spacing: -0.4px;
 }
 
 .brandAccent {
@@ -104,7 +104,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 28px;
+  gap: 32px;
   background: transparent;
   padding: 0;
   border-radius: 0;
@@ -120,15 +120,13 @@
   padding: 8px 2px;
   border-radius: 0;
   text-decoration: none;
-  font-family: var(--font-sans), sans-serif;
+  font-family: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14.5px;
   font-weight: 500;
-  letter-spacing: -0.01em;
   color: var(--text-secondary);
   transition: color 0.16s ease;
   user-select: none;
 }
-
 
 .navItem:hover {
   color: var(--text);

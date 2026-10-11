@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Outfit } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { AvatarProvider } from "@/lib/avatar-context";
 import { ThemeProvider } from "@/lib/theme-context";
@@ -15,20 +14,6 @@ import {
   buildRootStructuredData,
 } from "@/lib/seo";
 import "./globals.css";
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-sans",
-  display: "swap",
-});
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-  variable: "--font-heading",
-  display: "swap",
-});
 
 export const viewport: Viewport = {
   themeColor: "#0052CC",
@@ -109,17 +94,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="en"
-      className={`${plusJakartaSans.variable} ${outfit.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap"
-          rel="stylesheet"
-        />
-      </head>
       <body suppressHydrationWarning>
         <script
           id="binro-schema-ld"

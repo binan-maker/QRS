@@ -161,14 +161,14 @@ export function RecentScans() {
               </div>
             </div>
 
-            <h3 className={styles.emptyTitle}>No Scans Yet</h3>
+            <h3 className={styles.emptyTitle}>No scans yet</h3>
             <p className={styles.emptySubtitle}>
-              Point your camera or upload a QR image. BinRo will preview the destination URL, verify payment details, and check community safety scores before you open.
+              Scan smarter. Stay safe.
             </p>
 
             <Link href="/scanner" className={styles.scanButton}>
-              <Ionicons name="scan-outline" size={16} color="currentColor" />
-              <span>Open Safety Scanner</span>
+              <Ionicons name="scan-outline" size={15} color="currentColor" />
+              <span>Start First Scan</span>
             </Link>
           </div>
         )}

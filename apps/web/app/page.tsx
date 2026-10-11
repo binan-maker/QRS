@@ -4,7 +4,6 @@ import React from "react";
 import Link from "next/link";
 import { HomeHeader, HeroScanCard, RecentScans } from "@/components/home";
 import { BottomTabBar } from "@/components/navigation/BottomTabBar";
-import { Ionicons } from "@/lib/mobile-icons";
 import styles from "./home.module.css";
 
 export default function HomePage() {
@@ -17,50 +16,6 @@ export default function HomePage() {
           <HeroScanCard />
           <RecentScans />
         </div>
-
-        {/* ── Visual Trust Pillars & Safety Principles ── */}
-        <section className={styles.trustPillarsSection} aria-labelledby="why-binro-title">
-          <div className={styles.trustPillarsHeader}>
-            <h2 id="why-binro-title" className={styles.trustPillarsTitle}>
-              Know Before You Scan
-            </h2>
-            <p className={styles.trustPillarsSubtitle}>
-              Your phone camera opens QR links blindly. BinRo adds a zero-trust safety layer between your camera lens and the destination link.
-            </p>
-          </div>
-
-          <div className={styles.pillarsGrid}>
-            <div className={styles.pillarCard}>
-              <div className={styles.pillarIconBox}>
-                <Ionicons name="shield-checkmark" size={20} color="currentColor" />
-              </div>
-              <h3 className={styles.pillarCardTitle}>Link Preview &amp; Tracker Strip</h3>
-              <p className={styles.pillarCardDesc}>
-                Inspect shortened URLs (bit.ly, tinyurl), unmask nested redirects, and strip intrusive tracking parameters before visiting.
-              </p>
-            </div>
-
-            <div className={styles.pillarCard}>
-              <div className={styles.pillarIconBox}>
-                <Ionicons name="card" size={20} color="currentColor" />
-              </div>
-              <h3 className={styles.pillarCardTitle}>UPI Payment Verification</h3>
-              <p className={styles.pillarCardDesc}>
-                Validate merchant recipient IDs, flags fake shop stickers, and cross-checks known fraudulent payment VPAs.
-              </p>
-            </div>
-
-            <div className={styles.pillarCard}>
-              <div className={styles.pillarIconBox}>
-                <Ionicons name="people" size={20} color="currentColor" />
-              </div>
-              <h3 className={styles.pillarCardTitle}>Community Trust Scores</h3>
-              <p className={styles.pillarCardDesc}>
-                Powered by real user reports and safety ratings across India and globally, keeping the community safe from scam stickers.
-              </p>
-            </div>
-          </div>
-        </section>
 
         {/* Semantic SEO & Sitelinks Structure for Search Engines and Screen Readers */}
         <section

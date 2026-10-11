@@ -33,22 +33,15 @@ export function DesktopNavbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Hide only on full-screen auth pages
-  const isAuthPage =
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/register") ||
-    pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/reset-password");
+  // Only display the top navigation bar on Home ("/") and Profile ("/profile")
+  const isHome = pathname === "/";
+  const isProfile = pathname === "/profile" || pathname.startsWith("/profile");
 
-  if (isAuthPage) {
+  if (!isHome && !isProfile) {
     return null;
   }
 
-  const isHome = pathname === "/";
   const isScan = pathname === "/scanner";
-  const isRewards = pathname.startsWith("/rewards");
-  const isTrust = pathname.startsWith("/trust-scores");
-  const isProfile = pathname.startsWith("/profile");
 
   const displayName =
     profile?.displayName ||
@@ -102,7 +95,7 @@ export function DesktopNavbar() {
           </span>
         </Link>
 
-        {/* Center: Flat surface Navigation Links — Home, Scan, Rewards, Trust, Profile */}
+        {/* Center: Flat surface Navigation Links — Home, Scan, Profile (Text Only) */}
         <nav className={styles.navLinks} aria-label="Primary navigation">
           <Link
             href="/"
@@ -117,23 +110,7 @@ export function DesktopNavbar() {
             className={`${styles.navItem} ${isScan ? styles.navItemActive : ""}`}
             aria-current={isScan ? "page" : undefined}
           >
-            Scan QR
-          </Link>
-
-          <Link
-            href="/rewards"
-            className={`${styles.navItem} ${isRewards ? styles.navItemActive : ""}`}
-            aria-current={isRewards ? "page" : undefined}
-          >
-            Rewards &amp; Deals
-          </Link>
-
-          <Link
-            href="/trust-scores"
-            className={`${styles.navItem} ${isTrust ? styles.navItemActive : ""}`}
-            aria-current={isTrust ? "page" : undefined}
-          >
-            Trust Scores
+            Scan
           </Link>
 
           <Link
