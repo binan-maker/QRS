@@ -17,7 +17,7 @@ import QrVerificationView from "./QrVerificationView";
 
 export const dynamic = "force-dynamic";
 
-export function resolveQrId(code: string, content?: string): string | null {
+function resolveQrId(code: string, content?: string): string | null {
   if (code === "custom" && content && content.trim()) {
     return getQrIdForContent(content.trim());
   }

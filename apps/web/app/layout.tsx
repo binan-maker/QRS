@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { AvatarProvider } from "@/lib/avatar-context";
 import { ThemeProvider } from "@/lib/theme-context";
@@ -16,18 +15,8 @@ import {
 } from "@/lib/seo";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0f17" },
-  ],
+  themeColor: "#0052CC",
   width: "device-width",
   initialScale: 1,
 };
@@ -52,19 +41,9 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "48x48" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
-      { url: "/web-app-manifest-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/web-app-manifest-512x512.png", sizes: "512x512", type: "image/png" },
-      { url: "/favicon.svg", type: "image/svg+xml" },
-    ],
-    shortcut: ["/favicon.ico"],
-    apple: [
-      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
-    ],
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.png",
   },
   manifest: "/site.webmanifest",
   openGraph: {
@@ -115,11 +94,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="en"
-      data-scroll-behavior="smooth"
-      className={inter.variable}
       suppressHydrationWarning
     >
-      <body className={inter.className} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <script
           id="binro-schema-ld"
           type="application/ld+json"
