@@ -114,7 +114,7 @@ export default function AuthCallbackPage() {
           minHeight: "100dvh",
           padding: "24px",
           textAlign: "center",
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "var(--font-sans), 'Plus Jakarta Sans', Inter, sans-serif",
           backgroundColor: "var(--background, #F5F8FF)",
         }}
       >
@@ -164,7 +164,7 @@ export default function AuthCallbackPage() {
         justifyContent: "center",
         minHeight: "100dvh",
         backgroundColor: "var(--background, #F5F8FF)",
-        fontFamily: "Inter, sans-serif",
+        fontFamily: "var(--font-sans), 'Plus Jakarta Sans', Inter, sans-serif",
       }}
     >
       <div
