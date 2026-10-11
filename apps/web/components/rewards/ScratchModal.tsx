@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import confetti from "canvas-confetti";
 import { Ionicons } from "@/lib/mobile-icons";
-import { MerchantLogo, MerchantBanner } from "@/lib/rewards-image";
+import { MerchantLogo, MerchantBanner, MerchantSlideBanner } from "@/lib/rewards-image";
 import type { ScratchCardItem } from "@services/rewards";
 import styles from "./scratch-modal.module.css";
 
@@ -13,7 +13,43 @@ interface ScratchModalProps {
   onClose: () => void;
   onScratchComplete?: (card: ScratchCardItem) => void;
   onClaim?: (card: ScratchCardItem) => void;
+  onOpenDetails?: (card: ScratchCardItem) => void;
 }
+
+interface BirthdayPiece {
+  id: number;
+  left: number;
+  color: string;
+  shape: "ribbon" | "square" | "circle" | "star";
+  size: number;
+  delay: number;
+  duration: number;
+}
+
+const CELEBRATION_COLORS = [
+  "#FF2D55", // Coral pink / magenta
+  "#FF9500", // Bright orange
+  "#FFCC00", // Golden yellow
+  "#34C759", // Festive emerald green
+  "#007AFF", // Royal electric blue
+  "#AF52DE", // Festive violet
+  "#FFD700", // Shimmer gold
+  "#38BDF8", // Sky cyan
+  "#EC4899", // Rose
+];
+
+const BIRTHDAY_PIECES: BirthdayPiece[] = Array.from({ length: 44 }, (_, i) => {
+  const shapes: BirthdayPiece["shape"][] = ["ribbon", "square", "circle", "star"];
+  return {
+    id: i,
+    left: ((i * 2.3 + (i % 7) * 4) % 96) + 2,
+    color: CELEBRATION_COLORS[i % CELEBRATION_COLORS.length],
+    shape: shapes[i % shapes.length],
+    size: 7 + (i % 6) * 1.5,
+    delay: (i * 0.08) % 2.2,
+    duration: 2.8 + (i % 5) * 0.4,
+  };
+});
 
 export function ScratchModal({
   card,
@@ -21,6 +57,7 @@ export function ScratchModal({
   onClose,
   onScratchComplete,
   onClaim,
+  onOpenDetails,
 }: ScratchModalProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -43,26 +80,49 @@ export function ScratchModal({
     setTimeout(() => setToastMessage(null), 2400);
   }, []);
 
-  // ── Confetti Celebration Trigger (Brand Navy & Gold Accents) ───────────────
+  // ── Birthday Celebration Fireworks & Moving Pieces Trigger ──────────────────
   const triggerCelebration = useCallback(() => {
     try {
+      // Wave 1: Immediate center explosion
       confetti({
-        particleCount: 60,
-        spread: 70,
+        particleCount: 75,
+        spread: 90,
         origin: { y: 0.6 },
-        colors: ["#0052CC", "#3B82F6", "#F59E0B", "#10B981", "#FFFFFF"],
-        disableForReducedMotion: true,
+        colors: ["#FF2D55", "#FF9500", "#FFCC00", "#34C759", "#007AFF", "#AF52DE", "#FFD700"],
       });
 
+      // Wave 2: Left confetti cannon angled up and right
       setTimeout(() => {
         confetti({
-          particleCount: 40,
-          spread: 60,
-          origin: { y: 0.65 },
-          colors: ["#0052CC", "#FBBF24", "#60A5FA"],
-          disableForReducedMotion: true,
+          particleCount: 50,
+          angle: 60,
+          spread: 65,
+          origin: { x: 0.1, y: 0.7 },
+          colors: ["#FFD700", "#FF2D55", "#007AFF", "#34C759"],
         });
-      }, 150);
+      }, 250);
+
+      // Wave 3: Right confetti cannon angled up and left
+      setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          angle: 120,
+          spread: 65,
+          origin: { x: 0.9, y: 0.7 },
+          colors: ["#FF9500", "#AF52DE", "#FFCC00", "#38BDF8"],
+        });
+      }, 500);
+
+      // Wave 4: Gentle star and circle cascade from top
+      setTimeout(() => {
+        confetti({
+          particleCount: 35,
+          spread: 100,
+          origin: { y: 0.2 },
+          shapes: ["circle", "star"],
+          colors: ["#FFD700", "#FBBF24", "#60A5FA", "#F43F5E"],
+        });
+      }, 850);
     } catch {}
   }, []);
 
@@ -390,7 +450,7 @@ export function ScratchModal({
 
         {/* Revealed Card Interior */}
         <div className={styles.cardInterior}>
-          {/* Top Media Banner */}
+          {/* Top Media Banner: Fitted creative slide banner without trophy */}
           <div
             className={`${styles.mediaBanner} ${
               tier === "gold"
@@ -400,44 +460,22 @@ export function ScratchModal({
                   : ""
             }`}
           >
-            {/* Background creative image from vCommission / Merchant */}
-            <div className={styles.mediaBannerBg}>
-              <MerchantBanner
-                merchantName={offer.merchantName}
-                directUrl={offer.merchantLogoUrl}
-                category={offer.category}
-                className={styles.mediaBannerImg}
-                alt={`${offer.merchantName} Banner`}
-              />
-              <div className={styles.mediaBannerOverlay} />
-            </div>
-
-            <div className={styles.mediaArtWrap}>
-              <span className={styles.mediaArtIcon}>
-                <Ionicons
-                  name={
-                    tier === "gold"
-                      ? "trophy-outline"
-                      : offer.category === "Fashion"
-                        ? "shirt-outline"
-                        : offer.category === "Electronics"
-                          ? "headset-outline"
-                          : "ticket-outline"
-                  }
-                  size={42}
-                />
-              </span>
-            </div>
-
-            <span className={styles.mediaPillTag}>
-              {tier === "gold" ? "Gold VIP" : tier === "silver" ? "Silver" : "Verified"}
-            </span>
+            <MerchantSlideBanner
+              merchantName={offer.merchantName}
+              bannerUrl={offer.bannerUrl}
+              creativeUrls={offer.creativeUrls}
+              campaignId={offer.campaignId}
+              category={offer.category}
+              className={styles.mediaBannerImg}
+              alt={`${offer.merchantName} Banner`}
+            />
 
             {/* Overlapping Brand Circle Logo Badge */}
             <div className={styles.brandBadgeCircle}>
               <MerchantLogo
                 merchantName={offer.merchantName}
                 directUrl={offer.merchantLogoUrl}
+                campaignId={offer.campaignId}
                 className={styles.brandBadgeImg}
                 alt={offer.merchantName}
                 fallbackInitialClassName={styles.brandBadgeInitial}
@@ -486,6 +524,73 @@ export function ScratchModal({
         </div>
       </div>
 
+      {/* Moving Birthday Celebration Pieces Overlay */}
+      {isRevealed && (
+        <div className={styles.celebrationOverlay} aria-hidden="true">
+          {BIRTHDAY_PIECES.map((p) => (
+            <div
+              key={p.id}
+              className={styles.celebrationPiece}
+              style={{
+                left: `${p.left}%`,
+                animationDelay: `${p.delay}s`,
+                animationDuration: `${p.duration}s`,
+              }}
+            >
+              <div
+                className={styles.celebrationInner}
+                style={{
+                  animationDuration: `${1.4 + (p.id % 3) * 0.4}s`,
+                }}
+              >
+                {p.shape === "star" ? (
+                  <span
+                    style={{
+                      color: p.color,
+                      fontSize: `${p.size + 4}px`,
+                      display: "block",
+                      filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
+                    }}
+                  >
+                    ★
+                  </span>
+                ) : p.shape === "circle" ? (
+                  <div
+                    style={{
+                      width: `${p.size}px`,
+                      height: `${p.size}px`,
+                      borderRadius: "50%",
+                      backgroundColor: p.color,
+                      boxShadow: `0 2px 6px ${p.color}66`,
+                    }}
+                  />
+                ) : p.shape === "ribbon" ? (
+                  <div
+                    style={{
+                      width: `${Math.round(p.size * 0.45)}px`,
+                      height: `${Math.round(p.size * 1.8)}px`,
+                      borderRadius: "2px",
+                      backgroundColor: p.color,
+                      boxShadow: `0 2px 6px ${p.color}66`,
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: `${p.size}px`,
+                      height: `${p.size}px`,
+                      borderRadius: "2px",
+                      backgroundColor: p.color,
+                      boxShadow: `0 2px 6px ${p.color}66`,
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Bottom Action Section */}
       <div className={styles.bottomActionWrap}>
         {!isRevealed ? (
@@ -499,14 +604,28 @@ export function ScratchModal({
             <span>Reveal Voucher</span>
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={onClose}
-            className={styles.scratchOffBtn}
-            aria-label="Return to rewards"
-          >
-            <span>Back to Rewards</span>
-          </button>
+          <div className={styles.bottomButtonGroup}>
+            {onOpenDetails && (
+              <button
+                type="button"
+                onClick={() => onOpenDetails(card)}
+                className={styles.viewDetailsBtn}
+                aria-label="View full voucher details"
+              >
+                <Ionicons name="document-text-outline" size={16} />
+                <span>View Voucher Details</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className={styles.scratchOffBtn}
+              style={{ flex: onOpenDetails ? 1 : undefined }}
+              aria-label="Return to rewards"
+            >
+              <span>Back to Rewards</span>
+            </button>
+          </div>
         )}
       </div>
     </div>

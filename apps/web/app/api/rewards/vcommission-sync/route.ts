@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseClient, isWebSupabaseConfigured } from "@/lib/supabase";
-import { extractAndNormalizeImageUrl, getMerchantDomain } from "@/lib/rewards-image";
+import { extractAndNormalizeImageUrl, VCOMMISSION_NETWORK_LOGO } from "@/lib/rewards-image";
 
 /**
  * vCommission Automated Ingestion & Sync Engine
@@ -26,33 +26,14 @@ interface RawCouponInput {
   tier?: "gold" | "silver" | "bronze";
 }
 
-function cleanMerchantName(raw: string): { name: string; domain: string } {
-  const lower = (raw || "").toLowerCase();
-  if (lower.includes("tatacliq")) return { name: "Tata CLiQ", domain: "tatacliq.com" };
-  if (lower.includes("blabliblu")) return { name: "Blabliblulife", domain: "blabliblulife.com" };
-  if (lower.includes("tenxyou")) return { name: "Tenxyou", domain: "tenxyou.com" };
-  if (lower.includes("boat")) return { name: "boAt Lifestyle", domain: "boat-lifestyle.com" };
-  if (lower.includes("flipkart")) return { name: "Flipkart", domain: "flipkart.com" };
-  if (lower.includes("ajio")) return { name: "AJIO", domain: "ajio.com" };
-  if (lower.includes("myntra")) return { name: "Myntra", domain: "myntra.com" };
-  if (lower.includes("nykaa")) return { name: "Nykaa", domain: "nykaa.com" };
-  if (lower.includes("makemytrip") || lower.includes("mmt")) return { name: "MakeMyTrip", domain: "makemytrip.com" };
-  if (lower.includes("swiggy")) return { name: "Swiggy", domain: "swiggy.com" };
-  if (lower.includes("zomato")) return { name: "Zomato", domain: "zomato.com" };
-  if (lower.includes("hostinger")) return { name: "Hostinger", domain: "hostinger.in" };
-  if (lower.includes("mamaearth")) return { name: "Mamaearth", domain: "mamaearth.in" };
-  if (lower.includes("lenskart")) return { name: "Lenskart", domain: "lenskart.com" };
-  if (lower.includes("pharmeasy")) return { name: "PharmEasy", domain: "pharmeasy.in" };
-
-  // Generic fallback: clean ".com", "Ecommerce CPS", etc.
-  const cleaned = raw
+function cleanMerchantName(raw: string): string {
+  const cleaned = (raw || "")
     .replace(/\.com|\.in|\.org/gi, "")
     .replace(/ecommerce/gi, "")
     .replace(/cps|cpa|cpl/gi, "")
     .replace(/- india|- in/gi, "")
     .trim();
-  const domain = getMerchantDomain(cleaned || raw);
-  return { name: cleaned || "Partner Brand", domain };
+  return cleaned || "vCommission Partner";
 }
 
 function computeTier(title: string, desc: string): "gold" | "silver" | "bronze" {
@@ -83,9 +64,12 @@ function computeTier(title: string, desc: string): "gold" | "silver" | "bronze" 
   return "bronze";
 }
 
-function resolveLogoUrl(domain: string): string {
-  // Ultra-crisp Google Favicon CDN service (128px high-res vector/PNG)
-  return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+function resolveVCommissionCreativeUrl(campaignId?: string | null): string {
+  const cleanId = (campaignId || "").trim();
+  if (cleanId && cleanId !== "auto" && cleanId !== "feed") {
+    return `https://media.hasoffers.com/brand/${cleanId}/logo.png`;
+  }
+  return VCOMMISSION_NETWORK_LOGO;
 }
 
 function parseDateString(dateStr?: string): string | null {
@@ -131,7 +115,7 @@ export async function POST(req: NextRequest) {
           const code = parts[0].trim();
           const campaign = parts[1].trim();
           const desc = parts[2] || "";
-          const { name, domain } = cleanMerchantName(campaign);
+          const name = cleanMerchantName(campaign);
           const tier = computeTier(desc, campaign);
           const offerId = `vc_${name.toLowerCase().replace(/[^a-z0-9]/g, "")}_${code.toLowerCase()}`;
 
@@ -146,7 +130,6 @@ export async function POST(req: NextRequest) {
                 normalized.includes("creative") ||
                 normalized.includes("thumbnail") ||
                 normalized.includes("logo") ||
-                normalized.includes("favicon") ||
                 /\.(png|jpe?g|webp|svg|gif)/i.test(normalized))
             ) {
               directLogoUrl = normalized;
@@ -159,7 +142,7 @@ export async function POST(req: NextRequest) {
             network_provider: "vcommission",
             campaign_id: "auto",
             merchant_name: name,
-            merchant_logo_url: directLogoUrl || resolveLogoUrl(domain),
+            merchant_logo_url: directLogoUrl || resolveVCommissionCreativeUrl("auto"),
             title: desc || `${name} Special Discount`,
             description: desc,
             coupon_code: code,
@@ -204,10 +187,11 @@ export async function POST(req: NextRequest) {
 
               if (couponCode) {
                 const campaignName = offerObj.name || offerObj.campaign_name || "Partner Campaign";
-                const { name, domain } = cleanMerchantName(campaignName);
+                const name = cleanMerchantName(campaignName);
                 const desc = offerObj.description || offerObj.title || "";
                 const tier = computeTier(campaignName, desc);
-                const offerId = `vc_${offerObj.id || offerObj.offer_id || couponCode.toLowerCase()}`;
+                const rawCampaignId = String(offerObj.id || offerObj.offer_id || "10240");
+                const offerId = `vc_${rawCampaignId}_${couponCode.toLowerCase()}`;
 
                 // Check for creative thumbnail, logo, or file from TUNE / vCommission
                 const rawThumbnail =
@@ -222,18 +206,24 @@ export async function POST(req: NextRequest) {
                   offerObj?.image_url ||
                   offerObj?.logo_url;
                 const thumbnail =
-                  extractAndNormalizeImageUrl(rawThumbnail) || resolveLogoUrl(domain);
+                  extractAndNormalizeImageUrl(rawThumbnail) || resolveVCommissionCreativeUrl(rawCampaignId);
 
                 transformedCoupons.push({
                   id: offerId,
                   network_provider: "vcommission",
-                  campaign_id: String(offerObj.id || offerObj.offer_id || "10240"),
+                  campaign_id: rawCampaignId,
                   merchant_name: name,
                   merchant_logo_url: thumbnail,
+                  banner_url: `https://media.hasoffers.com/brand/${rawCampaignId}/banner.jpg`,
+                  creative_urls: [
+                    `https://media.hasoffers.com/brand/${rawCampaignId}/banner.jpg`,
+                    `https://media.hasoffers.com/network_images/vcommission/${rawCampaignId}_banner.jpg`,
+                    `https://tracking.vcommission.com/media/offer_${rawCampaignId}.png`,
+                  ],
                   title: desc || `${name} Exclusive Offer`,
                   description: desc,
                   coupon_code: couponCode,
-                  destination_url: `https://tracking.vcommission.com/aff_c?offer_id=${offerObj.id || "10240"}&aff_id=${affiliateId}`,
+                  destination_url: `https://tracking.vcommission.com/aff_c?offer_id=${rawCampaignId}&aff_id=${affiliateId}`,
                   tier,
                   category: "Shopping",
                   terms_text: offerObj.terms || "Standard merchant terms apply.",
@@ -262,25 +252,26 @@ export async function POST(req: NextRequest) {
           const list = Array.isArray(feedJson) ? feedJson : feedJson.coupons || feedJson.offers || [];
           for (const item of list) {
             if (item.coupon_code || item.code) {
-              const { name, domain } = cleanMerchantName(item.merchant || item.campaign || "");
-                const rawFeedImg =
-                  item.merchant_logo_url ||
-                  item.logo_url ||
-                  item.image_url ||
-                  item.thumbnail_url ||
-                  item.creative_url;
-                const feedImg =
-                  extractAndNormalizeImageUrl(rawFeedImg) || resolveLogoUrl(domain);
-                transformedCoupons.push({
-                  id: `vc_feed_${item.code || item.coupon_code}`,
-                  network_provider: "vcommission",
-                  campaign_id: String(item.campaign_id || "feed"),
-                  merchant_name: name,
-                  merchant_logo_url: feedImg,
+              const name = cleanMerchantName(item.merchant || item.campaign || "");
+              const feedCampaignId = String(item.campaign_id || "feed");
+              const rawFeedImg =
+                item.merchant_logo_url ||
+                item.logo_url ||
+                item.image_url ||
+                item.thumbnail_url ||
+                item.creative_url;
+              const feedImg =
+                extractAndNormalizeImageUrl(rawFeedImg) || resolveVCommissionCreativeUrl(feedCampaignId);
+              transformedCoupons.push({
+                id: `vc_feed_${item.code || item.coupon_code}`,
+                network_provider: "vcommission",
+                campaign_id: feedCampaignId,
+                merchant_name: name,
+                merchant_logo_url: feedImg,
                 title: item.title || `${name} Deal`,
                 description: item.description || "",
                 coupon_code: item.code || item.coupon_code,
-                destination_url: `https://tracking.vcommission.com/aff_c?offer_id=${item.campaign_id || "feed"}&aff_id=${affiliateId}`,
+                destination_url: `https://tracking.vcommission.com/aff_c?offer_id=${feedCampaignId}&aff_id=${affiliateId}`,
                 tier: computeTier(item.title || "", item.description || ""),
                 category: "Shopping",
                 terms_text: item.terms || "Standard merchant terms apply.",

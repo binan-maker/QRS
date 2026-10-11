@@ -1,847 +1,359 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   BINRO WEB: SCRATCH CARDS & REWARDS PAGE (rewards.module.css)
-   Mature, executive fintech styling. Strict brand navy & clean surface hierarchy.
+   BINRO WEB: MY BONUSES & SCRATCH CARDS (rewards.module.css)
+   Exact match for Image 1 reference: 2-column mobile grid, clean dark cards
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .pageFrame {
   min-height: 100dvh;
-  background-color: var(--background);
-  color: var(--text);
+  background-color: #0B0F19;
+  color: #ffffff;
   display: flex;
   flex-direction: column;
 }
 
 .container {
   width: 100%;
-  max-width: 1080px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 16px 16px calc(90px + env(safe-area-inset-bottom, 0px));
+  padding: 12px 14px calc(90px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
 }
 
 @media (min-width: 640px) {
   .container {
-    padding: 24px 24px 80px;
+    padding: 20px 24px 80px;
   }
 }
 
 @media (min-width: 1024px) {
   .container {
-    padding: 32px 32px 96px;
+    padding: 28px 32px 96px;
   }
 }
 
-/* ── Top Navigation Bar ─────────────────────────────────────────────────── */
+/* ── Top Navigation Bar (Centered Title "My bonuses" matching Image 1) ───── */
 .topBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.topBarLeft {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
+  position: relative;
+  width: 100%;
+  padding: 8px 0 16px;
 }
 
 .backBtn {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  min-height: 42px;
-  border-radius: 12px;
-  border: 1px solid var(--surface-border);
-  background-color: var(--surface);
-  color: var(--text);
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
+  z-index: 2;
 }
 
 .backBtn:hover {
-  background-color: var(--surface-light);
+  background-color: rgba(255, 255, 255, 0.14);
 }
 
 .backBtn:active {
   transform: scale(0.96);
 }
 
-.headingBlock {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
 .pageTitle {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: clamp(20px, calc(16px + 0.8vw), 26px);
-  font-weight: 800;
-  letter-spacing: -0.4px;
-  color: var(--text);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: #ffffff;
   margin: 0;
-  line-height: 1.2;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
 }
 
-.pageSubtitle {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 3px 0 0;
-  line-height: 1.4;
+.topBarSpacer {
+  width: 38px;
 }
 
-.topBarRight {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.topActionBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  min-height: 40px;
-  border-radius: 12px;
-  background-color: var(--surface);
-  border: 1px solid var(--surface-border);
-  color: var(--primary);
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-
-.topActionBtn:hover {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  color: #ffffff;
-}
-
-/* ── Featured Demo Scratch Card (Clearly Visible at Top) ─────────────────── */
-.demoFeatureCard {
-  width: 100%;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #003A99 0%, #0052CC 60%, #1D4ED8 100%);
-  color: #ffffff;
-  padding: 20px 22px;
-  box-sizing: border-box;
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 8px 24px -4px rgba(0, 82, 204, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-
-.demoFeatureCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px -4px rgba(0, 82, 204, 0.35);
-}
-
-@media (min-width: 640px) {
-  .demoFeatureCard {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 22px 26px;
-  }
-}
-
-.demoFeatureLeft {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-width: 640px;
-}
-
-.demoPillTag {
-  align-self: flex-start;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: #93C5FD;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 3px 10px;
-  border-radius: 100px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.demoFeatureTitle {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 18px;
-  font-weight: 800;
-  color: #ffffff;
-  margin: 2px 0 0;
-  line-height: 1.25;
-}
-
-.demoFeatureDesc {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.88);
-  margin: 0;
-  line-height: 1.45;
-}
-
-.demoFeatureBtn {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 11px 20px;
-  border-radius: 14px;
-  background: #ffffff;
-  color: #003A99;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 13.5px;
-  font-weight: 800;
-  border: none;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-
-@media (min-width: 640px) {
-  .demoFeatureBtn {
-    align-self: center;
-  }
-}
-
-.demoFeatureBtn:hover {
-  background: #F8FAFC;
-  transform: scale(1.02);
-}
-
-/* ── Daily Milestone Progress Card ──────────────────────────────────────── */
-.progressCard {
-  background-color: var(--surface);
-  border: 1px solid var(--surface-border);
-  border-radius: 18px;
-  padding: 18px 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-}
-
-.progressHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.progressTitle {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0;
-}
-
-.progressSub {
-  font-size: 12.5px;
-  color: var(--text-secondary);
-  margin: 3px 0 0;
-}
-
-.progressBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 8px;
-  background-color: var(--surface-light);
-  border: 1px solid var(--surface-border);
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.progressBarTrack {
-  height: 8px;
-  border-radius: 4px;
-  background-color: var(--surface-light);
-  margin-top: 14px;
-  overflow: hidden;
-}
-
-.progressBarFill {
-  height: 100%;
-  border-radius: 4px;
-  background: var(--primary);
-  transition: width 0.3s ease;
-}
-
-/* ── Filter Segment Bar ─────────────────────────────────────────────────── */
-.filterBar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 18px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: none;
-}
-
-.filterBar::-webkit-scrollbar {
-  display: none;
-}
-
-.filterBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  min-height: 38px;
-  border-radius: 10px;
-  border: 1px solid var(--surface-border);
-  background-color: var(--surface);
-  color: var(--text-secondary);
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-
-.filterBtnActive {
-  background-color: var(--primary);
-  border-color: var(--primary);
-  color: #ffffff;
-}
-
-/* ── Cards Grid (Executive 2 & 3 Column Structure) ──────────────────────── */
+/* ── Cards Grid (2-column on mobile, 3-column tablet, 4-column desktop) ──── */
 .cardsGrid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
   width: 100%;
 }
 
 @media (min-width: 640px) {
   .cardsGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 18px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
   }
 }
 
 @media (min-width: 1024px) {
   .cardsGrid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
   }
 }
 
-/* ── Mature Card Component ──────────────────────────────────────────────── */
-.rewardCard {
-  background-color: var(--surface);
-  border: 1px solid var(--surface-border);
-  border-radius: 18px;
-  padding: 18px;
+/* ── Individual Bonus Scratch Card ───────────────────────────────────────── */
+.bonusCard {
+  background-color: #141926;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   position: relative;
   text-align: left;
 }
 
-.rewardCard:hover {
+.bonusCard:hover {
   transform: translateY(-2px);
-  border-color: var(--primary);
-  box-shadow: 0 6px 18px rgba(0, 82, 204, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
-.rewardCardTop {
+.bonusCard:active {
+  transform: scale(0.98);
+}
+
+/* Expired card in gray tone matching reference image */
+.bonusCardExpired {
+  background-color: #0f131c;
+  border-color: rgba(255, 255, 255, 0.05);
+  opacity: 0.88;
+}
+
+.bonusCardExpired:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.bonusCardExpired .cardHeadline {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Wide card (spans 2 columns on tablet/desktop, e.g. Visa card) */
+.bonusCardWide {
+  grid-column: span 2;
+}
+
+/* ── Card Media Container (Top Half) ─────────────────────────────────────── */
+.cardMediaWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 11;
+  overflow: hidden;
+  background-color: #0c111d;
+}
+
+.bonusCardWide .cardMediaWrap {
+  aspect-ratio: 16 / 8;
+}
+
+/* ── Scratch Foil Surface for Unscratched Cards ──────────────────────────── */
+.cardFoilSurface {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0e1e38 0%, #173059 45%, #0d1a30 85%, #132544 100%);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
+  justify-content: center;
+  overflow: hidden;
 }
 
-.merchantLogoTagWrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.cardFoilSurface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.035) 0px,
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 1px,
+    transparent 7px
+  );
+  pointer-events: none;
 }
 
-.cardMerchantLogoBadge {
-  width: 26px;
-  height: 26px;
+.cardFoilSheen {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.bonusCard:hover .cardFoilSheen {
+  left: 140%;
+}
+
+.cardFoilPrompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(14, 27, 49, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  padding: 6px 12px;
+  border-radius: 100px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  z-index: 2;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.bonusCard:hover .cardFoilPrompt {
+  transform: scale(1.04);
+  background: rgba(37, 99, 235, 0.35);
+  border-color: rgba(96, 165, 250, 0.5);
+}
+
+.cardMediaImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.bonusCard:hover .cardMediaImg {
+  transform: scale(1.04);
+}
+
+/* Grayscale muted effect for expired / not applicable cards (Citrus, WOG) */
+.cardMediaImgExpired {
+  filter: grayscale(1) contrast(0.9) brightness(0.72);
+  opacity: 0.65;
+}
+
+/* Round Badge overlapping bottom-left of image box */
+.cardRoundBadge {
+  position: absolute;
+  bottom: 8px;
+  left: 10px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: #ffffff;
-  border: 1px solid var(--surface-border);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  background-color: #ffffff;
+  border: 2.5px solid #141926;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  z-index: 5;
   overflow: hidden;
   flex-shrink: 0;
 }
 
-.cardMerchantLogoImg {
+.cardRoundBadgeExpired {
+  background-color: #242b3b;
+  border-color: #0f131c;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+
+.cardRoundBadgeLocked {
+  background-color: rgba(20, 26, 40, 0.95);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.cardRoundBadgePink {
+  background: linear-gradient(135deg, #F43F5E 0%, #EC4899 100%);
+  color: #ffffff;
+}
+
+.cardRoundBadgeImg {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 3px;
-  background: #ffffff;
+  padding: 2px;
 }
 
-.cardMerchantLogoInitial {
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--primary);
-  font-family: var(--font-inter), sans-serif;
-}
-
-.merchantTag {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.tierPill {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 3px 8px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.tierPillGold {
-  background: rgba(217, 119, 6, 0.12);
-  color: #D97706;
-  border: 1px solid rgba(217, 119, 6, 0.25);
-}
-
-.tierPillSilver {
-  background: var(--surface-light);
-  color: var(--text-secondary);
-  border: 1px solid var(--surface-border);
-}
-
-.tierPillBronze {
-  background: var(--primary-dim);
-  color: var(--primary);
-  border: 1px solid rgba(0, 82, 204, 0.2);
-}
-
-.tierPillDemo {
-  background: rgba(0, 82, 204, 0.12);
-  color: var(--primary);
-  border: 1px solid rgba(0, 82, 204, 0.3);
-}
-
-.tierPillAhmed {
-  background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
-  color: #ffffff;
-  border: 1px solid rgba(245, 158, 11, 0.6);
-  box-shadow: 0 1px 4px rgba(217, 119, 6, 0.35);
-}
-
-.cardAhmedFree {
-  border-color: #F59E0B !important;
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, #ffffff 60%) !important;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.14) !important;
-}
-
-.ahmedBanner {
-  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-  border: 1px solid rgba(245, 158, 11, 0.45);
-  border-radius: 14px;
-  padding: 14px 18px;
-  margin-bottom: 24px;
+/* ── Card Body (Bottom Half) ─────────────────────────────────────────────── */
+.cardBody {
+  padding: 10px 12px 14px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: space-between;
-  gap: 14px;
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  min-height: 68px;
+  gap: 8px;
 }
 
-.ahmedBannerLeft {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.ahmedBannerIcon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: rgba(245, 158, 11, 0.2);
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #F59E0B;
-  flex-shrink: 0;
-}
-
-.ahmedBannerTitle {
+.cardHeadline {
   font-family: var(--font-inter), sans-serif;
   font-size: 13.5px;
   font-weight: 700;
-  color: #F8FAFC;
-  margin-bottom: 2px;
-}
-
-.ahmedBannerSub {
-  font-size: 12px;
-  color: #94A3B8;
-}
-
-.ahmedBannerAction {
-  padding: 6px 14px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
   color: #ffffff;
-  font-size: 12px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.3);
-  transition: opacity 0.15s ease;
-}
-
-.ahmedBannerAction:hover {
-  opacity: 0.92;
-}
-
-.rewardCardBody {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
-}
-
-.rewardCardTitle {
-  font-family: var(--font-inter), -apple-system, sans-serif;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text);
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+  letter-spacing: -0.1px;
+}
+
+/* ── Capsule Status Pills (Matching Image 1) ─────────────────────────────── */
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 3px 9px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
   line-height: 1.3;
 }
 
-.rewardCardDesc {
-  font-size: 12.5px;
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.45;
+/* Blue capsule: "Valid for 3 days", "Valid for 7 days" */
+.statusPillValid {
+  background-color: rgba(37, 99, 235, 0.18);
+  color: #60A5FA;
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
-.rewardCardFooter {
-  padding-top: 14px;
-  border-top: 1px solid var(--surface-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+/* Gray capsule: "Not applicable" */
+.statusPillExpired {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.45);
+  border: 1px solid transparent;
 }
 
-.statusIndicator {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.cardActionBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.cardActionScratch {
-  background-color: var(--primary);
-  color: #ffffff;
-}
-
-.cardActionScratch:hover {
-  background-color: #0043a8;
-}
-
-.cardActionRevealed {
-  background-color: var(--surface-light);
-  border: 1px solid var(--surface-border);
-  color: var(--text);
-}
-
-.cardActionRevealed:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.cardActionLocked {
-  background-color: var(--surface-light);
-  border: 1px solid var(--surface-border);
-  color: var(--text-muted);
-  cursor: default;
-}
-
-/* ── Empty State ────────────────────────────────────────────────────────── */
-.emptyState {
-  background-color: var(--surface);
-  border: 1px solid var(--surface-border);
-  border-radius: 18px;
-  padding: 44px 20px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.emptyTitle {
-  font-size: 17px;
-  font-weight: 800;
-  color: var(--text);
-  margin: 0;
-}
-
-.emptyText {
-  font-size: 13px;
-  color: var(--text-secondary);
-  max-width: 340px;
-  margin: 0;
-  line-height: 1.5;
-}
-
-/* ── vCommission Automated Sync Modal & Controls ────────────────────────── */
-.syncActionBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  min-height: 40px;
-  border-radius: 12px;
-  background-color: var(--surface);
-  border: 1px solid var(--surface-border);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.syncActionBtn:hover {
-  background-color: var(--surface-light);
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.syncModalOverlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(8px);
-  z-index: 99999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-
-.syncModalContent {
-  width: 100%;
-  max-width: 480px;
-  background-color: var(--surface);
-  border: 1px solid var(--surface-border);
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.syncModalHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.syncModalTitle {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--text);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.syncModalSubtitle {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin: 4px 0 0;
-  line-height: 1.4;
-}
-
-.syncCloseBtn {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  border: 1px solid var(--surface-border);
-  background-color: var(--surface-light);
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.syncCloseBtn:hover {
-  color: var(--text);
-}
-
-.syncFieldGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.syncLabel {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.syncInput {
-  width: 100%;
-  height: 42px;
-  border-radius: 12px;
-  border: 1px solid var(--surface-border);
-  background-color: var(--surface-light);
-  padding: 0 12px;
-  font-size: 13px;
-  color: var(--text);
-  outline: none;
-  transition: border-color 0.15s ease;
-}
-
-.syncInput:focus {
-  border-color: var(--primary);
-}
-
-.syncTextarea {
-  width: 100%;
-  min-height: 80px;
-  border-radius: 12px;
-  border: 1px solid var(--surface-border);
-  background-color: var(--surface-light);
-  padding: 10px 12px;
-  font-size: 12px;
-  font-family: monospace;
-  color: var(--text);
-  outline: none;
-  resize: vertical;
-}
-
-.syncTextarea:focus {
-  border-color: var(--primary);
-}
-
-.syncHint {
-  font-size: 11px;
-  color: var(--text-muted);
-  line-height: 1.4;
-}
-
-.syncStatusAlert {
-  padding: 10px 14px;
-  border-radius: 12px;
-  font-size: 12px;
-  line-height: 1.4;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.syncStatusSuccess {
-  background-color: rgba(16, 185, 129, 0.12);
-  color: #10b981;
+/* Green/emerald capsule: "Code ready · View" */
+.statusPillScratched {
+  background-color: rgba(16, 185, 129, 0.18);
+  color: #34D399;
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
-
-.syncStatusError {
-  background-color: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.syncSubmitBtn {
-  width: 100%;
-  height: 44px;
-  border-radius: 12px;
-  background-color: var(--primary);
-  color: #ffffff;
-  border: none;
-  font-size: 14px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.syncSubmitBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.syncSubmitBtn:not(:disabled):hover {
-  opacity: 0.92;
-}
-

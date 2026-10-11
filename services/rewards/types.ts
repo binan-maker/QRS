@@ -14,6 +14,8 @@ export interface RewardOffer {
   campaignId: string | null;
   merchantName: string;
   merchantLogoUrl?: string | null;
+  bannerUrl?: string | null;
+  creativeUrls?: string[];
   title: string;
   description: string;
   couponCode: string | null;

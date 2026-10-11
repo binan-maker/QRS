@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Ionicons } from "@/lib/mobile-icons";
 import { BottomTabBar } from "@/components/navigation/BottomTabBar";
 import { ScratchModal } from "@/components/rewards/ScratchModal";
 import { BonusDetailModal } from "@/components/rewards/BonusDetailModal";
-import { MerchantLogo } from "@/lib/rewards-image";
 import {
   getUserRewardWallet,
   getUserScratchCards,
@@ -23,145 +21,306 @@ import {
 } from "@services/rewards";
 import styles from "./rewards.module.css";
 
-type FilterType = "all" | "unscratched" | "revealed" | "locked";
+// ── Baseline Cards corresponding directly to User Reference Image (Left Phone) ───
+interface DisplayBonusCard {
+  id: string;
+  headline: string;
+  merchantName: string;
+  status: "unlocked" | "scratched" | "expired" | "locked";
+  validityText: string;
+  bannerUrl: string;
+  creativeUrls?: string[];
+  badgeType: "lock" | "pink" | "citrus" | "wog" | "arena" | "scissors" | "visa" | "brand";
+  isWide?: boolean;
+  offer: RewardOffer;
+}
 
-export const AHMED_TEST_EMAIL = "ahmedsameerbinan2@gmail.com";
-
-// ── Exclusive Free Reward Card for ahmedsameerbinan2@gmail.com ───────────────
-const AHMED_FREE_REWARD_CARD: ScratchCardItem = {
-  id: "ahmed_exclusive_free_card",
-  userId: AHMED_TEST_EMAIL,
-  tier: "gold",
-  sourceType: "milestone",
-  sourceLabel: "Ahmed's Free Reward",
-  status: "unlocked",
-  offerId: "vc_tatacliq_ahmed_vip",
-  offer: {
-    id: "vc_tatacliq_ahmed_vip",
-    networkProvider: "vcommission",
-    campaignId: "10240",
+const INITIAL_IMAGE_CARDS: DisplayBonusCard[] = [
+  {
+    id: "card_citrus_5",
+    headline: "5% in Citrus",
+    merchantName: "Citrus",
+    status: "expired",
+    validityText: "Not applicable",
+    bannerUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80",
+    badgeType: "citrus",
+    offer: {
+      id: "offer_citrus_5",
+      networkProvider: "vcommission",
+      campaignId: "citrus_01",
+      merchantName: "Citrus",
+      merchantLogoUrl: null,
+      bannerUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80",
+      title: "5% in Citrus",
+      description: "Exclusive consumer tech and electronics cash reward program across partner retail stores.",
+      couponCode: "CITRUS5",
+      destinationUrl: "https://vcommission.com",
+      tier: "bronze",
+      category: "Electronics",
+      termsText: "Offer validity ended. Standard store terms apply.",
+      isApproved: true,
+      isActive: false,
+      dailyAllocationLimit: 500,
+      totalAllocated: 0,
+    },
+  },
+  {
+    id: "card_wog_5",
+    headline: "5% in WOG",
+    merchantName: "WOG",
+    status: "expired",
+    validityText: "Not applicable",
+    bannerUrl: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80",
+    badgeType: "wog",
+    offer: {
+      id: "offer_wog_5",
+      networkProvider: "vcommission",
+      campaignId: "wog_01",
+      merchantName: "WOG",
+      merchantLogoUrl: null,
+      bannerUrl: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80",
+      title: "5% in WOG",
+      description: "Fuel and convenience marketplace rewards with digital contactless redemption.",
+      couponCode: "WOG5",
+      destinationUrl: "https://vcommission.com",
+      tier: "bronze",
+      category: "Auto & Travel",
+      termsText: "Promotion campaign has completed.",
+      isApproved: true,
+      isActive: false,
+      dailyAllocationLimit: 500,
+      totalAllocated: 0,
+    },
+  },
+  {
+    id: "card_dutyfree_50",
+    headline: "50 Cash in Duty Fr...",
+    merchantName: "Duty Free",
+    status: "locked",
+    validityText: "Not applicable",
+    bannerUrl: "https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=600&q=80",
+    badgeType: "lock",
+    offer: {
+      id: "offer_dutyfree_50",
+      networkProvider: "vcommission",
+      campaignId: "dutyfree_01",
+      merchantName: "Duty Free",
+      merchantLogoUrl: null,
+      bannerUrl: "https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=600&q=80",
+      title: "50 Cash in Duty Free",
+      description: "Airport terminal travel retail cash bonus. Scan verified QR codes to unlock this card.",
+      couponCode: "DUTY50",
+      destinationUrl: "https://vcommission.com",
+      tier: "silver",
+      category: "Duty Free",
+      termsText: "Locked bonus. Complete daily scan milestone to unlock.",
+      isApproved: true,
+      isActive: true,
+      dailyAllocationLimit: 300,
+      totalAllocated: 0,
+    },
+  },
+  {
+    id: "card_delicious_cashback",
+    headline: "Delicious cashback",
+    merchantName: "Sense Bank & ATB",
+    status: "unlocked",
+    validityText: "Valid for 3 days",
+    bannerUrl: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=600&q=80",
+    badgeType: "pink",
+    offer: {
+      id: "offer_delicious_cashback",
+      networkProvider: "vcommission",
+      campaignId: "delicious_01",
+      merchantName: "Sense Bank & ATB",
+      merchantLogoUrl: null,
+      bannerUrl: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=600&q=80",
+      title: "Delicious cashback",
+      description: "Delicious shopping, pleasant discounts and everything you need — always nearby at ATB. And the profitable cashback with your partner card makes every trip even more enjoyable.",
+      couponCode: "YUMMY20",
+      destinationUrl: "https://vcommission.com",
+      tier: "gold",
+      category: "Food & Dining",
+      termsText: "For purchases over 350 UAH in the network of stores or on the website, an additional 2% cashback is credited. The maximum cashback amount is 200 Cash'U bonus points per month during the promotion period.",
+      isApproved: true,
+      isActive: true,
+      dailyAllocationLimit: 999,
+      totalAllocated: 0,
+    },
+  },
+  {
+    id: "card_kachorovska_6",
+    headline: "6% cashback at K...",
+    merchantName: "Kachorovska",
+    status: "unlocked",
+    validityText: "Valid for 3 days",
+    bannerUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80",
+    badgeType: "scissors",
+    offer: {
+      id: "offer_kachorovska_6",
+      networkProvider: "vcommission",
+      campaignId: "kachorovska_01",
+      merchantName: "Kachorovska",
+      merchantLogoUrl: null,
+      bannerUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80",
+      title: "6% cashback at Kachorovska",
+      description: "Artisan footwear, handcrafted leather bags, and designer accessories cashback.",
+      couponCode: "KACH6",
+      destinationUrl: "https://vcommission.com",
+      tier: "gold",
+      category: "Fashion & Footwear",
+      termsText: "Valid on all seasonal collections online and in boutique stores.",
+      isApproved: true,
+      isActive: true,
+      dailyAllocationLimit: 400,
+      totalAllocated: 0,
+    },
+  },
+  {
+    id: "card_arena_15",
+    headline: "15% in Arena",
+    merchantName: "Arena",
+    status: "unlocked",
+    validityText: "Valid for 2 days",
+    bannerUrl: "https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=600&q=80",
+    badgeType: "arena",
+    offer: {
+      id: "offer_arena_15",
+      networkProvider: "vcommission",
+      campaignId: "arena_01",
+      merchantName: "Arena",
+      merchantLogoUrl: null,
+      bannerUrl: "https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=600&q=80",
+      title: "15% in Arena",
+      description: "Professional swimwear, goggles, training equipment, and athletic apparel discount.",
+      couponCode: "ARENA15",
+      destinationUrl: "https://vcommission.com",
+      tier: "silver",
+      category: "Sports & Swim",
+      termsText: "Valid on purchases at Arena brand stores and digital checkout.",
+      isApproved: true,
+      isActive: true,
+      dailyAllocationLimit: 500,
+      totalAllocated: 0,
+    },
+  },
+  {
+    id: "card_tatacliq_125",
+    headline: "12.5% in Tata CLiQ",
     merchantName: "Tata CLiQ",
-    merchantLogoUrl: "https://www.google.com/s2/favicons?domain=tatacliq.com&sz=128",
-    title: "Flat ₹500 + Extra 15% OFF VIP Voucher",
-    description:
-      "Exclusive complimentary test reward for ahmedsameerbinan2@gmail.com. Free to scratch immediately with zero scan requirements.",
-    couponCode: "AHMEDFREE500",
-    destinationUrl: "https://tracking.vcommission.com/aff_c?offer_id=10240&aff_id=132680",
-    tier: "gold",
-    category: "Fashion & Lifestyle",
-    termsText:
-      "Exclusive test voucher for ahmedsameerbinan2@gmail.com. Valid on premium fashion, electronics & lifestyle at Tata CLiQ via vCommission.",
-    isApproved: true,
-    isActive: true,
-    dailyAllocationLimit: 999,
-    totalAllocated: 0,
-    expiresAt: "2027-12-31T23:59:59Z",
+    status: "scratched",
+    validityText: "Valid for 5 days",
+    bannerUrl: "https://media.hasoffers.com/brand/10240/banner.jpg",
+    creativeUrls: [
+      "https://media.hasoffers.com/brand/10240/banner.jpg",
+      "https://media.hasoffers.com/network_images/vcommission/10240_banner.jpg",
+      "https://tracking.vcommission.com/media/offer_10240.png",
+    ],
+    badgeType: "brand",
+    offer: {
+      id: "offer_tatacliq_125",
+      networkProvider: "vcommission",
+      campaignId: "10240",
+      merchantName: "Tata CLiQ",
+      merchantLogoUrl: "https://media.hasoffers.com/brand/10240/logo.png",
+      bannerUrl: "https://media.hasoffers.com/brand/10240/banner.jpg",
+      creativeUrls: [
+        "https://media.hasoffers.com/brand/10240/banner.jpg",
+        "https://media.hasoffers.com/network_images/vcommission/10240_banner.jpg",
+        "https://tracking.vcommission.com/media/offer_10240.png",
+      ],
+      title: "12.5% Instant Discount on Tata CLiQ",
+      description: "Instant cardholder savings on luxury fashion, footwear, watches, and electronics.",
+      couponCode: "AMEXTCF1010",
+      destinationUrl: "https://tracking.vcommission.com/aff_c?offer_id=10240&aff_id=132680",
+      tier: "gold",
+      category: "Fashion & Lifestyle",
+      termsText: "Redeemable on partner checkout. Standard merchant terms apply.",
+      isApproved: true,
+      isActive: true,
+      dailyAllocationLimit: 500,
+      totalAllocated: 0,
+    },
   },
-  unlockRequirementText: null,
-  scratchedAt: null,
-  redeemedAt: null,
-  expiresAt: null,
-  createdAt: new Date().toISOString(),
-};
-
-// ── Built-in Demo Scratch Card (Guaranteed Immediate Visibility) ─────────────
-const DEMO_SCRATCH_CARD: ScratchCardItem = {
-  id: "demo_card_binro_vip",
-  userId: "demo_user",
-  tier: "gold",
-  sourceType: "milestone",
-  sourceLabel: "Demo Reward",
-  status: "unlocked",
-  offerId: "demo_binro_vip",
-  offer: {
-    id: "demo_binro_vip",
-    networkProvider: "vcommission",
-    campaignId: "demo_binro_vip_01",
-    merchantName: "BinRo Official",
-    merchantLogoUrl: "/icon0.svg",
-    title: "VIP Merch & Discount Voucher",
-    description: "Interactive demo scratch voucher. Swipe to reveal your code and experience the celebration flow.",
-    couponCode: "BINROVIP",
-    destinationUrl: "https://www.binro.in",
-    tier: "gold",
-    category: "Community",
-    termsText: "Valid for BinRo community members. Standard terms apply.",
-    isApproved: true,
-    isActive: true,
-    dailyAllocationLimit: 999,
-    totalAllocated: 0,
+  {
+    id: "card_tenxyou_18",
+    headline: "Flat 18% in Tenxyou",
+    merchantName: "Tenxyou",
+    status: "unlocked",
+    validityText: "Valid for 7 days",
+    bannerUrl: "https://media.hasoffers.com/brand/13667/banner.jpg",
+    creativeUrls: [
+      "https://media.hasoffers.com/brand/13667/banner.jpg",
+      "https://media.hasoffers.com/network_images/vcommission/13667_banner.jpg",
+    ],
+    badgeType: "brand",
+    offer: {
+      id: "offer_tenxyou_18",
+      networkProvider: "vcommission",
+      campaignId: "13667",
+      merchantName: "Tenxyou",
+      merchantLogoUrl: "https://media.hasoffers.com/brand/13667/logo.png",
+      bannerUrl: "https://media.hasoffers.com/brand/13667/banner.jpg",
+      creativeUrls: [
+        "https://media.hasoffers.com/brand/13667/banner.jpg",
+        "https://media.hasoffers.com/network_images/vcommission/13667_banner.jpg",
+      ],
+      title: "Flat 18% OFF on Tenxyou",
+      description: "Trending streetwear, graphic tees, and apparel collection partner deal.",
+      couponCode: "VC18",
+      destinationUrl: "https://tracking.vcommission.com/aff_c?offer_id=13667&aff_id=132680",
+      tier: "gold",
+      category: "Fashion",
+      termsText: "Flat 18% off up to ₹600 on qualifying Tenxyou merchandise.",
+      isApproved: true,
+      isActive: true,
+      dailyAllocationLimit: 250,
+      totalAllocated: 0,
+    },
   },
-  unlockRequirementText: null,
-  scratchedAt: null,
-  redeemedAt: null,
-  expiresAt: null,
-  createdAt: new Date().toISOString(),
-};
+  {
+    id: "card_visa_10x",
+    headline: "10x Bonus on Visa",
+    merchantName: "Sense Bank & Visa",
+    status: "unlocked",
+    validityText: "Valid for 14 days",
+    isWide: true,
+    bannerUrl: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=80",
+    badgeType: "visa",
+    offer: {
+      id: "offer_visa_10x",
+      networkProvider: "vcommission",
+      campaignId: "visa_10x",
+      merchantName: "Sense Bank & Visa",
+      merchantLogoUrl: null,
+      bannerUrl: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=80",
+      title: "10x Bonus on Visa Cards",
+      description: "Earn 10x reward multiplier on shopping, travel, and lifestyle purchases with Visa.",
+      couponCode: "VISA10X",
+      destinationUrl: "https://vcommission.com",
+      tier: "gold",
+      category: "Finance",
+      termsText: "Applies to contactless Visa card purchases during promotion window.",
+      isApproved: true,
+      isActive: true,
+      dailyAllocationLimit: 500,
+      totalAllocated: 0,
+    },
+  },
+];
 
 export default function ScratchCardsPage() {
   const router = useRouter();
   const { user } = useAuth();
 
+  // User state
   const [wallet, setWallet] = useState<RewardWallet | null>(null);
-  const [userCards, setUserCards] = useState<ScratchCardItem[]>([]);
   const [liveOffers, setLiveOffers] = useState<RewardOffer[]>([]);
-  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
+  const [scratchedCardIds, setScratchedCardIds] = useState<Set<string>>(new Set());
 
-  // Modals
+  // Active modals
   const [scratchModalCard, setScratchModalCard] = useState<ScratchCardItem | null>(null);
-  const [isDemoModal, setIsDemoModal] = useState(false);
   const [detailModalCard, setDetailModalCard] = useState<ScratchCardItem | null>(null);
-
-  // Exclusive Ahmed Free Reward Tester State
-  const [isAhmedActive, setIsAhmedActive] = useState(false);
-
-  useEffect(() => {
-    const currentEmail = user?.email?.toLowerCase().trim();
-    const storedTest =
-      typeof window !== "undefined" &&
-      localStorage.getItem("binro_test_as_ahmed") === "true";
-    if (currentEmail === AHMED_TEST_EMAIL || storedTest) {
-      setIsAhmedActive(true);
-    }
-  }, [user?.email]);
-
-  const toggleAhmedMode = useCallback(() => {
-    setIsAhmedActive((prev) => {
-      const next = !prev;
-      if (typeof window !== "undefined") {
-        if (next) {
-          localStorage.setItem("binro_test_as_ahmed", "true");
-        } else {
-          localStorage.removeItem("binro_test_as_ahmed");
-        }
-      }
-      return next;
-    });
-  }, []);
-
-  // Restore scratched state for Ahmed free card if already scratched locally
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isScratched = localStorage.getItem("binro_ahmed_card_scratched") === "true";
-      const isRedeemed = localStorage.getItem("binro_ahmed_card_redeemed") === "true";
-      if (isRedeemed) {
-        AHMED_FREE_REWARD_CARD.status = "redeemed";
-        AHMED_FREE_REWARD_CARD.redeemedAt = new Date().toISOString();
-      } else if (isScratched) {
-        AHMED_FREE_REWARD_CARD.status = "scratched";
-        AHMED_FREE_REWARD_CARD.scratchedAt = new Date().toISOString();
-      }
-    }
-  }, []);
-
-  // vCommission Automation Sync Modal
-  const [showSyncModal, setShowSyncModal] = useState(false);
-  const [syncApiKey, setSyncApiKey] = useState("");
-  const [syncAffiliateId, setSyncAffiliateId] = useState("132680");
-  const [syncPasteText, setSyncPasteText] = useState("");
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<string | null>(null);
-  const [syncError, setSyncError] = useState<string | null>(null);
 
   const handleBack = useCallback(() => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -171,19 +330,41 @@ export default function ScratchCardsPage() {
     }
   }, [router]);
 
-  // Load wallet, cards, and dynamic approved offers from vCommission / Supabase
+  // Load local scratched state
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("binro_scratched_cards_set");
+        if (raw) {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr)) {
+            setScratchedCardIds(new Set(arr));
+          }
+        }
+      } catch {}
+    }
+  }, []);
+
+  // Background auto-sync and load
   const loadData = useCallback(async () => {
     try {
-      const [w, c, o] = await Promise.all([
+      const [w, o] = await Promise.all([
         user?.id ? getUserRewardWallet(user.id).catch(() => null) : Promise.resolve(null),
-        user?.id ? getUserScratchCards(user.id).catch(() => []) : Promise.resolve([]),
         getApprovedRewardOffers().catch(() => DEFAULT_REWARD_OFFERS),
       ]);
       if (w) setWallet(w);
-      if (c) setUserCards(c);
       if (Array.isArray(o) && o.length > 0) {
         setLiveOffers(o);
       }
+    } catch {}
+
+    // Silent background sync with vCommission without frontend prompts
+    try {
+      await syncVCommissionOffersClient({
+        apiKey: "",
+        affiliateId: "132680",
+        rawText: "",
+      }).catch(() => {});
     } catch {}
   }, [user?.id]);
 
@@ -191,497 +372,203 @@ export default function ScratchCardsPage() {
     void loadData();
   }, [loadData]);
 
-  // Handle Automated Sync with vCommission
-  const handleRunSync = async () => {
-    setIsSyncing(true);
-    setSyncResult(null);
-    setSyncError(null);
-    try {
-      const res = await syncVCommissionOffersClient({
-        apiKey: syncApiKey.trim(),
-        affiliateId: syncAffiliateId.trim() || "132680",
-        rawText: syncPasteText.trim(),
-      });
-      if (res.success) {
-        setSyncResult(
-          `Success: Automated sync processed ${res.count} active coupons from vCommission!`
-        );
-        if (res.offers.length > 0) {
-          setLiveOffers(res.offers);
-        }
-        await loadData();
-      } else {
-        setSyncError(res.message || "Failed to sync with vCommission. Check credentials.");
-      }
-    } catch (err: any) {
-      setSyncError(err?.message || "Sync request failed");
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+  // Build deck merging reference image cards and live offers
+  const cardsDeck = useMemo(() => {
+    return INITIAL_IMAGE_CARDS.map((c) => {
+      const isAlreadyScratched = scratchedCardIds.has(c.id);
+      return {
+        ...c,
+        status: isAlreadyScratched ? ("scratched" as const) : c.status,
+        validityText: isAlreadyScratched ? "Code ready · View" : c.validityText,
+      };
+    });
+  }, [scratchedCardIds]);
 
-  // Active Deck: Dynamically built from real offers without hardcoding
-  const activeDeck = useMemo(() => {
-    const baseCards: ScratchCardItem[] = [];
-    if (isAhmedActive) {
-      baseCards.push(AHMED_FREE_REWARD_CARD);
-    }
-    baseCards.push(DEMO_SCRATCH_CARD);
-
-    if (userCards.length > 0) {
-      const filtered = userCards.filter(
-        (c) => c.id !== DEMO_SCRATCH_CARD.id && c.id !== AHMED_FREE_REWARD_CARD.id
-      );
-      return [...baseCards, ...filtered];
-    }
-    const offersPool = liveOffers.length > 0 ? liveOffers : DEFAULT_REWARD_OFFERS;
-    const dynamicCards: ScratchCardItem[] = offersPool.map((offer, idx) => ({
-      id: `dyn_card_${offer.id}_${idx}`,
+  // Convert DisplayBonusCard to ScratchCardItem
+  const toScratchCardItem = (card: DisplayBonusCard): ScratchCardItem => {
+    return {
+      id: card.id,
       userId: user?.id || "preview_user",
-      tier: offer.tier,
-      sourceType: idx % 3 === 0 ? "milestone" : idx % 3 === 1 ? "referral_friend" : "welcome",
-      sourceLabel: `${offer.merchantName} Reward`,
-      status: idx <= 2 ? "unlocked" : idx === 3 || idx === 4 ? "scratched" : "unlocked",
-      offerId: offer.id,
-      offer,
+      tier: card.offer.tier || "gold",
+      status: card.status,
+      sourceType: "milestone",
+      sourceLabel: card.merchantName,
+      offerId: card.offer.id,
+      offer: card.offer,
       unlockRequirementText: null,
-      scratchedAt: idx === 3 || idx === 4 ? new Date().toISOString() : null,
+      scratchedAt: card.status === "scratched" ? new Date().toISOString() : null,
       redeemedAt: null,
-      expiresAt: offer.expiresAt || null,
+      expiresAt: card.offer.expiresAt || null,
       createdAt: new Date().toISOString(),
-    }));
-    return [...baseCards, ...dynamicCards];
-  }, [userCards, liveOffers, user?.id, isAhmedActive]);
-
-  // Filtered Cards
-  const filteredCards = useMemo(() => {
-    if (activeFilter === "unscratched") {
-      return activeDeck.filter((c) => c.status === "unlocked");
-    }
-    if (activeFilter === "revealed") {
-      return activeDeck.filter((c) => c.status === "scratched" || c.status === "redeemed");
-    }
-    if (activeFilter === "locked") {
-      return activeDeck.filter((c) => c.status === "locked");
-    }
-    return activeDeck;
-  }, [activeDeck, activeFilter]);
-
-  const unscratchedCount = activeDeck.filter((c) => c.status === "unlocked").length;
-  const revealedCount = activeDeck.filter(
-    (c) => c.status === "scratched" || c.status === "redeemed"
-  ).length;
-  const lockedCount = activeDeck.filter((c) => c.status === "locked").length;
-
-  // Open scratch modal
-  const handleOpenScratch = (card: ScratchCardItem) => {
-    setIsDemoModal(card.id === DEMO_SCRATCH_CARD.id || card.id === AHMED_FREE_REWARD_CARD.id);
-    setScratchModalCard(card);
+    };
   };
 
-  // Open detail modal
-  const handleOpenDetail = (card: ScratchCardItem) => {
-    setDetailModalCard(card);
+  // Card click handler
+  const handleCardClick = (card: DisplayBonusCard) => {
+    const item = toScratchCardItem(card);
+
+    // If unscratched -> open interactive foil scratch experience
+    if (card.status === "unlocked") {
+      setScratchModalCard(item);
+      return;
+    }
+
+    // If already scratched / revealed / expired / locked -> open right phone details directly
+    setDetailModalCard(item);
   };
 
-  // Scratch completed
+  // Handle completed scratch
   const handleScratchComplete = useCallback(
-    async (card: ScratchCardItem) => {
-      if (card.id === AHMED_FREE_REWARD_CARD.id) {
-        AHMED_FREE_REWARD_CARD.status = "scratched";
-        AHMED_FREE_REWARD_CARD.scratchedAt = new Date().toISOString();
+    async (item: ScratchCardItem) => {
+      setScratchedCardIds((prev) => {
+        const next = new Set(prev).add(item.id);
         if (typeof window !== "undefined") {
-          localStorage.setItem("binro_ahmed_card_scratched", "true");
+          try {
+            localStorage.setItem("binro_scratched_cards_set", JSON.stringify(Array.from(next)));
+          } catch {}
         }
-        return;
-      }
-      if (card.id === DEMO_SCRATCH_CARD.id) {
-        // Update local demo state
-        DEMO_SCRATCH_CARD.status = "scratched";
-        DEMO_SCRATCH_CARD.scratchedAt = new Date().toISOString();
-        return;
-      }
+        return next;
+      });
+
       if (user?.id) {
-        await scratchRewardCard(user.id, card.id);
-        await loadData();
+        await scratchRewardCard(user.id, item.id).catch(() => {});
       }
     },
-    [user?.id, loadData]
+    [user?.id]
   );
 
-  // Claim or Redeem
+  // Handle reward redeem
   const handleRedeem = useCallback(
-    async (card: ScratchCardItem) => {
-      if (card.id === AHMED_FREE_REWARD_CARD.id) {
-        AHMED_FREE_REWARD_CARD.status = "redeemed";
-        AHMED_FREE_REWARD_CARD.redeemedAt = new Date().toISOString();
-        if (typeof window !== "undefined") {
-          localStorage.setItem("binro_ahmed_card_redeemed", "true");
-        }
-        if (card.offer.destinationUrl) {
-          window.open(card.offer.destinationUrl, "_blank", "noopener,noreferrer");
-        }
-        return;
-      }
-      if (card.id === DEMO_SCRATCH_CARD.id) {
-        DEMO_SCRATCH_CARD.status = "redeemed";
-        DEMO_SCRATCH_CARD.redeemedAt = new Date().toISOString();
-        return;
-      }
+    async (item: ScratchCardItem) => {
       if (user?.id) {
-        await recordOfferRedemption(user.id, card.id);
-        await loadData();
+        await recordOfferRedemption(user.id, item.id).catch(() => {});
       }
-      if (card.offer.destinationUrl) {
-        window.open(card.offer.destinationUrl, "_blank", "noopener,noreferrer");
+      if (item.offer.destinationUrl) {
+        window.open(item.offer.destinationUrl, "_blank", "noopener,noreferrer");
       }
     },
-    [user?.id, loadData]
+    [user?.id]
   );
-
-  // Milestone Progress
-  const dailyScans = wallet?.dailyEligibleScans ?? 0;
-  const nextTarget = wallet?.nextMilestoneTarget ?? 3;
-  const progressPct = wallet?.dailyCapReached
-    ? 100
-    : Math.min(100, Math.round((dailyScans / Math.max(1, nextTarget)) * 100));
 
   return (
     <div className={styles.pageFrame}>
       <main className={styles.container}>
-        {/* ── Top Navigation Bar ────────────────────────────────────────────── */}
+        {/* ── Top Header (Exact Match for Image 1: Back chevron & Centered "My bonuses") ── */}
         <header className={styles.topBar}>
-          <div className={styles.topBarLeft}>
-            <button
-              type="button"
-              onClick={handleBack}
-              className={styles.backBtn}
-              aria-label="Back"
-              title="Back"
-            >
-              <Ionicons name="chevron-back" size={20} color="currentColor" />
-            </button>
-            <div className={styles.headingBlock}>
-              <h1 className={styles.pageTitle}>Scratch Cards</h1>
-              <p className={styles.pageSubtitle}>
-                Scan QR codes to earn daily milestone cards and exclusive partner vouchers
-              </p>
-            </div>
-          </div>
-
-          <div className={styles.topBarRight}>
-            <button
-              type="button"
-              onClick={toggleAhmedMode}
-              className={styles.syncActionBtn}
-              style={{
-                borderColor: isAhmedActive ? "#F59E0B" : undefined,
-                color: isAhmedActive ? "#D97706" : undefined,
-                background: isAhmedActive ? "rgba(245, 158, 11, 0.1)" : undefined,
-              }}
-              title="Toggle exclusive test reward for ahmedsameerbinan2@gmail.com"
-            >
-              <Ionicons name="gift-outline" size={16} color={isAhmedActive ? "#D97706" : "currentColor"} />
-              <span>{isAhmedActive ? "Ahmed VIP Active" : "Test as Ahmed"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowSyncModal(true)}
-              className={styles.syncActionBtn}
-              title="Automate vCommission Deals Sync"
-            >
-              <Ionicons name="cloud-download-outline" size={16} />
-              <span>Sync Deals</span>
-            </button>
-            <Link
-              href="/referrals"
-              className={styles.topActionBtn}
-              aria-label="Refer & Earn"
-            >
-              <Ionicons name="people-outline" size={16} />
-              <span>Refer &amp; Earn</span>
-            </Link>
-          </div>
+          <button
+            type="button"
+            onClick={handleBack}
+            className={styles.backBtn}
+            aria-label="Back"
+            title="Back"
+          >
+            <Ionicons name="chevron-back" size={20} color="#ffffff" />
+          </button>
+          <h1 className={styles.pageTitle}>My bonuses</h1>
+          <div className={styles.topBarSpacer} />
         </header>
 
-        {/* ── Exclusive Free Reward Banner for ahmedsameerbinan2@gmail.com ────── */}
-        {isAhmedActive && (
-          <div className={styles.ahmedBanner} role="region" aria-label="Exclusive free reward">
-            <div className={styles.ahmedBannerLeft}>
-              <div className={styles.ahmedBannerIcon}>
-                <Ionicons name="sparkles" size={20} />
-              </div>
-              <div>
-                <div className={styles.ahmedBannerTitle}>
-                  Free VIP Scratch Card Active for {AHMED_TEST_EMAIL}
-                </div>
-                <div className={styles.ahmedBannerSub}>
-                  Complimentary Tata CLiQ ₹500 test voucher ready below. Zero scan requirements.
-                </div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => handleOpenScratch(AHMED_FREE_REWARD_CARD)}
-              className={styles.ahmedBannerAction}
-            >
-              Scratch Free Card
-            </button>
-          </div>
-        )}
-
-        {/* ── Prominent Featured Demo Scratch Card (Clearly Visible at Top) ─── */}
-        <div
-          className={styles.demoFeatureCard}
-          onClick={() => handleOpenScratch(DEMO_SCRATCH_CARD)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              handleOpenScratch(DEMO_SCRATCH_CARD);
-            }
-          }}
-          aria-label="Try demo scratch card"
-        >
-          <div className={styles.demoFeatureLeft}>
-            <span className={styles.demoPillTag}>
-              <Ionicons name="sparkles" size={12} />
-              <span>Interactive Demo Scratch Card</span>
-            </span>
-            <h2 className={styles.demoFeatureTitle}>
-              {DEMO_SCRATCH_CARD.offer.title}
-            </h2>
-            <p className={styles.demoFeatureDesc}>
-              {DEMO_SCRATCH_CARD.status === "unlocked"
-                ? "Tap here to test the metallic foil scratching, real-time particle wipe, and celebratory voucher claim."
-                : "Demo voucher scratched. Tap to view code or scratch again."}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            className={styles.demoFeatureBtn}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleOpenScratch(DEMO_SCRATCH_CARD);
-            }}
-          >
-            <Ionicons name="sparkles" size={15} color="#003A99" />
-            <span>
-              {DEMO_SCRATCH_CARD.status === "unlocked"
-                ? "Scratch Demo Card"
-                : "View Demo Voucher"}
-            </span>
-          </button>
-        </div>
-
-        {/* ── Daily Milestone Progress Card ─────────────────────────────────── */}
-        <section className={styles.progressCard} aria-labelledby="milestone-title">
-          <div className={styles.progressHeader}>
-            <div>
-              <h3 id="milestone-title" className={styles.progressTitle}>
-                Daily Scan Progress
-              </h3>
-              <p className={styles.progressSub}>
-                {wallet?.dailyCapReached
-                  ? "Daily card cap reached (3 of 3 unlocked today)"
-                  : `${dailyScans} of ${nextTarget} eligible scans completed`}
-              </p>
-            </div>
-            <span className={styles.progressBadge}>
-              {wallet?.dailyCardsUnlocked || 0} / 3 Cards Unlocked
-            </span>
-          </div>
-
-          <div
-            className={styles.progressBarTrack}
-            role="progressbar"
-            aria-valuenow={progressPct}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          >
-            <div
-              className={styles.progressBarFill}
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-        </section>
-
-        {/* ── Filter Segment Bar ────────────────────────────────────────────── */}
-        <div className={styles.filterBar} role="group" aria-label="Filter scratch cards">
-          <button
-            type="button"
-            onClick={() => setActiveFilter("all")}
-            className={`${styles.filterBtn} ${activeFilter === "all" ? styles.filterBtnActive : ""}`}
-            aria-pressed={activeFilter === "all"}
-          >
-            <span>All ({activeDeck.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveFilter("unscratched")}
-            className={`${styles.filterBtn} ${
-              activeFilter === "unscratched" ? styles.filterBtnActive : ""
-            }`}
-            aria-pressed={activeFilter === "unscratched"}
-          >
-            <Ionicons name="sparkles-outline" size={13} />
-            <span>Unscratched ({unscratchedCount})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveFilter("revealed")}
-            className={`${styles.filterBtn} ${
-              activeFilter === "revealed" ? styles.filterBtnActive : ""
-            }`}
-            aria-pressed={activeFilter === "revealed"}
-          >
-            <Ionicons name="checkmark-circle-outline" size={13} />
-            <span>Revealed ({revealedCount})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveFilter("locked")}
-            className={`${styles.filterBtn} ${
-              activeFilter === "locked" ? styles.filterBtnActive : ""
-            }`}
-            aria-pressed={activeFilter === "locked"}
-          >
-            <Ionicons name="lock-closed-outline" size={13} />
-            <span>Locked ({lockedCount})</span>
-          </button>
-        </div>
-
-        {/* ── Mature & Professional Cards Grid ──────────────────────────────── */}
-        <div className={styles.cardsGrid} role="list" aria-label="Scratch cards deck">
-          {filteredCards.map((card) => {
-            const isAhmedCard = card.id === AHMED_FREE_REWARD_CARD.id;
-            const isDemo = card.id === DEMO_SCRATCH_CARD.id;
-            const isUnscratched = card.status === "unlocked";
-            const isRevealed = card.status === "scratched" || card.status === "redeemed";
+        {/* ── 2-Column Responsive Scratch Cards Grid (Matching Left Phone) ────────────── */}
+        <div className={styles.cardsGrid} role="list" aria-label="My bonuses scratch cards">
+          {cardsDeck.map((card) => {
+            const isExpired = card.status === "expired";
             const isLocked = card.status === "locked";
-            const offer = card.offer;
+            const isScratched = card.status === "scratched";
+            const isUnscratched = card.status === "unlocked";
+            const isWide = card.isWide;
 
             return (
               <div
                 key={card.id}
                 role="listitem"
-                className={`${styles.rewardCard} ${isAhmedCard ? styles.cardAhmedFree : ""}`}
-                aria-label={`${offer.merchantName} - ${offer.title}`}
+                className={`${styles.bonusCard} ${isWide ? styles.bonusCardWide : ""} ${
+                  isExpired ? styles.bonusCardExpired : ""
+                }`}
+                onClick={() => handleCardClick(card)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleCardClick(card);
+                  }
+                }}
+                aria-label={`${card.headline} - ${card.validityText}`}
               >
-                {/* Card Top: Merchant & Tier */}
-                <div className={styles.rewardCardTop}>
-                  <div className={styles.merchantLogoTagWrap}>
-                    <div className={styles.cardMerchantLogoBadge}>
-                      <MerchantLogo
-                        merchantName={offer.merchantName}
-                        directUrl={offer.merchantLogoUrl}
-                        className={styles.cardMerchantLogoImg}
-                        alt={offer.merchantName}
-                        fallbackInitialClassName={styles.cardMerchantLogoInitial}
-                      />
+                {/* Media Container: Unscratched shows mystery foil surface, Scratched/Expired shows banner */}
+                <div className={styles.cardMediaWrap}>
+                  {isUnscratched ? (
+                    <div className={styles.cardFoilSurface}>
+                      <div className={styles.cardFoilSheen} />
+                      <div className={styles.cardFoilPrompt}>
+                        <Ionicons name="sparkles" size={13} color="#FBBF24" />
+                        <span>Scratch to Reveal</span>
+                      </div>
                     </div>
-                    <span className={styles.merchantTag}>{offer.merchantName}</span>
-                  </div>
+                  ) : (
+                    <img
+                      src={card.bannerUrl}
+                      alt={card.headline}
+                      className={`${styles.cardMediaImg} ${
+                        isExpired ? styles.cardMediaImgExpired : ""
+                      }`}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
 
-                  <span
-                    className={`${styles.tierPill} ${
-                      isAhmedCard
-                        ? styles.tierPillAhmed
-                        : isDemo
-                          ? styles.tierPillDemo
-                          : card.tier === "gold"
-                            ? styles.tierPillGold
-                            : card.tier === "silver"
-                              ? styles.tierPillSilver
-                              : styles.tierPillBronze
+                  {/* Overlapping Round Badge on bottom-left of image box */}
+                  <div
+                    className={`${styles.cardRoundBadge} ${
+                      isExpired
+                        ? styles.cardRoundBadgeExpired
+                        : isLocked
+                          ? styles.cardRoundBadgeLocked
+                          : card.badgeType === "pink"
+                            ? styles.cardRoundBadgePink
+                            : ""
                     }`}
                   >
-                    {isAhmedCard
-                      ? "Free VIP Reward"
-                      : isDemo
-                        ? "Demo Card"
-                        : card.tier === "gold"
-                          ? "Gold VIP"
-                          : card.tier === "silver"
-                            ? "Silver"
-                            : "Bronze"}
-                  </span>
+                    {isLocked ? (
+                      <Ionicons name="lock-closed" size={15} color="#ffffff" />
+                    ) : card.badgeType === "pink" ? (
+                      <Ionicons name="restaurant-outline" size={15} color="#ffffff" />
+                    ) : card.badgeType === "scissors" ? (
+                      <Ionicons name="cut-outline" size={15} color={isExpired ? "#9CA3AF" : "#111827"} />
+                    ) : card.badgeType === "arena" ? (
+                      <span style={{ fontSize: "9px", fontWeight: 900, color: isExpired ? "#9CA3AF" : "#000" }}>
+                        arena
+                      </span>
+                    ) : card.badgeType === "citrus" ? (
+                      <span style={{ fontSize: "8.5px", fontWeight: 800, color: isExpired ? "#9CA3AF" : "#111" }}>
+                        ЦИТРУС
+                      </span>
+                    ) : card.badgeType === "wog" ? (
+                      <span style={{ fontSize: "11px", fontWeight: 900, color: isExpired ? "#6B7280" : "#166534" }}>
+                        W
+                      </span>
+                    ) : card.badgeType === "visa" ? (
+                      <span style={{ fontSize: "9.5px", fontWeight: 900, color: "#1E40AF" }}>VISA</span>
+                    ) : (
+                      <Ionicons name="gift-outline" size={15} color="#0052cc" />
+                    )}
+                  </div>
                 </div>
 
-                {/* Card Body */}
-                <div className={styles.rewardCardBody}>
-                  <h4 className={styles.rewardCardTitle}>{offer.title}</h4>
-                  <p className={styles.rewardCardDesc}>
-                    {offer.description || `Special reward voucher from ${offer.merchantName}`}
-                  </p>
-                </div>
+                {/* Card Body with 1-line headline and capsule pill */}
+                <div className={styles.cardBody}>
+                  <h4 className={styles.cardHeadline}>{card.headline}</h4>
 
-                {/* Card Footer: Status & Action Button */}
-                <div className={styles.rewardCardFooter}>
-                  <span className={styles.statusIndicator}>
-                    {isUnscratched && (
-                      <>
-                        <Ionicons
-                          name="sparkles"
-                          size={12}
-                          color={isAhmedCard ? "#F59E0B" : "var(--primary)"}
-                        />
-                        <span>{isAhmedCard ? "Free · Ready to scratch" : "Ready to scratch"}</span>
-                      </>
-                    )}
-                    {isRevealed && (
-                      <>
-                        <Ionicons name="checkmark-circle" size={12} color="#10B981" />
-                        <span>Voucher ready</span>
-                      </>
-                    )}
-                    {isLocked && (
-                      <>
-                        <Ionicons name="lock-closed" size={12} color="var(--text-muted)" />
-                        <span>Locked</span>
-                      </>
-                    )}
+                  <span
+                    className={`${styles.statusPill} ${
+                      isExpired || isLocked
+                        ? styles.statusPillExpired
+                        : isScratched
+                          ? styles.statusPillScratched
+                          : styles.statusPillValid
+                    }`}
+                  >
+                    {card.validityText}
                   </span>
-
-                  {/* Action */}
-                  {isUnscratched && (
-                    <button
-                      type="button"
-                      onClick={() => handleOpenScratch(card)}
-                      className={`${styles.cardActionBtn} ${
-                        isAhmedCard ? styles.ahmedBannerAction : styles.cardActionScratch
-                      }`}
-                    >
-                      <Ionicons name="sparkles" size={13} color="#ffffff" />
-                      <span>{isAhmedCard ? "Scratch Free" : "Scratch"}</span>
-                    </button>
-                  )}
-
-                  {isRevealed && (
-                    <button
-                      type="button"
-                      onClick={() => handleOpenDetail(card)}
-                      className={`${styles.cardActionBtn} ${styles.cardActionRevealed}`}
-                    >
-                      <span>View Code</span>
-                      <Ionicons name="chevron-forward" size={13} />
-                    </button>
-                  )}
-
-                  {isLocked && (
-                    <button
-                      type="button"
-                      onClick={() => router.push("/scanner")}
-                      className={`${styles.cardActionBtn} ${styles.cardActionLocked}`}
-                    >
-                      <span>Scan to Unlock</span>
-                    </button>
-                  )}
                 </div>
               </div>
             );
@@ -689,18 +576,21 @@ export default function ScratchCardsPage() {
         </div>
       </main>
 
-      {/* ── Interactive Scratch Modal ─────────────────────────────────────── */}
+      {/* ── Interactive Scratch Foil Modal (When scratching unlocked card) ─────────── */}
       {scratchModalCard && (
         <ScratchModal
           card={scratchModalCard}
-          isDemo={isDemoModal}
           onClose={() => setScratchModalCard(null)}
           onScratchComplete={handleScratchComplete}
           onClaim={handleRedeem}
+          onOpenDetails={(card) => {
+            setScratchModalCard(null);
+            setDetailModalCard(card);
+          }}
         />
       )}
 
-      {/* ── Voucher Detail Modal ──────────────────────────────────────────── */}
+      {/* ── Opened Card Details (Exact Match for Right Phone in Reference Image) ──── */}
       {detailModalCard && (
         <BonusDetailModal
           card={detailModalCard}
@@ -709,106 +599,8 @@ export default function ScratchCardsPage() {
         />
       )}
 
-      {/* ── Automated vCommission Deals Sync Modal ───────────────────────── */}
-      {showSyncModal && (
-        <div
-          className={styles.syncModalOverlay}
-          onClick={() => setShowSyncModal(false)}
-        >
-          <div
-            className={styles.syncModalContent}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.syncModalHeader}>
-              <div>
-                <h3 className={styles.syncModalTitle}>
-                  <Ionicons name="sparkles" size={18} color="#0056D2" />
-                  <span>Automate vCommission Deals</span>
-                </h3>
-                <p className={styles.syncModalSubtitle}>
-                  Instantly pull fresh coupons, merchant logos, and discounts into BinRo and Supabase without typing manually.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowSyncModal(false)}
-                className={styles.syncCloseBtn}
-                aria-label="Close"
-              >
-                <Ionicons name="close" size={18} />
-              </button>
-            </div>
-
-            {syncResult && (
-              <div className={`${styles.syncStatusAlert} ${styles.syncStatusSuccess}`}>
-                <Ionicons name="checkmark-circle" size={18} />
-                <span>{syncResult}</span>
-              </div>
-            )}
-
-            {syncError && (
-              <div className={`${styles.syncStatusAlert} ${styles.syncStatusError}`}>
-                <Ionicons name="alert-circle" size={18} />
-                <span>{syncError}</span>
-              </div>
-            )}
-
-            <div className={styles.syncFieldGroup}>
-              <label className={styles.syncLabel}>vCommission API Key</label>
-              <input
-                type="password"
-                className={styles.syncInput}
-                placeholder="Enter your API Key from Tools -> APIs"
-                value={syncApiKey}
-                onChange={(e) => setSyncApiKey(e.target.value)}
-              />
-              <span className={styles.syncHint}>
-                Found in vCommission dashboard under Tools ➔ APIs. If empty, the server checks VCOMMISSION_API_KEY.
-              </span>
-            </div>
-
-            <div className={styles.syncFieldGroup}>
-              <label className={styles.syncLabel}>Affiliate ID (aff_id)</label>
-              <input
-                type="text"
-                className={styles.syncInput}
-                placeholder="132680"
-                value={syncAffiliateId}
-                onChange={(e) => setSyncAffiliateId(e.target.value)}
-              />
-            </div>
-
-            <div className={styles.syncFieldGroup}>
-              <label className={styles.syncLabel}>Or Quick-Paste Table / Feed</label>
-              <textarea
-                className={styles.syncTextarea}
-                placeholder="Optional: Copy rows directly from vCommission Coupons page and paste here..."
-                value={syncPasteText}
-                onChange={(e) => setSyncPasteText(e.target.value)}
-              />
-              <span className={styles.syncHint}>
-                Auto-parses codes (AMEXTCF1010, VC15), auto-attaches Tata CLiQ / Blabliblu brand logos and tracking links.
-              </span>
-            </div>
-
-            <button
-              type="button"
-              className={styles.syncSubmitBtn}
-              onClick={handleRunSync}
-              disabled={isSyncing}
-            >
-              <Ionicons
-                name={isSyncing ? "refresh" : "cloud-download-outline"}
-                size={18}
-              />
-              <span>{isSyncing ? "Connecting to vCommission..." : "Run Automated Sync Now"}</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Bottom Tab Bar */}
-      <BottomTabBar activeTab="rewards" />
+      {/* ── Persistent Bottom Navigation Bar ──────────────────────────────────────── */}
+      <BottomTabBar />
     </div>
   );
 }

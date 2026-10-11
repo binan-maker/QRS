@@ -1,6 +1,7 @@
 export { default as QrDetailScreen } from "./QrDetailScreen";
 export { default } from "./QrDetailScreen";
-export { useQrDetail } from "./hooks/useQrDetail";
+export { useQrDetail } from "./hooks";
+export * from "./hooks";
 export { QrTypeIcon, QrTypeBadge } from "./components/QrTypeIcon";
 export * from "./types";
 export * from "./constants";
