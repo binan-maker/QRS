@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseClient, isWebSupabaseConfigured } from "@/lib/supabase";
+import { extractAndNormalizeImageUrl, getMerchantDomain } from "@/lib/rewards-image";
 
 /**
  * vCommission Automated Ingestion & Sync Engine
@@ -36,15 +37,21 @@ function cleanMerchantName(raw: string): { name: string; domain: string } {
   if (lower.includes("myntra")) return { name: "Myntra", domain: "myntra.com" };
   if (lower.includes("nykaa")) return { name: "Nykaa", domain: "nykaa.com" };
   if (lower.includes("makemytrip") || lower.includes("mmt")) return { name: "MakeMyTrip", domain: "makemytrip.com" };
+  if (lower.includes("swiggy")) return { name: "Swiggy", domain: "swiggy.com" };
+  if (lower.includes("zomato")) return { name: "Zomato", domain: "zomato.com" };
+  if (lower.includes("hostinger")) return { name: "Hostinger", domain: "hostinger.in" };
+  if (lower.includes("mamaearth")) return { name: "Mamaearth", domain: "mamaearth.in" };
+  if (lower.includes("lenskart")) return { name: "Lenskart", domain: "lenskart.com" };
+  if (lower.includes("pharmeasy")) return { name: "PharmEasy", domain: "pharmeasy.in" };
 
   // Generic fallback: clean ".com", "Ecommerce CPS", etc.
   const cleaned = raw
-    .replace(/\.com/gi, "")
+    .replace(/\.com|\.in|\.org/gi, "")
     .replace(/ecommerce/gi, "")
-    .replace(/cps/gi, "")
-    .replace(/- india/gi, "")
+    .replace(/cps|cpa|cpl/gi, "")
+    .replace(/- india|- in/gi, "")
     .trim();
-  const domain = `${cleaned.toLowerCase().replace(/[^a-z0-9]/g, "")}.com`;
+  const domain = getMerchantDomain(cleaned || raw);
   return { name: cleaned || "Partner Brand", domain };
 }
 
@@ -117,8 +124,9 @@ export async function POST(req: NextRequest) {
       const lines = rawPasteText.split("\n").map((l) => l.trim()).filter(Boolean);
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        // Match code line or tab-separated row
-        const parts = line.split("\t");
+        // Match code line or tab-separated row (or comma / pipe separated)
+        const delimiter = line.includes("\t") ? "\t" : line.includes(",") ? "," : "|";
+        const parts = line.split(delimiter).map((p) => p.trim());
         if (parts.length >= 2) {
           const code = parts[0].trim();
           const campaign = parts[1].trim();
@@ -126,12 +134,32 @@ export async function POST(req: NextRequest) {
           const { name, domain } = cleanMerchantName(campaign);
           const tier = computeTier(desc, campaign);
           const offerId = `vc_${name.toLowerCase().replace(/[^a-z0-9]/g, "")}_${code.toLowerCase()}`;
+
+          // Search any column for a direct image or creative thumbnail URL
+          let directLogoUrl: string | null = null;
+          for (const p of parts) {
+            const normalized = extractAndNormalizeImageUrl(p);
+            if (
+              normalized &&
+              (normalized.includes("hasoffers") ||
+                normalized.includes("vcommission") ||
+                normalized.includes("creative") ||
+                normalized.includes("thumbnail") ||
+                normalized.includes("logo") ||
+                normalized.includes("favicon") ||
+                /\.(png|jpe?g|webp|svg|gif)/i.test(normalized))
+            ) {
+              directLogoUrl = normalized;
+              break;
+            }
+          }
+
           transformedCoupons.push({
             id: offerId,
             network_provider: "vcommission",
             campaign_id: "auto",
             merchant_name: name,
-            merchant_logo_url: resolveLogoUrl(domain),
+            merchant_logo_url: directLogoUrl || resolveLogoUrl(domain),
             title: desc || `${name} Special Discount`,
             description: desc,
             coupon_code: code,
@@ -181,11 +209,20 @@ export async function POST(req: NextRequest) {
                 const tier = computeTier(campaignName, desc);
                 const offerId = `vc_${offerObj.id || offerObj.offer_id || couponCode.toLowerCase()}`;
 
-                // Check for creative thumbnail from TUNE
-                const thumbnail =
+                // Check for creative thumbnail, logo, or file from TUNE / vCommission
+                const rawThumbnail =
                   offerObj?.OfferFile?.thumbnail_url ||
+                  offerObj?.OfferFile?.url ||
+                  offerObj?.OfferFiles?.[0]?.thumbnail_url ||
+                  offerObj?.OfferFiles?.[0]?.url ||
+                  offerObj?.Thumbnail?.url ||
                   offerObj?.thumbnail_url ||
-                  resolveLogoUrl(domain);
+                  offerObj?.preview_url ||
+                  offerObj?.creative_url ||
+                  offerObj?.image_url ||
+                  offerObj?.logo_url;
+                const thumbnail =
+                  extractAndNormalizeImageUrl(rawThumbnail) || resolveLogoUrl(domain);
 
                 transformedCoupons.push({
                   id: offerId,
@@ -226,12 +263,20 @@ export async function POST(req: NextRequest) {
           for (const item of list) {
             if (item.coupon_code || item.code) {
               const { name, domain } = cleanMerchantName(item.merchant || item.campaign || "");
-              transformedCoupons.push({
-                id: `vc_feed_${item.code || item.coupon_code}`,
-                network_provider: "vcommission",
-                campaign_id: String(item.campaign_id || "feed"),
-                merchant_name: name,
-                merchant_logo_url: resolveLogoUrl(domain),
+                const rawFeedImg =
+                  item.merchant_logo_url ||
+                  item.logo_url ||
+                  item.image_url ||
+                  item.thumbnail_url ||
+                  item.creative_url;
+                const feedImg =
+                  extractAndNormalizeImageUrl(rawFeedImg) || resolveLogoUrl(domain);
+                transformedCoupons.push({
+                  id: `vc_feed_${item.code || item.coupon_code}`,
+                  network_provider: "vcommission",
+                  campaign_id: String(item.campaign_id || "feed"),
+                  merchant_name: name,
+                  merchant_logo_url: feedImg,
                 title: item.title || `${name} Deal`,
                 description: item.description || "",
                 coupon_code: item.code || item.coupon_code,

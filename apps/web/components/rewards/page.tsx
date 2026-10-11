@@ -8,6 +8,7 @@ import { Ionicons } from "@/lib/mobile-icons";
 import { BottomTabBar } from "@/components/navigation/BottomTabBar";
 import { ScratchModal } from "@/components/rewards/ScratchModal";
 import { BonusDetailModal } from "@/components/rewards/BonusDetailModal";
+import { MerchantLogo } from "@/lib/rewards-image";
 import {
   getUserRewardWallet,
   getUserScratchCards,
@@ -35,6 +36,7 @@ const DEMO_SCRATCH_CARD: ScratchCardItem = {
     networkProvider: "vcommission",
     campaignId: "demo_binro_vip_01",
     merchantName: "BinRo Official",
+    merchantLogoUrl: "/icon0.svg",
     title: "VIP Merch & Discount Voucher",
     description: "Interactive demo scratch voucher. Swipe to reveal your code and experience the celebration flow.",
     couponCode: "BINROVIP",
@@ -454,7 +456,18 @@ export default function ScratchCardsPage() {
               >
                 {/* Card Top: Merchant & Tier */}
                 <div className={styles.rewardCardTop}>
-                  <span className={styles.merchantTag}>{offer.merchantName}</span>
+                  <div className={styles.merchantLogoTagWrap}>
+                    <div className={styles.cardMerchantLogoBadge}>
+                      <MerchantLogo
+                        merchantName={offer.merchantName}
+                        directUrl={offer.merchantLogoUrl}
+                        className={styles.cardMerchantLogoImg}
+                        alt={offer.merchantName}
+                        fallbackInitialClassName={styles.cardMerchantLogoInitial}
+                      />
+                    </div>
+                    <span className={styles.merchantTag}>{offer.merchantName}</span>
+                  </div>
 
                   <span
                     className={`${styles.tierPill} ${

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import confetti from "canvas-confetti";
 import { Ionicons } from "@/lib/mobile-icons";
+import { MerchantLogo, MerchantBanner } from "@/lib/rewards-image";
 import type { ScratchCardItem } from "@services/rewards";
 import styles from "./scratch-modal.module.css";
 
@@ -399,6 +400,18 @@ export function ScratchModal({
                   : ""
             }`}
           >
+            {/* Background creative image from vCommission / Merchant */}
+            <div className={styles.mediaBannerBg}>
+              <MerchantBanner
+                merchantName={offer.merchantName}
+                directUrl={offer.merchantLogoUrl}
+                category={offer.category}
+                className={styles.mediaBannerImg}
+                alt={`${offer.merchantName} Banner`}
+              />
+              <div className={styles.mediaBannerOverlay} />
+            </div>
+
             <div className={styles.mediaArtWrap}>
               <span className={styles.mediaArtIcon}>
                 <Ionicons
@@ -422,7 +435,13 @@ export function ScratchModal({
 
             {/* Overlapping Brand Circle Logo Badge */}
             <div className={styles.brandBadgeCircle}>
-              <span>{offer.merchantName.charAt(0).toUpperCase()}</span>
+              <MerchantLogo
+                merchantName={offer.merchantName}
+                directUrl={offer.merchantLogoUrl}
+                className={styles.brandBadgeImg}
+                alt={offer.merchantName}
+                fallbackInitialClassName={styles.brandBadgeInitial}
+              />
             </div>
           </div>
 

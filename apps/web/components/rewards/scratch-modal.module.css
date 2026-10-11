@@ -219,12 +219,37 @@
   background: linear-gradient(135deg, #1E293B 0%, #334155 60%, #475569 100%);
 }
 
+.mediaBannerBg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.mediaBannerImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.65) saturate(1.1);
+  transition: transform 0.3s ease;
+}
+
+.mediaBannerOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.25) 0%, rgba(15, 23, 42, 0.75) 100%);
+}
+
 .mediaArtWrap {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: #ffffff;
+  z-index: 2;
+  position: relative;
 }
 
 .mediaArtIcon {
@@ -248,23 +273,39 @@
 
 .brandBadgeCircle {
   position: absolute;
-  bottom: -16px;
+  bottom: -20px;
   left: 50%;
   transform: translateX(-50%);
-  width: 40px;
-  height: 40px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: #0052CC;
+  background: #ffffff;
   border: 3px solid #0F172A;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  overflow: hidden;
+  color: #0052CC;
   font-family: var(--font-inter), sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
   z-index: 8;
+}
+
+.brandBadgeImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+  background: #ffffff;
+  border-radius: 50%;
+}
+
+.brandBadgeInitial {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0052CC;
 }
 
 /* Prize Details Text */

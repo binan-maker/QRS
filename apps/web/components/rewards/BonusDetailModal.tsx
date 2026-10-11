@@ -2,6 +2,7 @@
 
 import React, { useCallback, useState } from "react";
 import { Ionicons } from "@/lib/mobile-icons";
+import { MerchantLogo, MerchantBanner } from "@/lib/rewards-image";
 import type { ScratchCardItem } from "@services/rewards";
 import styles from "./bonus-detail.module.css";
 
@@ -54,6 +55,18 @@ export function BonusDetailModal({ card, onClose, onRedeem }: BonusDetailModalPr
                 : ""
           }`}
         >
+          {/* Background creative image from vCommission / Merchant */}
+          <div className={styles.heroArtworkBg}>
+            <MerchantBanner
+              merchantName={offer.merchantName}
+              directUrl={offer.merchantLogoUrl}
+              category={offer.category}
+              className={styles.heroArtworkImg}
+              alt={`${offer.merchantName} Artwork`}
+            />
+            <div className={styles.heroArtworkOverlay} />
+          </div>
+
           <span className={styles.artworkIcon}>
             <Ionicons
               name={
@@ -71,7 +84,12 @@ export function BonusDetailModal({ card, onClose, onRedeem }: BonusDetailModalPr
 
           <div className={styles.artworkPillRow}>
             <div className={styles.artworkBrandIcon}>
-              <span>{offer.merchantName.charAt(0).toUpperCase()}</span>
+              <MerchantLogo
+                merchantName={offer.merchantName}
+                directUrl={offer.merchantLogoUrl}
+                className={styles.artworkBrandImg}
+                alt={offer.merchantName}
+              />
             </div>
             <span className={styles.artworkPillLabel}>{offer.merchantName}</span>
           </div>

@@ -86,6 +86,58 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "picsum.photos",
       },
+      {
+        protocol: "https",
+        hostname: "**.vcommission.com",
+      },
+      {
+        protocol: "https",
+        hostname: "vcommission.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.hasoffers.com",
+      },
+      {
+        protocol: "https",
+        hostname: "hasoffers.com",
+      },
+      {
+        protocol: "https",
+        hostname: "media.hasoffers.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.tune.com",
+      },
+      {
+        protocol: "https",
+        hostname: "s3.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "www.google.com",
+      },
+      {
+        protocol: "https",
+        hostname: "logo.clearbit.com",
+      },
+      {
+        protocol: "https",
+        hostname: "unavatar.io",
+      },
+      {
+        protocol: "https",
+        hostname: "icons.duckduckgo.com",
+      },
+      {
+        protocol: "https",
+        hostname: "img.logo.dev",
+      },
     ],
   },
   experimental: {
