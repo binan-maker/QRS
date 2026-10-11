@@ -7,39 +7,16 @@
     "rootDir": "src",
     "outDir": "dist",
     "paths": {
-      "@/*": [
-        "*"
-      ],
-      "@shared/*": [
-        "shared/*"
-      ],
-      "@services/*": [
-        "services/*"
-      ],
-      "@binro/core": [
-        "packages/core/src/index.ts"
-      ],
-      "@binro/core/*": [
-        "packages/core/src/*"
-      ],
-      "@binro/db": [
-        "packages/db/src/index.ts"
-      ],
-      "@binro/config": [
-        "packages/config/src/index.ts"
-      ],
-      "@binro/config/*": [
-        "packages/config/src/*"
-      ]
+      "@/*": ["*"],
+      "@shared/*": ["shared/*"],
+      "@services/*": ["services/*"],
+      "@binro/core": ["packages/core/src/index.ts"],
+      "@binro/core/*": ["packages/core/src/*"],
+      "@binro/db": ["packages/db/src/index.ts"],
+      "@binro/config": ["packages/config/src/index.ts"],
+      "@binro/config/*": ["packages/config/src/*"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

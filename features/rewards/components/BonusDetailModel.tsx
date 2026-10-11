@@ -15,6 +15,8 @@ import * as Clipboard from "expo-clipboard";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { recordOfferRedemption } from "@/services/rewards";
+import { MerchantLogo } from "./MerchantLogo";
+import { getCardBadgeInfo } from "./RewardCard";
 import type { DisplayBonusCard } from "../types";
 
 interface BonusDetailModalProps {
@@ -73,6 +75,7 @@ export function BonusDetailModal({
 
   const offer = card.offer;
   const bannerImage = card.bannerUrl || offer.bannerUrl;
+  const badgeInfo = getCardBadgeInfo(card);
 
   return (
     <Modal
@@ -96,9 +99,12 @@ export function BonusDetailModal({
           </Pressable>
 
           <View style={styles.topBarTitleBox}>
-            <Text style={[styles.topBarTitle, { color: colors.text }]} numberOfLines={1}>
-              {card.merchantName}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <MerchantLogo name={card.merchantName} url={card.merchantLogoUrl || offer.merchantLogoUrl} size={24} />
+              <Text style={[styles.topBarTitle, { color: colors.text }]} numberOfLines={1}>
+                {card.merchantName}
+              </Text>
+            </View>
             <View style={styles.verifiedRow}>
               <Ionicons name="checkmark-circle" size={13} color="#10B981" />
               <Text style={styles.verifiedText}>Verified Partner Voucher</Text>
@@ -130,12 +136,17 @@ export function BonusDetailModal({
             />
             <View style={styles.bannerOverlay}>
               <View style={styles.merchantBadgePill}>
+                <MerchantLogo name={card.merchantName} url={card.merchantLogoUrl || offer.merchantLogoUrl} size={18} />
                 <Text style={styles.merchantBadgeText}>{card.merchantName.toUpperCase()}</Text>
               </View>
-              {card.validityText ? (
-                <View style={styles.validityBadgePill}>
-                  <Ionicons name="time-outline" size={12} color="#FFFFFF" />
-                  <Text style={styles.validityBadgeText}>{card.validityText}</Text>
+              {badgeInfo.pillText ? (
+                <View style={[styles.validityBadgePill, { backgroundColor: badgeInfo.pillBg }]}>
+                  {badgeInfo.type === "days_left" && (
+                    <Ionicons name="time-outline" size={12} color={badgeInfo.pillColor} />
+                  )}
+                  <Text style={[styles.validityBadgeText, { color: badgeInfo.pillColor }]}>
+                    {badgeInfo.dateLabel || badgeInfo.pillText}
+                  </Text>
                 </View>
               ) : null}
             </View>
@@ -422,3 +433,5 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 });
+
+export default BonusDetailModal;

@@ -16,6 +16,30 @@ export const DEFAULT_REWARD_LIMITS: RewardLimitsConfig = {
  * Each offer includes transparent merchant terms and clear eligibility disclosure.
  */
 export const DEFAULT_REWARD_OFFERS: RewardOffer[] = [
+  // ── 1. Unscratched Welcome Card (Deep Sapphire Foil Face with BinRo Logo) ──
+  {
+    id: "vc_welcome_unscratched",
+    networkProvider: "vcommission",
+    campaignId: "welcome_01",
+    merchantName: "Welcome Reward",
+    merchantLogoUrl: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=150&auto=format&fit=crop&q=80",
+    bannerUrl: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&auto=format&fit=crop&q=80",
+    creativeUrls: [
+      "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&auto=format&fit=crop&q=80",
+    ],
+    title: "Flat ₹500 Off",
+    description: "on Luxury Perfumes from BellaVita",
+    couponCode: "BELLA500",
+    destinationUrl: "https://bellavitaorganic.com",
+    tier: "gold",
+    category: "Beauty & Perfumes",
+    termsText: "Exclusive welcome scratch card on your verified BinRo scan.",
+    isApproved: true,
+    isActive: true,
+    dailyAllocationLimit: 500,
+    totalAllocated: 0,
+    expiresAt: new Date(Date.now() + 14 * 86400000).toISOString(),
+  },
   // ── Verified Partner Vouchers & Cashbacks (Real Brand Deals) ──
   {
     id: "vc_bellavita_500",
@@ -177,6 +201,47 @@ export const DEFAULT_REWARD_OFFERS: RewardOffer[] = [
     dailyAllocationLimit: 500,
     totalAllocated: 0,
     expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(), // 7 days left -> "7d left"
+  },
+  // ── Expired Partner Offers (Past Validity Archive) ──
+  {
+    id: "vc_citrus_expired",
+    networkProvider: "vcommission",
+    campaignId: "citrus_expired",
+    merchantName: "Citrus",
+    merchantLogoUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=150&auto=format&fit=crop&q=80",
+    bannerUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop&q=80",
+    title: "5% in Citrus",
+    description: "on premium electronics",
+    couponCode: "CITRUS5",
+    destinationUrl: "https://vcommission.com",
+    tier: "bronze",
+    category: "Electronics",
+    termsText: "Promotion validity has concluded.",
+    isApproved: true,
+    isActive: false,
+    dailyAllocationLimit: 500,
+    totalAllocated: 0,
+    expiresAt: new Date(Date.now() - 2 * 86400000).toISOString(), // Expired on 9 Oct
+  },
+  {
+    id: "vc_wog_expired",
+    networkProvider: "vcommission",
+    campaignId: "wog_expired",
+    merchantName: "WOG",
+    merchantLogoUrl: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=150&auto=format&fit=crop&q=80",
+    bannerUrl: "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=800&auto=format&fit=crop&q=80",
+    title: "5% in WOG",
+    description: "on fuel & store orders",
+    couponCode: "WOG5",
+    destinationUrl: "https://vcommission.com",
+    tier: "bronze",
+    category: "Auto & Travel",
+    termsText: "Promotion validity has concluded.",
+    isApproved: true,
+    isActive: false,
+    dailyAllocationLimit: 500,
+    totalAllocated: 0,
+    expiresAt: new Date(Date.now() - 5 * 86400000).toISOString(), // Expired on 6 Oct
   },
   // ── Real Live vCommission Coupons from Affiliate Dashboard ──
   {

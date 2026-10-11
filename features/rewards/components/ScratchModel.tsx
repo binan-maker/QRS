@@ -20,6 +20,7 @@ import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { scratchRewardCard, recordOfferRedemption } from "@/services/rewards";
 import { CelebrationOverlay } from "./CelebrationOverlay";
+import { MerchantLogo } from "./MerchantLogo";
 import type { DisplayBonusCard } from "../types";
 
 interface ScratchModalProps {
@@ -236,27 +237,50 @@ export function ScratchModal({
               }}
             >
               {/* Underlying Revealed Card Content */}
-              <View style={[styles.underlayCard, { backgroundColor: isDark ? "#1E293B" : "#F8FAFC" }]}>
-                <Image
-                  source={{ uri: bannerImage }}
-                  style={styles.underlayBanner}
-                  resizeMode="cover"
-                />
-                <View style={styles.underlayOverlay}>
+              <View
+                style={[
+                  styles.underlayCard,
+                  {
+                    backgroundColor: isDark ? "#141A28" : "#FFFFFF",
+                    borderColor: isDark ? "rgba(255,255,255,0.1)" : "#E2E8F0",
+                    borderWidth: 1,
+                  },
+                ]}
+              >
+                {/* Header row: Merchant Logo + Badge */}
+                <View style={styles.underlayHeaderRow}>
+                  <MerchantLogo
+                    name={card.merchantName}
+                    url={card.merchantLogoUrl || offer.merchantLogoUrl}
+                    size={38}
+                  />
                   <View style={styles.underlayPill}>
-                    <Ionicons name="sparkles" size={12} color="#F59E0B" />
-                    <Text style={styles.underlayPillText}>CONGRATULATIONS</Text>
+                    <Ionicons name="sparkles" size={11} color="#059669" />
+                    <Text style={styles.underlayPillText}>REWARD READY</Text>
                   </View>
-                  <Text style={styles.underlayHeadline} numberOfLines={2}>
+                </View>
+
+                {/* Offer Headline & Subtitle */}
+                <View style={styles.underlayTextCol}>
+                  <Text style={[styles.underlayHeadline, { color: isDark ? "#FFFFFF" : "#0F172A" }]} numberOfLines={1}>
                     {card.headline || offer.title}
                   </Text>
-                  <Text style={styles.underlayMerchant}>
-                    {card.merchantName}
+                  <Text style={[styles.underlaySubtitle, { color: isDark ? "#94A3B8" : "#475569" }]} numberOfLines={2}>
+                    {card.subtitle || offer.description}
                   </Text>
+                </View>
+
+                {/* Product Image */}
+                <View style={styles.underlayImageWrap}>
+                  <Image
+                    source={{ uri: bannerImage }}
+                    style={styles.underlayBanner}
+                    resizeMode="cover"
+                  />
                 </View>
               </View>
 
-              {/* Metallic Mystery Foil Layer */}
+              {/* Metallic Mystery Foil Layer (BinRo Sapphire Brand Color) */}
               {!isRevealed && (
                 <Animated.View
                   style={[
@@ -267,15 +291,15 @@ export function ScratchModal({
                   {...panResponder.panHandlers}
                 >
                   <LinearGradient
-                    colors={["#1E293B", "#0F172A", "#1E1B4B"]}
+                    colors={["#0052CC", "#003FA8", "#00236F"]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={StyleSheet.absoluteFill}
                   />
 
-                  {/* Decorative Security Lines */}
+                  {/* Decorative Security Emblems & Lines */}
                   <View style={styles.foilPattern}>
-                    <Ionicons name="sparkles" size={42} color="rgba(148, 163, 184, 0.25)" />
+                    <Ionicons name="shield-checkmark" size={38} color="#38BDF8" />
                     <Text style={styles.foilPromptTitle}>RUB TO SCRATCH</Text>
                     <Text style={styles.foilPromptSub}>Swipe finger across card to uncover reward</Text>
                   </View>
@@ -473,46 +497,54 @@ const styles = StyleSheet.create({
   underlayCard: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 24,
-    overflow: "hidden",
-  },
-  underlayBanner: {
-    width: "100%",
-    height: "100%",
-  },
-  underlayOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     padding: 16,
-    backgroundColor: "rgba(15, 23, 42, 0.88)",
+    justifyContent: "space-between",
+  },
+  underlayHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   underlayPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "rgba(245, 158, 11, 0.2)",
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    backgroundColor: "rgba(16, 185, 129, 0.14)",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: 100,
-    marginBottom: 6,
   },
   underlayPillText: {
-    color: "#F59E0B",
+    color: "#059669",
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 0.5,
   },
+  underlayTextCol: {
+    marginTop: 6,
+    marginBottom: 6,
+  },
   underlayHeadline: {
-    color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "800",
+    letterSpacing: -0.2,
   },
-  underlayMerchant: {
-    color: "#94A3B8",
+  underlaySubtitle: {
     fontSize: 12,
     marginTop: 2,
+    lineHeight: 16,
+  },
+  underlayImageWrap: {
+    width: "100%",
+    height: 130,
+    borderRadius: 16,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  underlayBanner: {
+    width: "100%",
+    height: "100%",
   },
   foilContainer: {
     borderRadius: 24,
@@ -654,3 +686,5 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 });
+
+export default ScratchModal;

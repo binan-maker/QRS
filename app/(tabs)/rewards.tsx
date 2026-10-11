@@ -5,15 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Image,
   RefreshControl,
   Share,
-  Dimensions,
 } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTopInset } from "@/shared/utils/platform";
@@ -28,6 +25,7 @@ import {
   type RewardOffer,
 } from "@/services/rewards";
 import {
+  RewardCard,
   ScratchModal,
   BonusDetailModal,
   type DisplayBonusCard,
@@ -107,7 +105,7 @@ export default function RewardsScreen() {
     setRefreshing(false);
   }, [loadData]);
 
-  // Combined cards deck: ONLY real approved coupons from Supabase / verified catalog
+  // Combined cards deck: Real approved coupons + user cards with precise status
   const cardsDeck = useMemo((): DisplayBonusCard[] => {
     const list: DisplayBonusCard[] = [];
     const addedOfferIds = new Set<string>();
@@ -119,32 +117,46 @@ export default function RewardsScreen() {
         id: uc.id,
         headline: uc.offer.title,
         merchantName: uc.offer.merchantName,
+        subtitle: uc.offer.description,
         status: uc.status === "locked" ? "locked" : isScratched ? "scratched" : "unlocked",
         validityText: uc.status === "scratched" ? "Code ready" : "Valid for 7 days",
         bannerUrl: uc.offer.bannerUrl,
+        merchantLogoUrl: uc.offer.merchantLogoUrl,
         badgeType: "brand",
+        createdAt: uc.createdAt,
+        scratchedAt: uc.scratchedAt,
+        expiresAt: uc.expiresAt || uc.offer?.expiresAt,
         offer: uc.offer,
       });
       if (uc.offer?.id) addedOfferIds.add(uc.offer.id);
     }
 
-    // 2. Real approved coupons fetched from Supabase (rewards_deals table)
+    // 2. Real approved coupons fetched from Supabase (rewards_deals table) & catalog
     for (const offer of approvedOffers) {
       if (!addedOfferIds.has(offer.id)) {
         const cardId = `card_${offer.id}`;
         const isLocallyScratched = scratchedCardIds.has(cardId);
-        const isOfferExpired = offer.expiresAt ? new Date(offer.expiresAt).getTime() < Date.now() : false;
+        const isOfferExpired = offer.expiresAt
+          ? new Date(offer.expiresAt).getTime() < Date.now()
+          : false;
 
-        const status: "unlocked" | "scratched" | "expired" = isOfferExpired
-          ? "expired"
-          : isLocallyScratched
-          ? "scratched"
-          : "unlocked";
+        // If offer is specifically the unscratched welcome card and not yet scratched:
+        // status remains "unlocked" (unscratched).
+        // Otherwise: scratched or expired.
+        let status: "unlocked" | "scratched" | "expired" = "scratched";
+        if (isOfferExpired) {
+          status = "expired";
+        } else if (isLocallyScratched) {
+          status = "scratched";
+        } else if (offer.id === "vc_welcome_unscratched") {
+          status = "unlocked";
+        }
 
         list.push({
           id: cardId,
           headline: offer.title,
           merchantName: offer.merchantName,
+          subtitle: offer.description,
           status,
           validityText:
             status === "scratched"
@@ -153,7 +165,9 @@ export default function RewardsScreen() {
               ? "Not applicable"
               : "Valid for 14 days",
           bannerUrl: offer.bannerUrl,
+          merchantLogoUrl: offer.merchantLogoUrl,
           badgeType: "brand",
+          expiresAt: offer.expiresAt,
           offer,
         });
         addedOfferIds.add(offer.id);
@@ -173,7 +187,7 @@ export default function RewardsScreen() {
       // Scratched card -> open voucher detail view directly!
       setDetailModalCard(card);
     } else if (card.status === "expired") {
-      // Expired card -> still allow viewing terms/archive
+      // Expired card -> open terms/archive view
       setDetailModalCard(card);
     }
   };
@@ -194,7 +208,7 @@ export default function RewardsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* ── Header (Clean "My Bonuses" matching web) ── */}
+      {/* ── Header ("My Bonuses") ── */}
       <View style={[styles.header, { paddingTop: topInset + 8 }]}>
         <Pressable
           onPress={() => router.push("/(tabs)")}
@@ -253,105 +267,15 @@ export default function RewardsScreen() {
       >
         {/* ── 2-Column Responsive Scratch Cards Grid ── */}
         <View style={styles.cardsGrid}>
-          {cardsDeck.map((card) => {
-            const isUnscratched = card.status === "unlocked";
-            const isScratched = card.status === "scratched";
-            const isExpired = card.status === "expired";
-            const isLocked = card.status === "locked";
-
-            return (
-              <Pressable
-                key={card.id}
-                onPress={() => handleCardClick(card)}
-                style={({ pressed }) => [
-                  styles.bonusCard,
-                  {
-                    backgroundColor: isDark ? "#141926" : "#FFFFFF",
-                    borderColor: isExpired
-                      ? isDark ? "rgba(255,255,255,0.05)" : "#E2E8F0"
-                      : isDark ? "rgba(255,255,255,0.08)" : "#E2E8F0",
-                    opacity: isExpired ? 0.65 : pressed ? 0.92 : 1,
-                    transform: [{ scale: pressed ? 0.98 : 1 }],
-                  },
-                ]}
-              >
-                {/* Visual Area */}
-                <View style={styles.cardVisualWrap}>
-                  {isUnscratched ? (
-                    /* ── Mystery Foil Face (Deep Sapphire Metallic Gradient) ── */
-                    <LinearGradient
-                      colors={["#1E293B", "#0F172A", "#1E1B4B"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.foilSurface}
-                    >
-                      <Ionicons name="sparkles" size={26} color="rgba(148, 163, 184, 0.45)" />
-                      <View style={styles.scratchPromptPill}>
-                        <Ionicons name="flash" size={11} color="#38BDF8" />
-                        <Text style={styles.scratchPromptText}>Scratch to Reveal</Text>
-                      </View>
-                    </LinearGradient>
-                  ) : (
-                    /* ── Revealed / Expired Card Artwork ── */
-                    <View style={styles.imageSurface}>
-                      <Image
-                        source={{ uri: card.bannerUrl }}
-                        style={[
-                          styles.cardBannerImg,
-                          isExpired && styles.cardBannerImgExpired,
-                        ]}
-                        resizeMode="cover"
-                      />
-                      {isExpired && (
-                        <View style={styles.expiredBadgePill}>
-                          <Text style={styles.expiredBadgeText}>Offer Expired</Text>
-                        </View>
-                      )}
-                      {isLocked && (
-                        <View style={styles.lockedBadgeOverlay}>
-                          <Ionicons name="lock-closed" size={22} color="#FFFFFF" />
-                        </View>
-                      )}
-                    </View>
-                  )}
-                </View>
-
-                {/* Card Meta Content */}
-                <View style={styles.cardContent}>
-                  <Text
-                    style={[
-                      styles.cardMerchantName,
-                      { color: isExpired ? colors.textMuted : colors.textSecondary },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {card.merchantName}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cardHeadline,
-                      { color: isExpired ? colors.textMuted : colors.text },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {card.headline}
-                  </Text>
-
-                  <View style={styles.validityRow}>
-                    <Text
-                      style={[
-                        styles.validityText,
-                        { color: isExpired ? colors.textMuted : isScratched ? "#10B981" : colors.textSecondary },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {isScratched ? "Code ready" : card.validityText}
-                    </Text>
-                  </View>
-                </View>
-              </Pressable>
-            );
-          })}
+          {cardsDeck.map((card) => (
+            <RewardCard
+              key={card.id}
+              card={card}
+              onPress={handleCardClick}
+              isDark={isDark}
+              colors={colors}
+            />
+          ))}
         </View>
       </ScrollView>
 
@@ -376,9 +300,6 @@ export default function RewardsScreen() {
     </View>
   );
 }
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_WIDTH = (SCREEN_WIDTH - 44) / 2;
 
 const styles = StyleSheet.create({
   container: {
@@ -429,97 +350,5 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 12,
     justifyContent: "space-between",
-  },
-  bonusCard: {
-    width: CARD_WIDTH,
-    borderRadius: 20,
-    borderWidth: 1,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  cardVisualWrap: {
-    width: "100%",
-    height: 125,
-    position: "relative",
-  },
-  foilSurface: {
-    width: "100%",
-    height: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 12,
-  },
-  scratchPromptPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgba(15, 23, 42, 0.75)",
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 100,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: "rgba(56, 189, 248, 0.3)",
-  },
-  scratchPromptText: {
-    color: "#FFFFFF",
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  imageSurface: {
-    width: "100%",
-    height: "100%",
-    position: "relative",
-  },
-  cardBannerImg: {
-    width: "100%",
-    height: "100%",
-  },
-  cardBannerImgExpired: {
-    opacity: 0.45,
-  },
-  expiredBadgePill: {
-    position: "absolute",
-    top: 8,
-    left: 8,
-    backgroundColor: "rgba(15, 23, 42, 0.8)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 100,
-  },
-  expiredBadgeText: {
-    color: "#94A3B8",
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  lockedBadgeOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(15, 23, 42, 0.65)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardContent: {
-    padding: 12,
-  },
-  cardMerchantName: {
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 0.3,
-  },
-  cardHeadline: {
-    fontSize: 14,
-    fontWeight: "800",
-    marginTop: 2,
-  },
-  validityRow: {
-    marginTop: 6,
-  },
-  validityText: {
-    fontSize: 11,
-    fontWeight: "600",
   },
 });
