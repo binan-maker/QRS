@@ -26,8 +26,6 @@ export async function appendToLocalScanHistory(
     const keys = [
       userId ? `local_scan_history_${userId}` : null,
       "local_scan_history",
-      "binro_recent_scans",
-      "binro_scan_history",
     ].filter(Boolean) as string[];
 
     const normEntryContent = normalizeScanContent(entry.content);

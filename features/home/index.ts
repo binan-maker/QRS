@@ -7,5 +7,4 @@ export { HomeHeader }             from "./components/HomeHeader";
 export { HeroScanCard }           from "./components/HeroScanCard";
 export { RecentScansList }        from "./components/RecentScansList";
 export { EmptyScans }             from "./components/EmptyScans";
-export { getFirstName }           from "./utils";
 export type { LocalScan }         from "./types";

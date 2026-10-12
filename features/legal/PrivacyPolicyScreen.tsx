@@ -3,8 +3,10 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
+  Linking,
 } from "react-native";
-import { useState, type ReactNode } from "react";
+import { useState, useCallback, type ReactNode } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
@@ -15,9 +17,13 @@ import type { AppColors } from "@/shared/constants/colors";
 import Reanimated from "react-native-reanimated";
 import { useHeaderHide } from "@/shared/hooks/useScrollHide";
 
-const EFFECTIVE_DATE = "April 8, 2026";
-const CONTACT_EMAIL = "ahmedsameerbinan2@gmail.com";
-const LEGAL_EMAIL = "ahmedsameerbinan2@gmail.com";
+import {
+  LEGAL_EFFECTIVE_DATE as EFFECTIVE_DATE,
+  LEGAL_CONTACT_EMAIL as CONTACT_EMAIL,
+  LEGAL_EMAIL,
+  ONLINE_PRIVACY_URL,
+} from "@/shared/constants/legal";
+import { openOnlinePrivacyPolicy, openContactEmail } from "@/shared/utils/legal-links";
 
 import {
   LegalSectionCard as SectionCard,
@@ -33,6 +39,10 @@ export default function PrivacyPolicyScreen() {
   const topInset = useTopInset();
   const { headerStyle, setHeight, onScroll } = useHeaderHide();
   const [headerH, setHeaderH] = useState(0);
+
+  const handleOpenOnlinePolicy = useCallback(() => {
+    openOnlinePrivacyPolicy();
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -78,6 +88,26 @@ export default function PrivacyPolicyScreen() {
             </View>
           </View>
         </LinearGradient>
+
+        <TouchableOpacity
+          style={[styles.webLinkCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+          onPress={handleOpenOnlinePolicy}
+          activeOpacity={0.7}
+          accessibilityRole="link"
+          accessibilityLabel="Read official Privacy Policy on binro.in/privacy"
+        >
+          <View style={[styles.webLinkIconWrap, { backgroundColor: colors.safe + "18" }]}>
+            <Ionicons name="globe-outline" size={18} color={colors.safe} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.webLinkTitle, { color: colors.text }]}>Official Online Privacy Policy</Text>
+            <Text style={[styles.webLinkUrl, { color: colors.safe }]}>https://binro.in/privacy</Text>
+          </View>
+          <View style={[styles.webLinkBadge, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.webLinkBadgeText, { color: colors.textMuted }]}>Open</Text>
+            <Ionicons name="open-outline" size={12} color={colors.textMuted} />
+          </View>
+        </TouchableOpacity>
 
         <SectionCard title="Who We Are" num="1" icon="shield-outline" colors={colors}>
           <Para colors={colors}>
@@ -260,15 +290,40 @@ export default function PrivacyPolicyScreen() {
 
         <SectionCard title="Contact Us" num="15" icon="mail-outline" colors={colors}>
           <Para colors={colors}>For privacy questions, data access requests, or to exercise your rights, contact us:</Para>
-          <View style={[styles.contactCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
+          <TouchableOpacity
+            style={[styles.contactCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}
+            onPress={() => openContactEmail(CONTACT_EMAIL, "BinRo Privacy Query")}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Send email to ${CONTACT_EMAIL}`}
+          >
             <View style={[styles.contactIconWrap, { backgroundColor: colors.primary + "22" }]}>
               <Ionicons name="mail-outline" size={18} color={colors.primary} />
             </View>
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={[styles.contactEmail, { color: colors.primary }]}>{CONTACT_EMAIL}</Text>
-              <Text style={[styles.contactEmail, { color: colors.primary }]}>{LEGAL_EMAIL}</Text>
+              <Text style={[styles.contactEmail, { color: colors.primary, fontSize: 12, opacity: 0.8 }]}>{LEGAL_EMAIL}</Text>
             </View>
-          </View>
+            <Ionicons name="send-outline" size={14} color={colors.primary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.contactCard, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}
+            onPress={handleOpenOnlinePolicy}
+            activeOpacity={0.7}
+            accessibilityRole="link"
+            accessibilityLabel="Open binro.in/privacy"
+          >
+            <View style={[styles.contactIconWrap, { backgroundColor: colors.safe + "20" }]}>
+              <Ionicons name="globe-outline" size={18} color={colors.safe} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.contactEmail, { color: colors.text, fontSize: 13 }]}>Official Online Privacy Policy</Text>
+              <Text style={[styles.contactEmail, { color: colors.safe, fontSize: 12 }]}>https://binro.in/privacy</Text>
+            </View>
+            <Ionicons name="open-outline" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+
           <Para colors={colors}>We aim to respond to all privacy-related enquiries within 5 business days.</Para>
         </SectionCard>
 
@@ -300,25 +355,24 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   dateBadgeText: { fontSize: 11, fontFamily: "Inter_500Medium" },
-  sectionCard: { borderRadius: 16, borderWidth: 1, padding: 14 },
-  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 9 },
-  sectionNum: { width: 24, height: 24, borderRadius: 7, alignItems: "center", justifyContent: "center" },
-  sectionNumText: { fontSize: 11, fontFamily: "Inter_700Bold" },
-  sectionIcon: { width: 22, height: 22, borderRadius: 6, alignItems: "center", justifyContent: "center" },
-  sectionTitle: { fontSize: 12, fontFamily: "Inter_700Bold", flex: 1 },
-  subhead: { fontSize: 11, fontFamily: "Inter_600SemiBold", marginTop: 7, marginBottom: 3 },
-  para: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, marginBottom: 5 },
-  warningBox: {
-    flexDirection: "row", alignItems: "flex-start", gap: 8,
-    padding: 10, borderRadius: 10, borderWidth: 1, marginBottom: 8,
+  webLinkCard: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderRadius: 14, padding: 12, borderWidth: 1,
   },
-  warningText: { fontSize: 12, fontFamily: "Inter_600SemiBold", flex: 1, lineHeight: 17 },
-  bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 9, marginBottom: 5 },
-  bulletDot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 8, flexShrink: 0 },
-  bulletText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
+  webLinkIconWrap: {
+    width: 36, height: 36, borderRadius: 10,
+    alignItems: "center", justifyContent: "center",
+  },
+  webLinkTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  webLinkUrl: { fontSize: 12, fontFamily: "Inter_500Medium", marginTop: 1 },
+  webLinkBadge: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
+  },
+  webLinkBadgeText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   contactCard: {
     flexDirection: "row", alignItems: "center", gap: 10,
-    borderRadius: 12, padding: 12, marginVertical: 8, borderWidth: 1,
+    borderRadius: 12, padding: 12, marginVertical: 4, borderWidth: 1,
   },
   contactIconWrap: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
   contactEmail: { fontSize: 13, fontFamily: "Inter_600SemiBold" },

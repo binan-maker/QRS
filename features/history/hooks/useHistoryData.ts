@@ -112,9 +112,6 @@ export function useHistoryData() {
       const keysToTry = [
         userId ? `local_scan_history_${userId}` : null,
         "local_scan_history",
-        "binro_recent_scans",
-        "binro_scan_history",
-        "binro_scans",
       ].filter(Boolean) as string[];
 
       const combined: HistoryItem[] = [];

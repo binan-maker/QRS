@@ -9,6 +9,7 @@ export {
   syncLocalScansToCloud,
   recordScan,
   deleteUserScan,
+  deleteLocalScan,
   deleteAllUserScans,
   deleteDuplicateUserScansByQrCode,
   purgeOldSoftDeleteScans,

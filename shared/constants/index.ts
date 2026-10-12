@@ -9,5 +9,6 @@ export * from "./collections";
 export * from "./colors";
 export * from "./config";
 export * from "./content-types";
+export * from "./legal";
 export * from "./styles";
 export * from "./typography";

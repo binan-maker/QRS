@@ -3,7 +3,7 @@ import { useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { getUserScansPaginated, deleteUserScan } from "@/lib/data-service";
+import { getUserScansPaginated, deleteUserScan, deleteLocalScan } from "@/lib/data-service";
 import { queryClient } from "@/lib/query-client";
 import {
   getCachedHomeScans,
@@ -96,9 +96,6 @@ export function useRecentScans() {
       const keysToTry = [
         userId ? localStorageKey(userId) : null,
         "local_scan_history",
-        "binro_recent_scans",
-        "binro_scan_history",
-        "binro_scans",
       ].filter(Boolean) as string[];
 
       const combined: LocalScan[] = [];
@@ -232,11 +229,12 @@ export function useRecentScans() {
     } else {
       // Local scan: remove from AsyncStorage (all matching duplicates)
       try {
-        const stored = await AsyncStorage.getItem(localStorageKey(user.id));
-        if (!stored) return;
-        const updated = (JSON.parse(stored) as LocalScan[]).filter((s) => !isMatch(s));
-        await AsyncStorage.setItem(localStorageKey(user.id), JSON.stringify(updated));
-        setLocalScans(updated);
+        await deleteLocalScan(user.id, {
+          id: scanId,
+          qrCodeId: targetQrId,
+          content: targetScan?.content,
+        });
+        setLocalScans((prev) => prev.filter((s) => !isMatch(s)));
       } catch {}
     }
   }, [user?.id, localScans]);

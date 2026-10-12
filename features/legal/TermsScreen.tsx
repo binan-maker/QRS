@@ -3,8 +3,10 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
+  Linking,
 } from "react-native";
-import { useState, type ReactNode } from "react";
+import { useState, useCallback, type ReactNode } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTopInset } from "@/shared/utils/platform";
@@ -15,9 +17,13 @@ import type { AppColors } from "@/shared/constants/colors";
 import Reanimated from "react-native-reanimated";
 import { useHeaderHide } from "@/shared/hooks/useScrollHide";
 
-const EFFECTIVE_DATE = "April 8, 2026";
-const CONTACT_EMAIL = "ahmedsameerbinan2@gmail.com";
-const APP_NAME = "BinRo";
+import {
+  APP_NAME,
+  LEGAL_EFFECTIVE_DATE as EFFECTIVE_DATE,
+  LEGAL_CONTACT_EMAIL as CONTACT_EMAIL,
+  ONLINE_TERMS_URL,
+} from "@/shared/constants/legal";
+import { openOnlineTerms, openContactEmail } from "@/shared/utils/legal-links";
 
 import {
   LegalSectionCard as SectionCard,
@@ -32,6 +38,10 @@ export default function TermsScreen() {
   const topInset = useTopInset();
   const { headerStyle, setHeight, onScroll } = useHeaderHide();
   const [headerH, setHeaderH] = useState(0);
+
+  const handleOpenOnlineTerms = useCallback(() => {
+    openOnlineTerms();
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -77,6 +87,26 @@ export default function TermsScreen() {
             </View>
           </View>
         </LinearGradient>
+
+        <TouchableOpacity
+          style={[styles.webLinkCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}
+          onPress={handleOpenOnlineTerms}
+          activeOpacity={0.7}
+          accessibilityRole="link"
+          accessibilityLabel="Read official Terms of Service on binro.in/terms"
+        >
+          <View style={[styles.webLinkIconWrap, { backgroundColor: colors.primaryDim }]}>
+            <Ionicons name="globe-outline" size={18} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.webLinkTitle, { color: colors.text }]}>Official Online Terms of Service</Text>
+            <Text style={[styles.webLinkUrl, { color: colors.primary }]}>https://binro.in/terms</Text>
+          </View>
+          <View style={[styles.webLinkBadge, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.webLinkBadgeText, { color: colors.textMuted }]}>Open</Text>
+            <Ionicons name="open-outline" size={12} color={colors.textMuted} />
+          </View>
+        </TouchableOpacity>
 
         <SectionCard title="Acceptance of Terms" num="1" colors={colors}>
           <Para colors={colors}>
@@ -273,10 +303,39 @@ export default function TermsScreen() {
 
         <SectionCard title="Contact" num="16" colors={colors}>
           <Para colors={colors}>For legal matters, policy questions, or to report a violation, contact us at:</Para>
-          <View style={[styles.contactCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
-            <Ionicons name="mail-outline" size={20} color={colors.primary} />
-            <Text style={[styles.contactEmail, { color: colors.primary }]}>{CONTACT_EMAIL}</Text>
-          </View>
+          <TouchableOpacity
+            style={[styles.contactCard, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}
+            onPress={() => openContactEmail(CONTACT_EMAIL, "BinRo Legal Enquiries")}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Send email to ${CONTACT_EMAIL}`}
+          >
+            <View style={[styles.contactIconWrap, { backgroundColor: colors.primary + "22" }]}>
+              <Ionicons name="mail-outline" size={18} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.contactEmail, { color: colors.primary }]}>{CONTACT_EMAIL}</Text>
+            </View>
+            <Ionicons name="send-outline" size={14} color={colors.primary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.contactCard, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}
+            onPress={handleOpenOnlineTerms}
+            activeOpacity={0.7}
+            accessibilityRole="link"
+            accessibilityLabel="Open binro.in/terms"
+          >
+            <View style={[styles.contactIconWrap, { backgroundColor: colors.primaryDim }]}>
+              <Ionicons name="globe-outline" size={18} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.contactEmail, { color: colors.text, fontSize: 13 }]}>Official Online Terms</Text>
+              <Text style={[styles.contactEmail, { color: colors.primary, fontSize: 12 }]}>https://binro.in/terms</Text>
+            </View>
+            <Ionicons name="open-outline" size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+
           <Para colors={colors}>We aim to respond to all legal enquiries within 5 business days.</Para>
         </SectionCard>
 
@@ -308,24 +367,31 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   dateBadgeText: { fontSize: 11, fontFamily: "Inter_500Medium" },
-  sectionCard: { borderRadius: 16, borderWidth: 1, padding: 14 },
-  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 9 },
-  sectionNum: { width: 24, height: 24, borderRadius: 7, alignItems: "center", justifyContent: "center" },
-  sectionNumText: { fontSize: 11, fontFamily: "Inter_700Bold" },
-  sectionTitle: { fontSize: 12, fontFamily: "Inter_700Bold", flex: 1 },
+  webLinkCard: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderRadius: 14, padding: 12, borderWidth: 1,
+  },
+  webLinkIconWrap: {
+    width: 36, height: 36, borderRadius: 10,
+    alignItems: "center", justifyContent: "center",
+  },
+  webLinkTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  webLinkUrl: { fontSize: 12, fontFamily: "Inter_500Medium", marginTop: 1 },
+  webLinkBadge: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
+  },
+  webLinkBadgeText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   warningBox: {
     flexDirection: "row", alignItems: "flex-start", gap: 8,
     padding: 10, borderRadius: 10, borderWidth: 1, marginBottom: 8,
   },
   warningText: { fontSize: 11, fontFamily: "Inter_600SemiBold", flex: 1, lineHeight: 16 },
-  para: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, marginBottom: 5 },
-  bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 9, marginBottom: 5 },
-  bulletDot: { width: 4, height: 4, borderRadius: 2, marginTop: 7, flexShrink: 0 },
-  bulletText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
   contactCard: {
     flexDirection: "row", alignItems: "center", gap: 10,
-    borderRadius: 12, padding: 12, marginVertical: 8, borderWidth: 1,
+    borderRadius: 12, padding: 12, marginVertical: 4, borderWidth: 1,
   },
+  contactIconWrap: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
   contactEmail: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   footer: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, paddingVertical: 14 },
   footerText: { fontSize: 11, fontFamily: "Inter_500Medium" },

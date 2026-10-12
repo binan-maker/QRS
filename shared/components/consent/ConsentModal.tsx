@@ -2,11 +2,12 @@ import React, { useState, useRef } from "react";
 import {
   View, Text, Modal, ScrollView, Pressable, StyleSheet,
   Platform, StatusBar, NativeScrollEvent, NativeSyntheticEvent,
-  useWindowDimensions, Linking,
+  useWindowDimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { openOnlinePrivacyPolicy, openOnlineTerms } from "@/shared/utils/legal-links";
 import ConsentScrollBody from "./ConsentScrollBody";
 
 export const CONSENT_VERSION = "3.0";
@@ -42,8 +43,8 @@ export default function ConsentModal({ visible, onAccept }: ConsentModalProps) {
   };
 
   const handleAccept = async () => { await saveConsent(); onAccept(); };
-  const openPrivacyPolicy = () => Linking.openURL("https://binan-maker.github.io/qrguard/privacy.html");
-  const openTerms = () => Linking.openURL("https://binan-maker.github.io/qrguard/terms.html");
+  const openPrivacyPolicy = () => openOnlinePrivacyPolicy();
+  const openTerms = () => openOnlineTerms();
 
   const cardHeight = Math.min(height * 0.78, 580);
   const cardBg      = isDark ? "#141E2B" : "#FFFFFF";

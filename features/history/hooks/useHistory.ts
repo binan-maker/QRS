@@ -1,7 +1,6 @@
 import { useCallback } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "@/shared/utils/haptics";
-import { deleteUserScan } from "@/lib/data-service";
+import { deleteUserScan, deleteLocalScan } from "@/lib/data-service";
 import { invalidateHistoryCache, invalidateHomeScansCache } from "@/services/cache/qr-cache";
 import { normalizeScanContent } from "@/services/scan-history/dedup";
 import { useHistoryData } from "@/features/history/hooks/useHistoryData";
@@ -38,13 +37,11 @@ export function useHistory() {
     if (item.source === "local") {
       setLocalHistory((prev) => prev.filter((i) => !isMatch(i)));
       try {
-        if (user?.id) {
-          const stored = await AsyncStorage.getItem(`local_scan_history_${user.id}`);
-          if (stored) {
-            const arr = JSON.parse(stored).filter((s: any) => !isMatch(s));
-            await AsyncStorage.setItem(`local_scan_history_${user.id}`, JSON.stringify(arr));
-          }
-        }
+        await deleteLocalScan(user?.id, {
+          id: item.id,
+          qrCodeId: targetQrId,
+          content: item.content,
+        });
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch {
         setLocalHistory((prev) =>

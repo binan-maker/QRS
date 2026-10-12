@@ -7,7 +7,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/hooks/useScaleFns";
-import { getFirstName } from "@/features/home/utils";
+import { formatFirstName } from "@/shared/utils/formatters/names";
 
 interface Props {
   user:     { displayName: string; id: string } | null;
@@ -39,7 +39,7 @@ export function HomeHeader({ user, photoURL }: Props) {
         {user ? (
           <Text style={styles.greeting} numberOfLines={1} ellipsizeMode="tail">
             {"👋 Hey, "}
-            <Text style={{ color: colors.primary }}>{getFirstName(user.displayName)}</Text>
+            <Text style={{ color: colors.primary }}>{formatFirstName(user.displayName)}</Text>
           </Text>
         ) : (
           <Text style={styles.greeting}>Welcome</Text>

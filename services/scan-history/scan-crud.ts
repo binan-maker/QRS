@@ -18,6 +18,7 @@ import { incrementSmartCounter } from "@/lib/db/distributed-counter";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import { logger } from "@/lib/logger";
 import { processEligibleScanReward } from "../rewards/reward-service";
+import { normalizeScanContent } from "./dedup";
 
 const SCAN_SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -207,9 +208,6 @@ export async function syncLocalScansToCloud(userId: string): Promise<void> {
     const keysToTry = [
       `local_scan_history_${userId}`,
       "local_scan_history",
-      "binro_recent_scans",
-      "binro_scan_history",
-      "binro_scans",
     ];
 
     const localItems: any[] = [];
@@ -547,9 +545,6 @@ export async function getUserScansPaginated(
       const localKeys = [
         `local_scan_history_${userId}`,
         "local_scan_history",
-        "binro_recent_scans",
-        "binro_scan_history",
-        "binro_scans",
       ];
       const localItems: any[] = [];
       const seen = new Set<string>();
@@ -678,6 +673,40 @@ export async function deleteDuplicateUserScansByQrCode(
       await batch.commit();
     }
   } catch {}
+}
+
+export async function deleteLocalScan(
+  userId?: string | null,
+  target: { id?: string; qrCodeId?: string | null; content?: string | null } = {}
+): Promise<void> {
+  const targetId = target.id;
+  const targetQrId = target.qrCodeId;
+  const targetNormContent = target.content ? normalizeScanContent(target.content) : null;
+
+  const isMatch = (s: any) => {
+    if (targetId && s.id === targetId) return true;
+    if (targetQrId && (s.qrCodeId === targetQrId || s.qrId === targetQrId)) return true;
+    if (targetNormContent && s.content && normalizeScanContent(s.content) === targetNormContent) return true;
+    return false;
+  };
+
+  const keys = [
+    userId ? `local_scan_history_${userId}` : null,
+    "local_scan_history",
+  ].filter(Boolean) as string[];
+
+  for (const key of keys) {
+    try {
+      const stored = await AsyncStorage.getItem(key);
+      if (stored) {
+        const arr = JSON.parse(stored);
+        if (Array.isArray(arr)) {
+          const filtered = arr.filter((s: any) => !isMatch(s));
+          await AsyncStorage.setItem(key, JSON.stringify(filtered));
+        }
+      }
+    } catch {}
+  }
 }
 
 export async function deleteAllUserScans(userId: string): Promise<void> {

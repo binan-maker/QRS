@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Section, Body, Bold, Bullets } from "./consent-primitives";
+import { LEGAL_EMAIL, PRIVACY_EMAIL, LEGAL_JURISDICTION } from "@/shared/constants/legal";
 
 interface Props {
   scrollRef: RefObject<ScrollView | null>;
@@ -137,16 +138,20 @@ export default function ConsentScrollBody({
         <Section label="Legal Basics" color={sectionBlue}>
           <Body color={bodyText}>
             BinRo operates under the laws of{" "}
-            <Bold color={boldText}>India</Bold>. Full details, including how
+            <Bold color={boldText}>{LEGAL_JURISDICTION}</Bold>. Full details, including how
             disputes are handled, are available in our Terms of Service below.
           </Body>
         </Section>
 
         <Section label="Contact" color={sectionBlue}>
           <Body color={bodyText}>
-            <Bold color={boldText}>legal@qrguard.app</Bold>
-            {"  ·  "}
-            <Bold color={boldText}>privacy@qrguard.app</Bold>
+            <Bold color={boldText}>{LEGAL_EMAIL}</Bold>
+            {LEGAL_EMAIL !== PRIVACY_EMAIL ? (
+              <>
+                {"  ·  "}
+                <Bold color={boldText}>{PRIVACY_EMAIL}</Bold>
+              </>
+            ) : null}
           </Body>
         </Section>
 

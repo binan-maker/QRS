@@ -1,7 +1,9 @@
+import { ONLINE_WEBSITE_URL } from "@/shared/constants/legal";
+
 const BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const BASE62_INDEX = new Map([...BASE62].map((character, index) => [character, index]));
 const QR_ID_HEX_LENGTH = 20;
-export const BINRO_SITE_URL = "https://binro.in";
+export const BINRO_SITE_URL = ONLINE_WEBSITE_URL;
 
 const SHA256_K = new Uint32Array([
   0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,

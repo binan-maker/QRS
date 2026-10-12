@@ -1,6 +1,17 @@
 import { StyleSheet } from "react-native";
 import type { AppColors } from "@/shared/constants/colors";
 
+const stylesCache = new WeakMap<AppColors, ReturnType<typeof makeLegalStyles>>();
+
+export function getLegalStyles(colors: AppColors) {
+  let cached = stylesCache.get(colors);
+  if (!cached) {
+    cached = makeLegalStyles(colors);
+    stylesCache.set(colors, cached);
+  }
+  return cached;
+}
+
 export function makeLegalStyles(colors: AppColors) {
   return StyleSheet.create({
     container: {
