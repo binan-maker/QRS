@@ -3,6 +3,8 @@ export {
   normalizeQrDetailContentType,
   type ReportKey,
   type ReportTypeConfig as ReportType,
+  COMMENTS_PER_PAGE,
+  REPLIES_PER_PAGE,
 } from "@/shared/utils/qr-detail-rules";
 
 export interface CommentItem {

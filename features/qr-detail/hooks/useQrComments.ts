@@ -2,8 +2,8 @@ import { useEffect, useState, useCallback, useRef, useMemo, useLayoutEffect } fr
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { getComments } from "@/lib/data-service";
 import * as Haptics from "@/shared/utils/haptics";
-import { type CommentItem, COMMENTS_PER_PAGE, REPLIES_PER_PAGE } from "./comment-types";
-import { mergeWithOptimistic, getAllDescendants, getRootCommentId } from "./comment-list-utils";
+import { type CommentItem, COMMENTS_PER_PAGE, REPLIES_PER_PAGE } from "../types";
+import { mergeWithOptimistic, getAllDescendants, getRootCommentId } from "../utils/comment-list";
 import { useCommentLikes } from "./useCommentLikes";
 import { useCommentActions } from "./useCommentActions";
 
@@ -45,23 +45,24 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     setCommentsList, pendingCommentsRef, deletingIdsRef, setExpandedReplies,
   });
 
-  const userUsername   = (user as any)?.username;
-  const userPhotoURL   = user?.photoURL;
-  const userDisplayName = user?.displayName;
+  const userUsername = (user as any)?.username;
+  const userPhotoURL = user?.photoURL;
   useEffect(() => {
     if (!userId) return;
+    const cleanUsername = userUsername ? userUsername.replace(/^@/, "") : undefined;
     setCommentsList((prev) =>
       prev.map((c) => {
         if (c.userId !== userId) return c;
+        const resolvedUsername = cleanUsername || c.userUsername || `user_${userId.slice(-5)}`;
         return {
           ...c,
-          userUsername:   userUsername   || c.userUsername,
-          userPhotoURL:   userPhotoURL   || c.userPhotoURL,
-          user: { displayName: userDisplayName || c.user.displayName },
+          userUsername: resolvedUsername,
+          userPhotoURL: userPhotoURL || c.userPhotoURL,
+          user: { displayName: `@${resolvedUsername}` },
         };
       })
     );
-  }, [userUsername, userPhotoURL, userDisplayName, userId]);
+  }, [userUsername, userPhotoURL, userId]);
 
   const loadInitialComments = useCallback(async (resetOptimistic = false) => {
     if (offlineMode) return;

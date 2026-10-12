@@ -13,9 +13,9 @@ import {
   REPORT_LABELS,
   REPORT_ICONS as MOBILE_REPORT_ICONS,
   REPLIES_PER_PAGE,
-} from "@features/qr-detail/constants";
-import type { ReportKey } from "@features/qr-detail/data/reportTypes";
-import { normalizeQrDetailContentType } from "@features/qr-detail/content-types";
+  type ReportKey,
+  normalizeQrDetailContentType,
+} from "@shared/utils/qr-detail-rules";
 import { isPaymentQr, parseAnyPaymentQr } from "@services/analysis";
 import { calculateTrustScore } from "@services/trust/trust-service";
 import {

@@ -7,7 +7,7 @@ import {
   softDeleteComment,
 } from "@/lib/data-service";
 import { queryClient } from "@/lib/query-client";
-import type { CommentItem } from "./comment-types";
+import type { CommentItem } from "../types";
 
 interface UseCommentActionsParams {
   id: string;
@@ -61,17 +61,21 @@ export function useCommentActions({
     const cachedProfile = userId
       ? queryClient.getQueryData<any>(["userProfile", userId])
       : undefined;
-    const clientUsername: string | undefined =
-      (user as any)?.username || (cachedProfile?.username as string) || undefined;
+    // Ensure we strictly have a valid username handle. Every account is assigned a username upon creation.
+    // If not yet hydrated, compute standard fallback handle `@user_xxxxx` from userId.
+    const rawUsername: string =
+      (user as any)?.username ||
+      (cachedProfile?.username as string) ||
+      (userId ? `user_${userId.slice(-5)}` : "user");
+    const clientUsername: string = rawUsername.replace(/^@/, "");
     const clientPhotoURL: string | undefined =
       user?.photoURL || (cachedProfile?.photoURL as string) || undefined;
-    const clientDisplayName: string = user?.displayName || "User";
     const tempId = `pending_${Date.now()}`;
     const parentId = replyTo ? replyTo.rootId : null;
 
     const optimisticComment: CommentItem = {
       id: tempId, text: trimmed, userId,
-      user: { displayName: clientDisplayName },
+      user: { displayName: `@${clientUsername}` },
       userUsername: clientUsername, userPhotoURL: clientPhotoURL,
       createdAt: new Date().toISOString(),
       likeCount: 0, dislikeCount: 0, userLike: null,
@@ -88,13 +92,14 @@ export function useCommentActions({
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      const saved = await addComment(id, userId, clientDisplayName, trimmed, parentId, emailVerified, clientUsername, clientPhotoURL);
+      const saved = await addComment(id, userId, clientUsername, trimmed, parentId, emailVerified, clientUsername, clientPhotoURL);
+      const resolvedSavedUsername = (saved.userUsername || clientUsername).replace(/^@/, "");
       const savedComment: CommentItem = {
         id: saved.id,
         text: saved.text ?? trimmed,
         userId: saved.userId ?? userId,
-        user: { displayName: saved.user?.displayName ?? clientDisplayName },
-        userUsername: saved.userUsername ?? clientUsername,
+        user: { displayName: `@${resolvedSavedUsername}` },
+        userUsername: resolvedSavedUsername,
         userPhotoURL: saved.userPhotoURL ?? clientPhotoURL,
         parentId: saved.parentId ?? parentId,
         createdAt: saved.createdAt ?? new Date().toISOString(),

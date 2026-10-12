@@ -1,16 +1,17 @@
 import React, { memo, useState, type ReactNode } from "react";
-import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { formatCompactNumber, formatRelativeTime } from "@/shared/utils/formatters";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import type { CommentItem as CommentItemType } from "@/features/qr-detail/hooks/comment-types";
+import type { CommentItem as CommentItemType } from "@/features/qr-detail/types";
 import {
   REPLIES_PER_PAGE,
   READ_MORE_THRESHOLD,
   getInitialColor,
 } from "@/shared/utils/qr-detail-rules";
+import { styles } from "@/features/qr-detail/styles/comment-item";
 
 interface Props {
   comment: CommentItemType;
@@ -41,7 +42,6 @@ interface Props {
   userId?: string;
 }
 
-// ── Avatar component (shared between top-level and reply) ──────────────────
 function CommentAvatar({ size, photoURL, initial, gradient }: {
   size: number;
   photoURL?: string | null;
@@ -73,7 +73,6 @@ function CommentAvatar({ size, photoURL, initial, gradient }: {
   );
 }
 
-// ── Like / Dislike pill ────────────────────────────────────────────────────
 function ActionPill({
   icon, count, active, activeColor, onPress, surfaceBg,
 }: {
@@ -83,11 +82,7 @@ function ActionPill({
   return (
     <Pressable onPress={onPress} style={styles.actionBtn} hitSlop={6}>
       <View style={[styles.actionPill, { backgroundColor: surfaceBg }]}>
-        <Ionicons
-          name={icon as any}
-          size={13}
-          color={active ? activeColor : "#94A3B8"}
-        />
+        <Ionicons name={icon as any} size={13} color={active ? activeColor : "#94A3B8"} />
         {count > 0 && (
           <Text style={[styles.actionCount, { color: active ? activeColor : "#94A3B8" }]}>
             {formatCompactNumber(count)}
@@ -99,8 +94,8 @@ function ActionPill({
 }
 
 const CommentItem = memo(function CommentItem({
-  comment, isReply = false, currentUserLike, isMenuOpen, isDeleting, isRevealed,
-  isCommentOwner, canDelete, descendants, expandedReplies, visibleRepliesCount,
+  comment, isReply = false, currentUserLike, isMenuOpen, isDeleting,
+  isCommentOwner, descendants, expandedReplies, visibleRepliesCount,
   onLike, onReply, onMenuOpen, onMenuClose, onDelete, onReport, onReveal,
   onToggleReplies, onShowMoreReplies,
   allComments, userLikes, commentMenuId, deletingCommentId, revealedComments, userId,
@@ -108,42 +103,32 @@ const CommentItem = memo(function CommentItem({
   const { colors, isDark } = useTheme();
   const [textExpanded, setTextExpanded] = useState(false);
 
-  const replyCount   = descendants.length;
-  const isExpanded   = expandedReplies[comment.id] ?? false;
-  const showCount    = visibleRepliesCount[comment.id] || REPLIES_PER_PAGE;
+  const replyCount = descendants.length;
+  const isExpanded = expandedReplies[comment.id] ?? false;
+  const showCount = visibleRepliesCount[comment.id] || REPLIES_PER_PAGE;
   const visibleReplies = descendants.slice(0, showCount);
-  const hasMore      = replyCount > showCount;
+  const hasMore = replyCount > showCount;
 
   const displayName = comment.userUsername
     ? `@${comment.userUsername}`
     : comment.userId
       ? `@user_${comment.userId.slice(-5)}`
       : "@user";
-  const avatarInitial  = comment.userUsername
-    ? comment.userUsername.charAt(0).toUpperCase()
-    : "U";
+  const avatarInitial = comment.userUsername ? comment.userUsername.charAt(0).toUpperCase() : "U";
   const avatarGradient = getInitialColor(displayName);
-  const avatarSize  = isReply ? 28 : 34;
-  const surfaceBg   = isDark ? colors.surfaceLight : colors.background;
+  const avatarSize = isReply ? 28 : 34;
+  const surfaceBg = isDark ? colors.surfaceLight : colors.background;
   const threadColor = isDark ? "rgba(148,163,184,0.25)" : "rgba(148,163,184,0.35)";
 
-  // ── Comment body (shared between top-level and reply) ─────────────────────
   function renderBody() {
     const isLong = comment.text.length > READ_MORE_THRESHOLD;
-    const displayText = isLong && !textExpanded
-      ? comment.text.slice(0, READ_MORE_THRESHOLD)
-      : comment.text;
+    const displayText = isLong && !textExpanded ? comment.text.slice(0, READ_MORE_THRESHOLD) : comment.text;
 
     return (
       <View style={styles.commentBody}>
-        {/* Header row */}
         <View style={styles.commentHeader}>
           <View style={styles.authorPressable}>
-            <Text
-              style={[styles.authorName, { color: colors.text }]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
+            <Text style={[styles.authorName, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
               {displayName}
             </Text>
           </View>
@@ -163,11 +148,9 @@ const CommentItem = memo(function CommentItem({
           </Pressable>
         </View>
 
-        {/* Comment text — leading @mention rendered in primary colour */}
         <View>
           <Text style={[styles.commentText, { color: colors.text }]}>
             {((): ReactNode => {
-              // Detect a leading @mention (e.g. "@username rest of reply")
               if (displayText.startsWith("@")) {
                 const si = displayText.indexOf(" ");
                 if (si > 0) {
@@ -184,23 +167,18 @@ const CommentItem = memo(function CommentItem({
               return displayText;
             })()}
             {isLong && !textExpanded && (
-              <Text
-                style={[styles.readMoreText, { color: colors.primary }]}
-                onPress={() => setTextExpanded(true)}
-              >{" "}... Read more</Text>
+              <Text style={[styles.readMoreText, { color: colors.primary }]} onPress={() => setTextExpanded(true)}>
+                {" "}... Read more
+              </Text>
             )}
           </Text>
           {isLong && textExpanded && (
-            <Text
-              style={[styles.readMoreText, { color: colors.primary, marginTop: 3 }]}
-              onPress={() => setTextExpanded(false)}
-            >
+            <Text style={[styles.readMoreText, { color: colors.primary, marginTop: 3 }]} onPress={() => setTextExpanded(false)}>
               Show less
             </Text>
           )}
         </View>
 
-        {/* Actions */}
         <View style={styles.actionRow}>
           <ActionPill
             icon={currentUserLike === "like" ? "thumbs-up" : "thumbs-up-outline"}
@@ -229,78 +207,47 @@ const CommentItem = memo(function CommentItem({
     );
   }
 
-  // ── Top-level comment ─────────────────────────────────────────────────────
   if (!isReply) {
     return (
       <View>
-        <View>
-          <View style={styles.commentRow}>
-            {/* Left column: avatar + optional vertical thread stem */}
-            <View style={styles.avatarColumn}>
-              <View style={{ flexShrink: 0 }}>
-                <CommentAvatar
-                  size={avatarSize}
-                  photoURL={comment.userPhotoURL}
-                  initial={avatarInitial}
-                  gradient={avatarGradient}
-                />
-              </View>
-              {/* Vertical thread stem — shown when replies are expanded */}
-              {replyCount > 0 && isExpanded && (
-                <View style={[styles.threadStem, { backgroundColor: threadColor }]} />
-              )}
+        <View style={styles.commentRow}>
+          <View style={styles.avatarColumn}>
+            <View style={{ flexShrink: 0 }}>
+              <CommentAvatar size={avatarSize} photoURL={comment.userPhotoURL} initial={avatarInitial} gradient={avatarGradient} />
             </View>
-            {renderBody()}
+            {replyCount > 0 && isExpanded && (
+              <View style={[styles.threadStem, { backgroundColor: threadColor }]} />
+            )}
           </View>
+          {renderBody()}
         </View>
 
-        {/* Replies toggle ─────────────────────────────────────────────────── */}
         {replyCount > 0 && (
-          <Pressable
-            onPress={() => onToggleReplies(comment.id)}
-            style={styles.repliesToggle}
-          >
-            {/* Short connector line from stem to toggle label */}
+          <Pressable onPress={() => onToggleReplies(comment.id)} style={styles.repliesToggle}>
             <View style={[styles.toggleConnector, { backgroundColor: threadColor }]} />
-            <View style={[styles.repliesToggleInner, {
-              backgroundColor: colors.primaryDim,
-              borderColor: colors.primary + "30",
-            }]}>
-              <Ionicons
-                name={isExpanded ? "chevron-up" : "chevron-down"}
-                size={11}
-                color={colors.primary}
-              />
+            <View style={[styles.repliesToggleInner, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
+              <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={11} color={colors.primary} />
               <Text style={[styles.repliesToggleText, { color: colors.primary }]}>
-                {isExpanded
-                  ? "Hide replies"
-                  : `${replyCount} ${replyCount === 1 ? "reply" : "replies"}`}
+                {isExpanded ? "Hide replies" : `${replyCount} ${replyCount === 1 ? "reply" : "replies"}`}
               </Text>
             </View>
           </Pressable>
         )}
 
-        {/* Threaded replies ──────────────────────────────────────────────── */}
         {isExpanded && (
           <View style={styles.repliesWrapper}>
             {visibleReplies.map((reply, idx) => {
               const isLast = idx === visibleReplies.length - 1 && !hasMore;
               return (
                 <View key={reply.id} style={styles.replyThreadRow}>
-                  {/* Vertical continuation line + L-elbow connector */}
                   <View style={styles.replyConnectorCol}>
-                    {/* Vertical segment — runs full height; hidden on last reply */}
-                    {!isLast && (
-                      <View style={[styles.replyVertLine, { backgroundColor: threadColor }]} />
-                    )}
-                    {/* L-elbow: top half vertical + horizontal arm */}
+                    {!isLast && <View style={[styles.replyVertLine, { backgroundColor: threadColor }]} />}
                     <View style={styles.replyElbow}>
                       <View style={[styles.elbowV, { backgroundColor: threadColor }]} />
                       <View style={[styles.elbowH, { backgroundColor: threadColor }]} />
                     </View>
                   </View>
 
-                  {/* Reply comment */}
                   <View style={{ flex: 1 }}>
                     <CommentItem
                       comment={reply}
@@ -349,157 +296,14 @@ const CommentItem = memo(function CommentItem({
     );
   }
 
-  // ── Reply comment (rendered inside a thread row by the parent) ────────────
   return (
-    <View>
-      <View style={styles.replyCommentRow}>
-        <View style={{ flexShrink: 0, marginTop: 2 }}>
-          <CommentAvatar
-            size={avatarSize}
-            photoURL={comment.userPhotoURL}
-            initial={avatarInitial}
-            gradient={avatarGradient}
-          />
-        </View>
-        {renderBody()}
+    <View style={styles.replyCommentRow}>
+      <View style={{ flexShrink: 0, marginTop: 2 }}>
+        <CommentAvatar size={avatarSize} photoURL={comment.userPhotoURL} initial={avatarInitial} gradient={avatarGradient} />
       </View>
+      {renderBody()}
     </View>
   );
 });
 
 export default CommentItem;
-
-// ── Dimensions ─────────────────────────────────────────────────────────────
-// Parent avatar: 34px → center at 17px from left edge of commentRow
-// Thread stem runs from below parent avatar down through the reply list
-// Reply connector col is 17px wide, matching the avatar centre
-const AVATAR_CENTER = 17; // px from left of commentRow to avatar centre (34/2)
-const ELBOW_H_WIDTH = 16; // horizontal arm of the L-connector
-
-const styles = StyleSheet.create({
-  // ── Sensitive row ──────────────────────────────────────────────────────
-  sensitiveRow: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    paddingVertical: 10, paddingHorizontal: 2,
-  },
-
-  // ── Top-level comment row ──────────────────────────────────────────────
-  commentRow: {
-    flexDirection: "row", gap: 10,
-    paddingTop: 12, paddingBottom: 6, paddingHorizontal: 2,
-  },
-  avatarColumn: {
-    flexShrink: 0,
-    alignItems: "center",
-    width: 34,
-  },
-  threadStem: {
-    width: 2,
-    flex: 1,
-    borderRadius: 1,
-    marginTop: 4,
-    minHeight: 8,
-  },
-
-  // ── Reply comment row (inside thread container) ────────────────────────
-  replyCommentRow: {
-    flexDirection: "row", gap: 8,
-    paddingTop: 8, paddingBottom: 6,
-  },
-
-  // ── Comment body ──────────────────────────────────────────────────────
-  commentBody:   { flex: 1, gap: 4 },
-  commentHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
-  authorPressable: { flex: 1, minWidth: 0 },
-  authorName: { fontSize: 12, fontFamily: "Inter_700Bold" },
-  commentTime: { fontSize: 11, fontFamily: "Inter_400Regular", flexShrink: 0 },
-  readMoreText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  sensitiveTag: { paddingHorizontal: 5, paddingVertical: 2, borderRadius: 5 },
-  menuBtn: { padding: 2 },
-  commentText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
-
-  // ── Action pills ──────────────────────────────────────────────────────
-  actionRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 },
-  actionBtn: {},
-  actionPill: {
-    flexDirection: "row", alignItems: "center", gap: 4,
-    paddingHorizontal: 9, paddingVertical: 5, borderRadius: 100,
-  },
-  actionCount: { fontSize: 12, fontFamily: "Inter_500Medium" },
-
-  // ── Replies toggle ────────────────────────────────────────────────────
-  repliesToggle: {
-    flexDirection: "row", alignItems: "center", gap: 0,
-    paddingLeft: AVATAR_CENTER - 1,   // aligns with avatar centre / stem
-    paddingVertical: 4, paddingBottom: 6,
-  },
-  toggleConnector: {
-    width: ELBOW_H_WIDTH + 2,
-    height: 2,
-    borderRadius: 1,
-    marginRight: 6,
-  },
-  repliesToggleInner: {
-    flexDirection: "row", alignItems: "center", gap: 4,
-    paddingHorizontal: 8, paddingVertical: 4,
-    borderRadius: 100, borderWidth: 1,
-  },
-  repliesToggleText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-
-  // ── Threaded replies wrapper ──────────────────────────────────────────
-  repliesWrapper: {
-    paddingLeft: AVATAR_CENTER - 1,   // align thread with avatar centre
-    paddingBottom: 4,
-  },
-
-  // ── Each reply row: connector column + reply item ─────────────────────
-  replyThreadRow: {
-    flexDirection: "row",
-  },
-  replyConnectorCol: {
-    width: ELBOW_H_WIDTH + 2,
-    alignItems: "flex-start",
-    position: "relative",
-  },
-  // Full-height vertical continuation line (hidden for last reply)
-  replyVertLine: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 2,
-    borderRadius: 1,
-  },
-  // L-elbow: the corner + horizontal arm
-  replyElbow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    marginTop: 20,   // pushes elbow down to avatar mid-height
-    height: 2,
-    width: "100%",
-  },
-  elbowV: {
-    width: 2,
-    height: 14,
-    position: "absolute",
-    left: 0,
-    bottom: 0,
-    borderRadius: 1,
-  },
-  elbowH: {
-    flex: 1,
-    height: 2,
-    marginLeft: 2,
-    borderRadius: 1,
-  },
-
-  // ── Show more replies ──────────────────────────────────────────────────
-  showMoreBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 8,
-    paddingLeft: ELBOW_H_WIDTH + 4,
-  },
-  showMoreText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-});

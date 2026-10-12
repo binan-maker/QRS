@@ -6,8 +6,8 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { SectionHeader } from "@/shared/components/ui/SectionHeader";
 import CommentItem from "@/features/qr-detail/components/CommentItem";
-import type { CommentItem as CommentItemType } from "@/features/qr-detail/hooks/comment-types";
-import { formatCompactNumber, smartName } from "@/shared/utils/formatters";
+import type { CommentItem as CommentItemType } from "@/features/qr-detail/types";
+import { formatCompactNumber } from "@/shared/utils/formatters";
 
 interface ReplyTo {
   id: string;
@@ -95,8 +95,9 @@ export default function CommentsSection({
   const onReply = useCallback(
     (c: CommentItemType) => {
       if (!user) { router.push("/(auth)/login"); return; }
-      const rootId = getRootCommentId(c.id);
-      const author = c.userUsername ? `@${c.userUsername}` : smartName(c.user.displayName);
+      const cleanHandle = (c.userUsername || (c.userId ? `user_${c.userId.slice(-5)}` : "user"))
+        .replace(/^@/, "");
+      const author = `@${cleanHandle}`;
       setReplyTo({
         id: c.id,
         author,
