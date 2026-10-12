@@ -600,8 +600,9 @@ export const supabaseDb: DbAdapter = {
     if (opts?.where) {
       for (const clause of opts.where) q = applyWhere(q, clause);
     }
+    let orderField: string | null = null;
     if (opts?.orderBy) {
-      let orderField = camelToSnake(opts.orderBy.field);
+      orderField = camelToSnake(opts.orderBy.field);
       if (table === "qr_comments" && orderField === "deleted_at") {
         orderField = "updated_at";
       }
@@ -622,7 +623,27 @@ export const supabaseDb: DbAdapter = {
     }
     if (opts?.limit) q = q.limit(opts.limit);
 
-    const { data, error } = await q;
+    let { data, error } = await q;
+    if (error && (error.message?.includes("scanned_at") || (error as any).code === "42703") && orderField === "scanned_at") {
+      let altQ = supabase.from(table).select("*");
+      altQ = applyExtraFilters(altQ, extraFilters);
+      if (opts?.where) {
+        for (const clause of opts.where) altQ = applyWhere(altQ, clause);
+      }
+      altQ = altQ.order("created_at", {
+        ascending: (opts?.orderBy?.direction ?? "asc") === "asc",
+      });
+      if (opts?.cursor != null) {
+        const asc = (opts?.orderBy?.direction ?? "asc") === "asc";
+        altQ = asc ? altQ.gt("created_at", opts.cursor) : altQ.lt("created_at", opts.cursor);
+      }
+      if (opts?.limit) altQ = altQ.limit(opts.limit);
+      const altRes = await altQ;
+      if (!altRes.error) {
+        data = altRes.data;
+        error = null;
+      }
+    }
     if (error) throw toDbError(error);
 
     const rows = (data ?? []) as Record<string, any>[];

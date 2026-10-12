@@ -64,14 +64,16 @@ export function useRecentScans() {
     queryKey: homeQueryKey(user?.id ?? ""),
     queryFn: async () => {
       const { items } = await getUserScansPaginated(user!.id, CLOUD_FETCH);
-      const scans = items.map((s: any): LocalScan => ({
+      const scans = (items || []).map((s: any): LocalScan => ({
         id:          s.id,
         content:     s.content,
         contentType: s.contentType,
         scannedAt:   s.scannedAt,
         qrCodeId:    s.qrCodeId,
       }));
-      setCachedHomeScans<LocalScan[]>(user!.id, scans).catch(() => {});
+      if (scans.length > 0) {
+        setCachedHomeScans<LocalScan[]>(user!.id, scans).catch(() => {});
+      }
       return scans;
     },
     staleTime:           HOME_STALE_MS,
@@ -90,10 +92,49 @@ export function useRecentScans() {
 
   // ── Local scans from device AsyncStorage ──────────────────────────────────
   const loadLocalScans = useCallback(async (userId?: string | null) => {
-    if (!userId) { setLocalScans([]); setLocalLoaded(true); return; }
     try {
-      const stored = await AsyncStorage.getItem(localStorageKey(userId));
-      setLocalScans(stored ? JSON.parse(stored) : []);
+      const keysToTry = [
+        userId ? localStorageKey(userId) : null,
+        "local_scan_history",
+        "binro_recent_scans",
+        "binro_scan_history",
+        "binro_scans",
+      ].filter(Boolean) as string[];
+
+      const combined: LocalScan[] = [];
+      const seen = new Set<string>();
+
+      for (const key of keysToTry) {
+        const stored = await AsyncStorage.getItem(key);
+        if (stored) {
+          const list: any[] = JSON.parse(stored);
+          if (Array.isArray(list)) {
+            for (const item of list) {
+              if (item.isDeleted === true || item.is_deleted === true) continue;
+              const qrId = item.qrCodeId || item.qrId || item.id;
+              const content = item.content || item.rawContent || "";
+              const dedupKey = qrId ? `qr:${qrId}` : `c:${normalizeScanContent(content)}`;
+              if (seen.has(dedupKey)) continue;
+              seen.add(dedupKey);
+
+              combined.push({
+                id:          String(item.id || qrId || Date.now()),
+                content,
+                contentType: item.contentType || item.content_type || "url",
+                scannedAt:   item.scannedAt || item.scanned_at || new Date().toISOString(),
+                qrCodeId:    qrId,
+              });
+            }
+          }
+        }
+      }
+
+      setLocalScans(combined);
+
+      // Persist to user's local key if found in fallback keys
+      if (userId && combined.length > 0) {
+        AsyncStorage.setItem(localStorageKey(userId), JSON.stringify(combined)).catch(() => {});
+      }
     } catch {
       setLocalScans([]);
     }
@@ -111,11 +152,7 @@ export function useRecentScans() {
       loadLocalScans(currentUserId);
 
       if (currentUserId && !authLoading) {
-        const state = queryClient.getQueryState(homeQueryKey(currentUserId));
-        const now = Date.now();
-        if (!state?.dataUpdatedAt || now - state.dataUpdatedAt > HOME_STALE_MS) {
-          refetchCloud();
-        }
+        refetchCloud().catch(() => {});
       }
     }, [user?.id, authLoading, loadLocalScans, refetchCloud])
   );

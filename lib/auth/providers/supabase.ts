@@ -90,7 +90,7 @@ function wrapUser(user: User, accessToken: string): AuthAdapterUser {
 
 // ─── Get current access token ─────────────────────────────────────────────────
 
-async function getCurrentToken(): Promise<string> {
+export async function getCurrentToken(): Promise<string> {
   if (currentSession?.access_token) return currentSession.access_token;
   const { data } = await supabase.auth.getSession();
   if (data.session) {

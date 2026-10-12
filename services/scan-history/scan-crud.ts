@@ -1,5 +1,17 @@
 import { db } from "@/lib/db/client";
-import { supabase } from "@/lib/supabase";
+import {
+  supabase,
+  createServerSupabaseClient,
+  createAdminSupabaseClient,
+} from "@/lib/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuthStore } from "@/store/authStore";
+import { getCurrentToken } from "@/lib/auth";
+import { queryClient } from "@/lib/query-client";
+import {
+  invalidateHistoryCache,
+  invalidateHomeScansCache,
+} from "@/services/cache/qr-cache";
 import { tsToString } from "../utils";
 import { tsToMs } from "../integrity/time-utils";
 import { incrementSmartCounter } from "@/lib/db/distributed-counter";
@@ -8,6 +20,55 @@ import { logger } from "@/lib/logger";
 import { processEligibleScanReward } from "../rewards/reward-service";
 
 const SCAN_SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+async function getCandidateScanClients(): Promise<any[]> {
+  const clients: any[] = [];
+  const seen = new Set<any>();
+
+  const add = (c: any) => {
+    if (c && !seen.has(c)) {
+      seen.add(c);
+      clients.push(c);
+    }
+  };
+
+  // 1. Primary default client (holds user's active session with auto-refresh)
+  add(supabase);
+
+  // 2. Authenticated client with fresh live token from auth provider
+  try {
+    let token = useAuthStore.getState().token;
+    if (!token) {
+      token = await getCurrentToken();
+    }
+    if (token) {
+      const authed = createServerSupabaseClient(token);
+      if (authed) add(authed);
+    }
+  } catch {}
+
+  // 3. Active session token from supabase.auth
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session?.access_token) {
+      const authed = createServerSupabaseClient(data.session.access_token);
+      if (authed) add(authed);
+    }
+  } catch {}
+
+  // 4. Admin client with service-role key (bypasses RLS)
+  try {
+    const admin = createAdminSupabaseClient();
+    if (admin) add(admin);
+  } catch {}
+
+  return clients;
+}
+
+async function getSupabaseScanClient(): Promise<any> {
+  const candidates = await getCandidateScanClients();
+  return candidates[0] ?? supabase;
+}
 
 function generateUUID(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -65,15 +126,29 @@ export async function recordScan(
     if (isUuid) basePayload.id = scanId;
 
     try {
-      const { error: insertErr } = await supabase.from("qr_scans").insert({
+      const client = await getSupabaseScanClient();
+      let { error: insertErr } = await client.from("qr_scans").insert({
         ...basePayload,
         is_deleted: false,
       });
 
+      if (insertErr && client === supabase) {
+        const admin = createAdminSupabaseClient();
+        const token = useAuthStore.getState().token;
+        const fallbackClient = (token ? createServerSupabaseClient(token) : null) ?? admin;
+        if (fallbackClient && fallbackClient !== client) {
+          const { error: retryErr } = await fallbackClient.from("qr_scans").insert({
+            ...basePayload,
+            is_deleted: false,
+          });
+          if (!retryErr) insertErr = null;
+        }
+      }
+
       if (insertErr) {
         // Retry without is_deleted in case column is absent in database
         delete basePayload.id;
-        const { error: retryErr } = await supabase.from("qr_scans").insert(basePayload);
+        const { error: retryErr } = await (await getSupabaseScanClient()).from("qr_scans").insert(basePayload);
         if (retryErr) {
           await db.set([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, scanId], {
             qrCodeId: qrId,
@@ -87,7 +162,7 @@ export async function recordScan(
     } catch {
       try {
         delete basePayload.id;
-        await supabase.from("qr_scans").insert(basePayload);
+        await (await getSupabaseScanClient()).from("qr_scans").insert(basePayload);
       } catch {
         await db.set([COLLECTIONS.USERS, userId, COLLECTIONS.SCANS, scanId], {
           qrCodeId: qrId,
@@ -113,51 +188,187 @@ export async function recordScan(
       await db.increment([COLLECTIONS.USERS, userId], "personalScanCount", 1).catch(() => {});
     }
 
+    // Invalidate caches immediately so Home Recent Scans and History show the new scan
+    try {
+      queryClient.invalidateQueries({ queryKey: ["home-recent-scans", userId] });
+      queryClient.invalidateQueries({ queryKey: ["history", userId] });
+      invalidateHomeScansCache(userId);
+      invalidateHistoryCache(userId);
+    } catch {}
+
     // Evaluate eligible scan reward (Welcome Card + 3/8/15 daily milestones + referral unlock)
     processEligibleScanReward(userId, qrId, isAnonymous).catch(() => {});
   }
 }
 
+export async function syncLocalScansToCloud(userId: string): Promise<void> {
+  if (!userId) return;
+  try {
+    const keysToTry = [
+      `local_scan_history_${userId}`,
+      "local_scan_history",
+      "binro_recent_scans",
+      "binro_scan_history",
+      "binro_scans",
+    ];
+
+    const localItems: any[] = [];
+    const seen = new Set<string>();
+
+    for (const key of keysToTry) {
+      const stored = await AsyncStorage.getItem(key);
+      if (!stored) continue;
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            if (item.isDeleted === true || item.is_deleted === true) continue;
+            const content = item.content || item.rawContent || "";
+            if (!content) continue;
+            const qrId = item.qrCodeId || item.qrId || item.id;
+            const dedupKey = qrId ? `qr:${qrId}` : `content:${content}`;
+            if (seen.has(dedupKey)) continue;
+            seen.add(dedupKey);
+            localItems.push(item);
+          }
+        }
+      } catch {}
+    }
+
+    if (localItems.length === 0) return;
+
+    const clients = await getCandidateScanClients();
+    let client = clients[0] ?? supabase;
+
+    // Query existing to avoid re-inserting
+    let existingRows: any[] | null = null;
+    for (const c of clients) {
+      try {
+        const { data } = await c
+          .from("qr_scans")
+          .select("qr_code_id, content")
+          .eq("user_id", userId)
+          .limit(100);
+        if (Array.isArray(data)) {
+          existingRows = data;
+          client = c;
+          break;
+        }
+      } catch {}
+    }
+
+    const existingKeys = new Set<string>();
+    if (Array.isArray(existingRows)) {
+      for (const row of existingRows) {
+        if (row.qr_code_id) existingKeys.add(String(row.qr_code_id));
+        if (row.content) existingKeys.add(String(row.content).trim());
+      }
+    }
+
+    const unsynced = localItems.filter((item) => {
+      const qrId = item.qrCodeId || item.qrId;
+      if (qrId && existingKeys.has(String(qrId))) return false;
+      if (item.content && existingKeys.has(String(item.content).trim())) return false;
+      return true;
+    });
+
+    if (unsynced.length === 0) return;
+
+    let syncedCount = 0;
+    for (const item of unsynced.slice(0, 20)) {
+      const qrId = item.qrCodeId || item.qrId || generateUUID();
+      const payload: Record<string, any> = {
+        user_id: userId,
+        qr_code_id: qrId,
+        content: item.content || "",
+        content_type: item.contentType || item.content_type || "url",
+        verdict: item.verdict || "unknown",
+        scanned_at: item.scannedAt || item.scanned_at || new Date().toISOString(),
+        is_deleted: false,
+      };
+      let { error: insErr } = await client.from("qr_scans").insert(payload);
+      if (insErr) {
+        delete payload.is_deleted;
+        const res = await client.from("qr_scans").insert(payload);
+        if (!res.error) syncedCount++;
+      } else {
+        syncedCount++;
+      }
+    }
+
+    if (syncedCount > 0) {
+      try {
+        queryClient.invalidateQueries({ queryKey: ["home-recent-scans", userId] });
+        queryClient.invalidateQueries({ queryKey: ["history", userId] });
+        invalidateHomeScansCache(userId);
+        invalidateHistoryCache(userId);
+      } catch {}
+    }
+  } catch (err) {
+    logger.warn("[scan-crud] syncLocalScansToCloud error:", err);
+  }
+}
+
 export async function getUserScans(userId: string): Promise<any[]> {
   if (!userId) return [];
-  try {
-    const { data: rows, error } = await supabase
-      .from("qr_scans")
-      .select("*")
-      .eq("user_id", userId)
-      .order("scanned_at", { ascending: false })
-      .limit(100);
+  const clients = await getCandidateScanClients();
 
-    if (!error && Array.isArray(rows)) {
-      return rows
-        .filter((r) => r.is_deleted !== true && r.isDeleted !== true)
-        .map((r) => ({
-          id: String(r.id),
-          qrCodeId: r.qr_code_id || r.qrCodeId,
-          content: r.content || "",
-          contentType: r.content_type || r.contentType || "url",
-          scannedAt: r.scanned_at || r.scannedAt || new Date().toISOString(),
-          source: "cloud" as const,
-        }));
-    }
-  } catch {}
+  for (const client of clients) {
+    try {
+      let { data: rows, error } = await client
+        .from("qr_scans")
+        .select("*")
+        .eq("user_id", userId)
+        .order("scanned_at", { ascending: false })
+        .limit(100);
 
+      if (error && (error.message?.includes("scanned_at") || error.code === "42703")) {
+        const { data: altRows, error: altErr } = await client
+          .from("qr_scans")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(100);
+        if (!altErr && Array.isArray(altRows)) {
+          rows = altRows;
+          error = null;
+        }
+      }
+
+      if (!error && Array.isArray(rows) && rows.length > 0) {
+        return rows
+          .filter((r) => r.is_deleted !== true && r.isDeleted !== true)
+          .map((r) => ({
+            id: String(r.id),
+            qrCodeId: r.qr_code_id || r.qrCodeId,
+            content: r.content || "",
+            contentType: r.content_type || r.contentType || "url",
+            scannedAt: r.scanned_at || r.scannedAt || r.created_at || new Date().toISOString(),
+            source: "cloud" as const,
+          }));
+      }
+    } catch {}
+  }
+
+  // Fallback via database adapter
   try {
     const { docs } = await db.query(
       [COLLECTIONS.USERS, userId, COLLECTIONS.SCANS],
       { orderBy: { field: "scannedAt", direction: "desc" }, limit: 100 }
     );
-    return docs
-      .filter((d) => d.data.isDeleted !== true && d.data.is_deleted !== true)
-      .map((d) => ({
-        id: d.id,
-        ...d.data,
-        scannedAt: tsToString(d.data.scannedAt || d.data.scanned_at),
-        source: "cloud" as const,
-      }));
-  } catch {
-    return [];
-  }
+    if (Array.isArray(docs) && docs.length > 0) {
+      return docs
+        .filter((d) => d.data.isDeleted !== true && d.data.is_deleted !== true)
+        .map((d) => ({
+          id: d.id,
+          ...d.data,
+          scannedAt: tsToString(d.data.scannedAt || d.data.scanned_at || d.data.createdAt),
+          source: "cloud" as const,
+        }));
+    }
+  } catch {}
+
+  return [];
 }
 
 export async function getUserScansPaginated(
@@ -169,86 +380,127 @@ export async function getUserScansPaginated(
     return { items: [], cursor: null, hasMore: false };
   }
 
-  // 1. Direct Supabase query
-  try {
-    let query = supabase
-      .from("qr_scans")
-      .select("*")
-      .eq("user_id", userId)
-      .order("scanned_at", { ascending: false })
-      .limit(pageSize);
+  const clients = await getCandidateScanClients();
+  let scanRows: any[] | null = null;
+  let successfulClient: any = null;
 
-    if (cursor) {
-      query = query.lt("scanned_at", cursor);
-    }
+  // 1. Direct Supabase query across candidate clients
+  for (const client of clients) {
+    try {
+      let query = client
+        .from("qr_scans")
+        .select("*")
+        .eq("user_id", userId)
+        .order("scanned_at", { ascending: false })
+        .limit(pageSize);
 
-    const { data: rows, error: qErr } = await query;
-    let scanRows = rows;
+      if (cursor) {
+        query = query.lt("scanned_at", cursor);
+      }
 
-    if (!qErr && Array.isArray(scanRows) && scanRows.length > 0) {
-      const filtered = scanRows.filter((r) => r.is_deleted !== true && r.isDeleted !== true);
+      let { data: rows, error: qErr } = await query;
 
-      // Check if any rows are missing content and batch-resolve from qr_codes
-      const missingQrIds: string[] = [];
-      for (const row of filtered) {
-        const qrId = row.qr_code_id || row.qrCodeId;
-        const content = row.content || "";
-        if (!content && qrId) {
-          missingQrIds.push(qrId);
+      if (qErr && (qErr.message?.includes("scanned_at") || qErr.code === "42703")) {
+        let altQuery = client
+          .from("qr_scans")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(pageSize);
+        if (cursor) {
+          altQuery = altQuery.lt("created_at", cursor);
+        }
+        const { data: altRows, error: altErr } = await altQuery;
+        if (!altErr && Array.isArray(altRows)) {
+          rows = altRows;
+          qErr = null;
         }
       }
 
-      const qrMap = new Map<string, { content: string; contentType: string }>();
-      if (missingQrIds.length > 0) {
+      if (!qErr && Array.isArray(rows) && rows.length > 0) {
+        scanRows = rows;
+        successfulClient = client;
+        break;
+      }
+    } catch (err) {
+      logger.warn("[scan-crud] Supabase query attempt error:", err);
+    }
+  }
+
+  // 2. Process rows from Supabase if found
+  if (Array.isArray(scanRows) && scanRows.length > 0) {
+    const filtered = scanRows.filter((r) => r.is_deleted !== true && r.isDeleted !== true);
+
+    // Check if any rows are missing content and batch-resolve from qr_codes
+    const missingQrIds: string[] = [];
+    for (const row of filtered) {
+      const qrId = row.qr_code_id || row.qrCodeId;
+      const content = row.content || "";
+      if (!content && qrId) {
+        missingQrIds.push(qrId);
+      }
+    }
+
+    const qrMap = new Map<string, { content: string; contentType: string }>();
+    if (missingQrIds.length > 0) {
+      try {
+        const resolveClient = successfulClient ?? supabase;
+        const { data: qrs } = await resolveClient
+          .from("qr_codes")
+          .select("id, content, content_type")
+          .in("id", missingQrIds);
+        if (Array.isArray(qrs)) {
+          for (const q of qrs) {
+            qrMap.set(q.id, { content: q.content || "", contentType: q.content_type || "url" });
+          }
+        }
+      } catch {}
+    }
+
+    const items: any[] = [];
+    for (const r of filtered) {
+      const rawQrId = r.qr_code_id || r.qrCodeId || r.id;
+      let content = r.content || "";
+      let contentType = r.content_type || r.contentType || "url";
+      if (!content && rawQrId && qrMap.has(rawQrId)) {
+        const mapped = qrMap.get(rawQrId)!;
+        content = mapped.content;
+        contentType = mapped.contentType;
+      }
+
+      // Check local storage fallback if content is still empty
+      if (!content && rawQrId) {
         try {
-          const { data: qrs } = await supabase
-            .from("qr_codes")
-            .select("id, content, content_type")
-            .in("id", missingQrIds);
-          if (Array.isArray(qrs)) {
-            for (const q of qrs) {
-              qrMap.set(q.id, { content: q.content || "", contentType: q.content_type || "url" });
-            }
+          const cached = await AsyncStorage.getItem(`qr_content_${rawQrId}`);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            content = parsed.content || "";
+            contentType = parsed.contentType || contentType;
           }
         } catch {}
       }
 
-      const items = filtered.map((r) => {
-        const rawQrId = r.qr_code_id || r.qrCodeId || r.id;
-        let content = r.content || "";
-        let contentType = r.content_type || r.contentType || "url";
-        if (!content && rawQrId && qrMap.has(rawQrId)) {
-          const mapped = qrMap.get(rawQrId)!;
-          content = mapped.content;
-          contentType = mapped.contentType;
-        }
-
-        return {
-          id: String(r.id),
-          qrCodeId: rawQrId,
-          content,
-          contentType,
-          scannedAt: r.scanned_at || r.scannedAt || new Date().toISOString(),
-          source: "cloud" as const,
-        };
+      items.push({
+        id: String(r.id),
+        qrCodeId: rawQrId,
+        content,
+        contentType,
+        scannedAt: r.scanned_at || r.scannedAt || r.created_at || new Date().toISOString(),
+        source: "cloud" as const,
       });
-
-      const lastRow = scanRows[scanRows.length - 1];
-      const nextCursor = scanRows.length >= pageSize && lastRow ? (lastRow.scanned_at || lastRow.scannedAt) : null;
-
-      return {
-        items,
-        cursor: nextCursor,
-        hasMore: scanRows.length >= pageSize,
-      };
-    } else if (!qErr && Array.isArray(scanRows)) {
-      return { items: [], cursor: null, hasMore: false };
     }
-  } catch (err) {
-    console.warn("[scan-crud] Supabase direct query failed:", err);
+
+    const lastRow = scanRows[scanRows.length - 1];
+    const nextCursor = scanRows.length >= pageSize && lastRow ? (lastRow.scanned_at || lastRow.scannedAt || lastRow.created_at) : null;
+
+    return {
+      items,
+      cursor: nextCursor,
+      hasMore: scanRows.length >= pageSize,
+    };
   }
 
-  // 2. Fallback via database adapter
+  // 3. Fallback via database adapter (if Supabase direct query had 0 rows)
   try {
     const visibleItems: any[] = [];
     let currentCursor: any = cursor ?? null;
@@ -271,21 +523,78 @@ export async function getUserScansPaginated(
       if (docs.length > 0) currentCursor = newCursor;
     }
 
-    return {
-      items: visibleItems.map((d) => ({
-        id: d.id,
-        ...d.data,
-        content: d.data.content || "",
-        contentType: d.data.contentType || d.data.content_type || "url",
-        scannedAt: tsToString(d.data.scannedAt || d.data.scanned_at),
-        source: "cloud" as const,
-      })),
-      cursor: exhausted ? null : currentCursor,
-      hasMore: !exhausted,
-    };
-  } catch {
-    return { items: [], cursor: null, hasMore: false };
+    if (visibleItems.length > 0) {
+      return {
+        items: visibleItems.map((d) => ({
+          id: d.id,
+          ...d.data,
+          content: d.data.content || "",
+          contentType: d.data.contentType || d.data.content_type || "url",
+          scannedAt: tsToString(d.data.scannedAt || d.data.scanned_at),
+          source: "cloud" as const,
+        })),
+        cursor: exhausted ? null : currentCursor,
+        hasMore: !exhausted && visibleItems.length >= pageSize,
+      };
+    }
+  } catch (dbErr) {
+    logger.warn("[scan-crud] Fallback db.query failed:", dbErr);
   }
+
+  // 4. Local storage fallback for first page: if cloud returned 0 rows, check local AsyncStorage
+  if (!cursor) {
+    try {
+      const localKeys = [
+        `local_scan_history_${userId}`,
+        "local_scan_history",
+        "binro_recent_scans",
+        "binro_scan_history",
+        "binro_scans",
+      ];
+      const localItems: any[] = [];
+      const seen = new Set<string>();
+
+      for (const key of localKeys) {
+        const stored = await AsyncStorage.getItem(key);
+        if (stored) {
+          const list = JSON.parse(stored);
+          if (Array.isArray(list)) {
+            for (const item of list) {
+              if (item.isDeleted === true || item.is_deleted === true) continue;
+              const qrId = item.qrCodeId || item.qrId || item.id;
+              const content = item.content || item.rawContent || "";
+              const dedupKey = qrId ? `qr:${qrId}` : `c:${content}`;
+              if (seen.has(dedupKey)) continue;
+              seen.add(dedupKey);
+
+              localItems.push({
+                id: String(item.id || qrId || Date.now()),
+                qrCodeId: qrId,
+                content,
+                contentType: item.contentType || item.content_type || "url",
+                scannedAt: item.scannedAt || item.scanned_at || new Date().toISOString(),
+                source: "local" as const,
+              });
+            }
+          }
+        }
+      }
+
+      if (localItems.length > 0) {
+        localItems.sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime());
+        const pageItems = localItems.slice(0, pageSize);
+        // Kick off cloud sync in background so local items get persisted to Supabase
+        syncLocalScansToCloud(userId).catch(() => {});
+        return {
+          items: pageItems,
+          cursor: null,
+          hasMore: localItems.length > pageSize,
+        };
+      }
+    } catch {}
+  }
+
+  return { items: [], cursor: null, hasMore: false };
 }
 
 export async function deleteUserScan(

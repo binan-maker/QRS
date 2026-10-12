@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { getUserScansPaginated } from "@/lib/data-service";
+import { getUserScansPaginated, syncLocalScansToCloud } from "@/lib/data-service";
 import { isWebSupabaseConfigured } from "@/lib/supabase";
 import { queryClient as globalQueryClient } from "@/lib/query-client";
 import { mergeAndDeduplicateScans } from "@/services/scan-history/dedup";
@@ -26,25 +26,19 @@ function mapScanItem(s: any): HistoryItem {
 }
 
 export function useHistoryData() {
-  const { user }      = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const queryClient   = useQueryClient();
   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
   const [localLoaded,  setLocalLoaded]  = useState(false);
   const [refreshing,   setRefreshing]   = useState(false);
 
-  // ── Pre-warm gate ────────────────────────────────────────────────────────────
-  const [preWarmDone, setPreWarmDone] = useState(false);
-  const [hadCachedCloud, setHadCachedCloud] = useState(false);
+  // ── Disk pre-warm ────────────────────────────────────────────────────────────
   const preWarmUid = useRef<string | null>(null);
 
   useEffect(() => {
     const uid = user?.id ?? null;
-    if (preWarmUid.current === uid) return;
+    if (!uid || preWarmUid.current === uid) return;
     preWarmUid.current = uid;
-
-    setPreWarmDone(false);
-
-    if (!uid) { setPreWarmDone(true); return; }
 
     getCachedHistoryPage<{ items: any[]; hasMore: boolean }>(uid)
       .then((cachedHistory) => {
@@ -54,12 +48,10 @@ export function useHistoryData() {
             pages:      [{ items: cachedHistory.items, cursor: null, hasMore: cachedHistory.hasMore }],
             pageParams: [null],
           });
-          setHadCachedCloud(true);
           globalQueryClient.invalidateQueries({ queryKey: qkHistory, refetchType: "active" });
         }
       })
-      .catch(() => {})
-      .finally(() => setPreWarmDone(true));
+      .catch(() => {});
   }, [user?.id]);
 
   // ── Cloud history: paginated ────────────────────────────────────────────────
@@ -75,7 +67,7 @@ export function useHistoryData() {
     queryKey:        ["history", user?.id],
     queryFn:         async ({ pageParam }) => {
       const result = await getUserScansPaginated(user!.id, PAGE_SIZE, pageParam ?? undefined);
-      if (!pageParam && result?.items) {
+      if (!pageParam && result?.items && result.items.length > 0) {
         setCachedHistoryPage(user!.id, { items: result.items, hasMore: !!result.hasMore }).catch(() => {});
       }
       return result || { items: [], cursor: null, hasMore: false };
@@ -86,7 +78,7 @@ export function useHistoryData() {
     gcTime:           60 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount:   true,
-    enabled:          !!user?.id && preWarmDone,
+    enabled:          !!user?.id && !authLoading,
   });
 
   // ── Derived collections ──────────────────────────────────────────────────────
@@ -136,8 +128,8 @@ export function useHistoryData() {
             for (const item of list) {
               if (item.isDeleted === true || item.is_deleted === true) continue;
               const qrId = item.qrCodeId || item.qrId || item.id;
-              const content = item.content || "";
-              const dedupKey = qrId || content;
+              const content = item.content || item.rawContent || "";
+              const dedupKey = qrId ? `qr:${qrId}` : `c:${content}`;
               if (seen.has(dedupKey)) continue;
               seen.add(dedupKey);
 
@@ -168,19 +160,23 @@ export function useHistoryData() {
 
   useEffect(() => {
     loadLocalHistory(user?.id ?? null);
-  }, [user?.id, loadLocalHistory]);
+    if (user?.id && !authLoading) {
+      refetchCloud();
+      syncLocalScansToCloud(user.id).catch(() => {});
+    }
+  }, [user?.id, authLoading, loadLocalHistory, refetchCloud]);
 
-  // ── Focus-based refetch: only when stale ─────────────────────────────────────
+  // ── Focus-based refetch ──────────────────────────────────────────────────────
   useFocusEffect(
     useCallback(() => {
-      if (Date.now() - localLoadTimestampRef.current > 600) {
+      if (Date.now() - localLoadTimestampRef.current > 500) {
         loadLocalHistory(user?.id ?? null);
       }
-      if (!user?.id || !preWarmDone) return;
-      const now = Date.now();
-      const cloudState = queryClient.getQueryState(["history", user.id]);
-      if (!cloudState?.dataUpdatedAt || now - cloudState.dataUpdatedAt > STALE_MS) refetchCloud();
-    }, [user?.id, preWarmDone, loadLocalHistory, queryClient, refetchCloud])
+      if (user?.id && !authLoading) {
+        refetchCloud();
+        syncLocalScansToCloud(user.id).catch(() => {});
+      }
+    }, [user?.id, authLoading, loadLocalHistory, refetchCloud])
   );
 
   return {
