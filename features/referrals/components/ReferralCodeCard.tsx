@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -14,7 +14,7 @@ interface ReferralCodeCardProps {
   onShare: () => void;
 }
 
-export function ReferralCodeCard({
+export const ReferralCodeCard = memo(function ReferralCodeCard({
   inviteCode,
   displaySignupLink,
   codeCopied,
@@ -29,10 +29,7 @@ export function ReferralCodeCard({
     <View
       style={[
         styles.vipCodeCard,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.surfaceBorder,
-        },
+        { backgroundColor: colors.surface, borderColor: colors.surfaceBorder },
       ]}
     >
       <View style={styles.codeHeaderRow}>
@@ -42,19 +39,11 @@ export function ReferralCodeCard({
             YOUR REFERRAL CODE
           </Text>
         </View>
-        <View
-          style={[
-            styles.codeActiveBadge,
-            { backgroundColor: `${colors.primary}14` },
-          ]}
-        >
-          <Text style={[styles.codeActiveText, { color: colors.primary }]}>
-            ACTIVE
-          </Text>
+        <View style={[styles.codeActiveBadge, { backgroundColor: `${colors.primary}14` }]}>
+          <Text style={[styles.codeActiveText, { color: colors.primary }]}>ACTIVE</Text>
         </View>
       </View>
 
-      {/* Monospace Code & Copy Button */}
       <View
         style={[
           styles.codeBox,
@@ -67,52 +56,33 @@ export function ReferralCodeCard({
         <Text style={[styles.codeText, { color: colors.primary }]}>
           {inviteCode.toUpperCase()}
         </Text>
-
         <Pressable
           onPress={onCopyCode}
           style={({ pressed }) => [
             styles.copyActionBtn,
-            {
-              backgroundColor: codeCopied ? "#10B981" : colors.primary,
-              opacity: pressed ? 0.88 : 1,
-            },
+            { backgroundColor: codeCopied ? "#10B981" : colors.primary, opacity: pressed ? 0.88 : 1 },
           ]}
         >
-          <Ionicons
-            name={codeCopied ? "checkmark" : "copy-outline"}
-            size={15}
-            color="#FFFFFF"
-          />
-          <Text style={styles.copyActionBtnText}>
-            {codeCopied ? "Copied" : "Copy"}
-          </Text>
+          <Ionicons name={codeCopied ? "checkmark" : "copy-outline"} size={15} color="#FFFFFF" />
+          <Text style={styles.copyActionBtnText}>{codeCopied ? "Copied" : "Copy"}</Text>
         </Pressable>
       </View>
 
-      {/* Signup Link Row */}
       <View
         style={[
           styles.linkBox,
           {
-            backgroundColor: isDark
-              ? "rgba(255, 255, 255, 0.03)"
-              : "rgba(0, 0, 0, 0.02)",
+            backgroundColor: isDark ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.02)",
             borderColor: colors.surfaceBorder,
           },
         ]}
       >
         <View style={styles.linkInfo}>
-          <Text style={[styles.linkLabel, { color: colors.textMuted }]}>
-            SIGNUP LINK
-          </Text>
-          <Text
-            style={[styles.linkValue, { color: colors.text }]}
-            numberOfLines={1}
-          >
+          <Text style={[styles.linkLabel, { color: colors.textMuted }]}>SIGNUP LINK</Text>
+          <Text style={[styles.linkValue, { color: colors.text }]} numberOfLines={1}>
             {displaySignupLink}
           </Text>
         </View>
-
         <Pressable
           onPress={onCopyLink}
           hitSlop={8}
@@ -136,25 +106,20 @@ export function ReferralCodeCard({
         </Pressable>
       </View>
 
-      {/* Single Clean Share Action Button */}
       <Pressable
         onPress={onShare}
         style={({ pressed }) => [
           styles.singleShareBtn,
           {
-            backgroundColor: isDark
-              ? "rgba(255, 255, 255, 0.06)"
-              : "#F1F5F9",
+            backgroundColor: isDark ? "rgba(255, 255, 255, 0.06)" : "#F1F5F9",
             borderColor: colors.surfaceBorder,
             opacity: pressed ? 0.85 : 1,
           },
         ]}
       >
         <Ionicons name="share-social-outline" size={17} color={colors.text} />
-        <Text style={[styles.singleShareBtnText, { color: colors.text }]}>
-          Share Code
-        </Text>
+        <Text style={[styles.singleShareBtnText, { color: colors.text }]}>Share Code</Text>
       </Pressable>
     </View>
   );
-}
+});

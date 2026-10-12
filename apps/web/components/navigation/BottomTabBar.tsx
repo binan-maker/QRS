@@ -6,7 +6,7 @@ import { Ionicons } from "@/lib/mobile-icons";
 import styles from "./BottomTabBar.module.css";
 
 interface Props {
-  activeTab?: "home" | "scan" | "rewards" | "profile";
+  activeTab?: "home" | "scan" | "history" | "profile";
 }
 
 export function BottomTabBar({ activeTab }: Props) {
@@ -58,19 +58,19 @@ export function BottomTabBar({ activeTab }: Props) {
           <span className={styles.label}>Scan</span>
         </Link>
 
-        {/* Rewards Tab */}
+        {/* History Tab */}
         <Link
-          href="/rewards"
-          className={`${styles.tabItem} ${activeTab === "rewards" ? styles.tabItemActive : ""}`}
+          href="/history"
+          className={`${styles.tabItem} ${activeTab === "history" ? styles.tabItemActive : ""}`}
         >
-          <div className={activeTab === "rewards" ? styles.activeIconWrap : styles.iconWrap}>
+          <div className={activeTab === "history" ? styles.activeIconWrap : styles.iconWrap}>
             <Ionicons
-              name={activeTab === "rewards" ? "gift" : "gift-outline"}
+              name={activeTab === "history" ? "time" : "time-outline"}
               size={22}
               color="currentColor"
             />
           </div>
-          <span className={styles.label}>Rewards</span>
+          <span className={styles.label}>History</span>
         </Link>
 
         {/* Profile Tab */}

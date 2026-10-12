@@ -1,9 +1,7 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   toastPill: {
     position: "absolute",
     top: 60,
@@ -16,17 +14,9 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 100,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
     elevation: 8,
   },
-  toastText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "600",
-  },
+  toastText: { color: "#FFFFFF", fontSize: 13, fontWeight: "600" },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -42,30 +32,36 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  topBarTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    letterSpacing: -0.3,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-  carouselWrapper: {
+  topBarTitle: { fontSize: 18, fontWeight: "800", letterSpacing: -0.3 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 8 },
+
+  /* ── Stats Summary ── */
+  statsRow: {
+    flexDirection: "row",
+    gap: 10,
     marginBottom: 16,
   },
-  slideCardWrap: {
-    paddingRight: 0,
+  statCard: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
+  statNumber: { fontSize: 18, fontWeight: "800", letterSpacing: -0.5 },
+  statLabel: { fontSize: 11, fontWeight: "600", marginTop: 2 },
+
+  /* ── Carousel ── */
+  carouselWrapper: { marginBottom: 14 },
+  slideCardWrap: { paddingRight: 0 },
   heroSlide: {
-    borderRadius: 22,
-    padding: 20,
-    minHeight: 160,
+    borderRadius: 20,
+    padding: 18,
+    minHeight: 145,
     justifyContent: "space-between",
     borderWidth: 1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
     elevation: 3,
   },
   slideTopRow: {
@@ -74,21 +70,10 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
   },
-  dotsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  dot: {
-    height: 6,
-    borderRadius: 3,
-  },
-  inactiveDot: {
-    width: 6,
-  },
-  activeDot: {
-    width: 20,
-  },
+  dotsRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+  dot: { height: 6, borderRadius: 3 },
+  inactiveDot: { width: 6 },
+  activeDot: { width: 20 },
   slideTagPill: {
     flexDirection: "row",
     alignItems: "center",
@@ -98,40 +83,18 @@ export const styles = StyleSheet.create({
     borderRadius: 100,
     borderWidth: 1,
   },
-  slideTagText: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.6,
-  },
-  slideBodyWrap: {
-    marginTop: 8,
-  },
-  slideTitleTop: {
-    fontSize: 17,
-    fontWeight: "700",
-    lineHeight: 22,
-  },
-  slideTitleHighlight: {
-    fontSize: 21,
-    fontWeight: "800",
-    lineHeight: 26,
-  },
-  slideSubtitle: {
-    fontSize: 12.5,
-    lineHeight: 17,
-    marginTop: 4,
-  },
+  slideTagText: { fontSize: 10, fontWeight: "800", letterSpacing: 0.6 },
+  slideBodyWrap: { marginTop: 8 },
+  slideTitleTop: { fontSize: 16, fontWeight: "700", lineHeight: 21 },
+  slideTitleHighlight: { fontSize: 20, fontWeight: "800", lineHeight: 25 },
+  slideSubtitle: { fontSize: 12, lineHeight: 16, marginTop: 4 },
 
-  /* ── VIP Referral Code Card ── */
+  /* ── Referral Code Card ── */
   vipCodeCard: {
     borderRadius: 20,
     borderWidth: 1,
     padding: 16,
     marginBottom: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
     elevation: 2,
   },
   codeHeaderRow: {
@@ -140,26 +103,10 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 10,
   },
-  codeLabelWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  codeLabel: {
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.6,
-  },
-  codeActiveBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  codeActiveText: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-  },
+  codeLabelWrap: { flexDirection: "row", alignItems: "center", gap: 6 },
+  codeLabel: { fontSize: 11, fontWeight: "800", letterSpacing: 0.6 },
+  codeActiveBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  codeActiveText: { fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
   codeBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -170,12 +117,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
   },
-  codeText: {
-    fontSize: 20,
-    fontWeight: "800",
-    letterSpacing: 2,
-    fontFamily: "Inter_700Bold",
-  },
+  codeText: { fontSize: 20, fontWeight: "800", letterSpacing: 2 },
   copyActionBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -184,11 +126,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
   },
-  copyActionBtnText: {
-    color: "#FFFFFF",
-    fontSize: 12.5,
-    fontWeight: "700",
-  },
+  copyActionBtnText: { color: "#FFFFFF", fontSize: 12.5, fontWeight: "700" },
   linkBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -199,27 +137,10 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
   },
-  linkInfo: {
-    flex: 1,
-    marginRight: 10,
-  },
-  linkLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 0.4,
-    marginBottom: 2,
-  },
-  linkValue: {
-    fontSize: 12.5,
-    fontWeight: "600",
-  },
-  linkCopyIconBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  linkInfo: { flex: 1, marginRight: 10 },
+  linkLabel: { fontSize: 10, fontWeight: "700", letterSpacing: 0.4, marginBottom: 2 },
+  linkValue: { fontSize: 12.5, fontWeight: "600" },
+  linkCopyIconBtn: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   singleShareBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -229,10 +150,7 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
   },
-  singleShareBtnText: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
+  singleShareBtnText: { fontSize: 13, fontWeight: "700" },
 
   /* ── Have Code Card ── */
   haveCodeCard: {
@@ -241,89 +159,26 @@ export const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
-    marginBottom: 18,
+    marginBottom: 16,
     gap: 12,
   },
-  haveCodeIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  haveCodeContent: {
-    flex: 1,
-  },
-  haveCodeTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  haveCodeSubtitle: {
-    fontSize: 11.5,
-    marginTop: 2,
-  },
-  haveCodeArrowWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  haveCodeIconWrap: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  haveCodeContent: { flex: 1 },
+  haveCodeTitle: { fontSize: 14, fontWeight: "700" },
+  haveCodeSubtitle: { fontSize: 11.5, marginTop: 2 },
+  haveCodeArrowWrap: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
 
   /* ── How It Works ── */
-  sectionBlock: {
-    marginBottom: 20,
-  },
-  sectionHeading: {
-    fontSize: 16,
-    fontWeight: "800",
-    marginBottom: 12,
-    letterSpacing: -0.2,
-  },
-  stepsCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  stepItemRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    paddingVertical: 8,
-  },
-  stepBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepBadgeText: {
-    fontSize: 13,
-    fontWeight: "800",
-  },
-  stepTextWrap: {
-    flex: 1,
-  },
-  stepTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  stepDesc: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  stepDivider: {
-    height: 1,
-    marginVertical: 4,
-  },
+  sectionBlock: { marginBottom: 20 },
+  sectionHeading: { fontSize: 16, fontWeight: "800", marginBottom: 12, letterSpacing: -0.2 },
+  stepsCard: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 14, elevation: 2 },
+  stepItemRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 8 },
+  stepBadge: { width: 30, height: 30, borderRadius: 15, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  stepBadgeText: { fontSize: 13, fontWeight: "800" },
+  stepTextWrap: { flex: 1 },
+  stepTitle: { fontSize: 14, fontWeight: "700" },
+  stepDesc: { fontSize: 12, marginTop: 2 },
+  stepDivider: { height: 1, marginVertical: 4 },
 
   /* ── Bottom Fixed Bar ── */
   bottomFixedBar: {
@@ -343,11 +198,7 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
   },
-  inviteNowBtnText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "700",
-  },
+  inviteNowBtnText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
 
   /* ── Modal ── */
   modalBackdrop: {
@@ -363,10 +214,6 @@ export const styles = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 1,
     padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
     elevation: 10,
   },
   modalHeader: {
@@ -375,105 +222,19 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 14,
   },
-  modalTitle: {
-    fontSize: 17,
-    fontWeight: "800",
-  },
-  modalCloseBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalBlockedState: {
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-  },
-  modalStateIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
-  },
-  modalStateTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    textAlign: "center",
-  },
-  modalStateDesc: {
-    fontSize: 13,
-    textAlign: "center",
-    lineHeight: 18,
-    marginTop: 6,
-    marginBottom: 18,
-  },
-  modalDismissBtn: {
-    height: 46,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  },
-  modalDismissBtnText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  modalEligibleBody: {
-    marginTop: 2,
-  },
-  modalDesc: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 14,
-  },
-  modalInput: {
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 1.5,
-  },
-  modalStatusBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    marginTop: 10,
-  },
-  modalStatusText: {
-    fontSize: 12,
-    fontWeight: "600",
-    flex: 1,
-  },
-  modalSubmitBtn: {
-    height: 48,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 16,
-  },
-  modalSubmitBtnText: {
-    color: "#FFFFFF",
-    fontSize: 14.5,
-    fontWeight: "700",
-  },
-  modalSecondaryBtn: {
-    height: 42,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalSecondaryBtnText: {
-    fontSize: 13.5,
-    fontWeight: "700",
-  },
+  modalTitle: { fontSize: 17, fontWeight: "800" },
+  modalCloseBtn: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  modalBlockedState: { alignItems: "center", paddingVertical: 14, paddingHorizontal: 8 },
+  modalStateIconWrap: { width: 56, height: 56, borderRadius: 28, alignItems: "center", justifyContent: "center", marginBottom: 12 },
+  modalStateTitle: { fontSize: 16, fontWeight: "800", textAlign: "center" },
+  modalStateDesc: { fontSize: 13, textAlign: "center", lineHeight: 18, marginTop: 6, marginBottom: 18 },
+  modalDismissBtn: { height: 46, borderRadius: 12, alignItems: "center", justifyContent: "center", width: "100%" },
+  modalDismissBtnText: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
+  modalEligibleBody: { marginTop: 2 },
+  modalDesc: { fontSize: 13, lineHeight: 18, marginBottom: 14 },
+  modalInput: { height: 48, borderRadius: 12, borderWidth: 1, paddingHorizontal: 16, fontSize: 16, fontWeight: "700", letterSpacing: 1.5 },
+  modalStatusBox: { flexDirection: "row", alignItems: "center", gap: 8, padding: 10, borderRadius: 10, borderWidth: 1, marginTop: 10 },
+  modalStatusText: { fontSize: 12, fontWeight: "600", flex: 1 },
+  modalSubmitBtn: { height: 48, borderRadius: 12, alignItems: "center", justifyContent: "center", marginTop: 16 },
+  modalSubmitBtnText: { color: "#FFFFFF", fontSize: 14.5, fontWeight: "700" },
 });

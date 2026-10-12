@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
@@ -8,7 +8,7 @@ interface RefereeClaimBannerProps {
   onPress: () => void;
 }
 
-export function RefereeClaimBanner({ onPress }: RefereeClaimBannerProps) {
+export const RefereeClaimBanner = memo(function RefereeClaimBanner({ onPress }: RefereeClaimBannerProps) {
   const { colors } = useTheme();
 
   return (
@@ -23,12 +23,7 @@ export function RefereeClaimBanner({ onPress }: RefereeClaimBannerProps) {
         },
       ]}
     >
-      <View
-        style={[
-          styles.haveCodeIconWrap,
-          { backgroundColor: `${colors.primary}12` },
-        ]}
-      >
+      <View style={[styles.haveCodeIconWrap, { backgroundColor: `${colors.primary}14` }]}>
         <Ionicons name="gift-outline" size={20} color={colors.primary} />
       </View>
       <View style={styles.haveCodeContent}>
@@ -36,17 +31,12 @@ export function RefereeClaimBanner({ onPress }: RefereeClaimBannerProps) {
           Have a friend&apos;s code?
         </Text>
         <Text style={[styles.haveCodeSubtitle, { color: colors.textSecondary }]}>
-          Enter before your 1st scan to claim Silver Card
+          Enter before your 1st scan to link accounts
         </Text>
       </View>
-      <View
-        style={[
-          styles.haveCodeArrowWrap,
-          { backgroundColor: colors.surfaceLight },
-        ]}
-      >
+      <View style={[styles.haveCodeArrowWrap, { backgroundColor: colors.surfaceLight }]}>
         <Ionicons name="chevron-forward" size={15} color={colors.primary} />
       </View>
     </Pressable>
   );
-}
+});

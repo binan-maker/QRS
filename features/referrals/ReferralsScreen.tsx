@@ -20,6 +20,7 @@ export function ReferralsScreen() {
   const { colors } = useTheme();
 
   const {
+    refDashboard,
     activeSlide,
     setActiveSlide,
     carouselScrollRef,
@@ -54,10 +55,7 @@ export function ReferralsScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + 90 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 90 }]}
       >
         <HeroCarousel
           activeSlide={activeSlide}
@@ -65,13 +63,26 @@ export function ReferralsScreen() {
           carouselScrollRef={carouselScrollRef}
           onScroll={handleScroll}
           onSelectSlide={(idx) => {
-            carouselScrollRef.current?.scrollTo({
-              x: idx * slideWidth,
-              animated: true,
-            });
+            carouselScrollRef.current?.scrollTo({ x: idx * slideWidth, animated: true });
             setActiveSlide(idx);
           }}
         />
+
+        {/* Clean 3-Metric Referral Counter (Google Pay pattern) */}
+        <View style={styles.statsRow}>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.statNumber, { color: colors.text }]}>{refDashboard?.totalInvited ?? 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Invited</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{refDashboard?.totalQualified ?? 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Verified</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
+            <Text style={[styles.statNumber, { color: colors.textMuted }]}>{refDashboard?.totalPending ?? 0}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pending</Text>
+          </View>
+        </View>
 
         <ReferralCodeCard
           inviteCode={inviteCode}
@@ -88,7 +99,7 @@ export function ReferralsScreen() {
         <HowItWorksSteps />
       </ScrollView>
 
-      {/* Fixed Bottom CTA Bar ("Invite Now" Button) */}
+      {/* Fixed Bottom CTA Bar */}
       <View
         style={[
           styles.bottomFixedBar,
@@ -107,7 +118,7 @@ export function ReferralsScreen() {
           ]}
         >
           <Ionicons name="share-social-outline" size={18} color="#FFFFFF" />
-          <Text style={styles.inviteNowBtnText}>Invite Now</Text>
+          <Text style={styles.inviteNowBtnText}>Invite Friends</Text>
         </Pressable>
       </View>
 

@@ -2,8 +2,8 @@ import { useEffect, useState, useCallback, useRef, useMemo, useLayoutEffect } fr
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { getComments } from "@/lib/data-service";
 import * as Haptics from "@/shared/utils/haptics";
-import { type CommentItem, COMMENTS_PER_PAGE, REPLIES_PER_PAGE } from "../types";
-import { mergeWithOptimistic, getAllDescendants, getRootCommentId } from "../utils/comment-list";
+import { type CommentItem, COMMENTS_PER_PAGE, REPLIES_PER_PAGE } from "./comment-types";
+import { mergeWithOptimistic, getAllDescendants, getRootCommentId } from "./comment-list-utils";
 import { useCommentLikes } from "./useCommentLikes";
 import { useCommentActions } from "./useCommentActions";
 
@@ -11,90 +11,50 @@ export type { CommentItem };
 
 export function useQrComments(id: string, userId: string | null, offlineMode: boolean) {
   const { user } = useAuth();
-  const emailVerified = user?.emailVerified ?? false;
-
-  const [commentsList, setCommentsList]             = useState<CommentItem[]>([]);
-  const [hasMoreComments, setHasMoreComments]       = useState(false);
-  const [commentsLoading, setCommentsLoading]       = useState(!offlineMode);
+  const [commentsList, setCommentsList] = useState<CommentItem[]>([]);
+  const [hasMoreComments, setHasMoreComments] = useState(false);
+  const [commentsLoading, setCommentsLoading] = useState(!offlineMode);
   const [commentsRefreshing, setCommentsRefreshing] = useState(false);
-  const [expandedReplies, setExpandedReplies]       = useState<Record<string, boolean>>({});
+  const [expandedReplies, setExpandedReplies] = useState<Record<string, boolean>>({});
   const [visibleRepliesCount, setVisibleRepliesCount] = useState<Record<string, number>>({});
-  const [revealedComments, setRevealedComments]     = useState<Set<string>>(new Set());
+  const [revealedComments, setRevealedComments] = useState<Set<string>>(new Set());
 
-  const lastCommentRef       = useRef<any>(undefined);
-  const pendingCommentsRef   = useRef<CommentItem[]>([]);
-  const deletingIdsRef       = useRef<Set<string>>(new Set());
-  // Mirrors commentsList in a ref so stable callbacks can read the latest value
-  // without being recreated on every comment update.
-  const commentsListRef      = useRef<CommentItem[]>([]);
-
-  // Keep the ref in sync on every render (before any layout effects run).
+  const lastCommentRef = useRef<any>(undefined);
+  const pendingCommentsRef = useRef<CommentItem[]>([]);
+  const deletingIdsRef = useRef<Set<string>>(new Set());
+  const commentsListRef = useRef<CommentItem[]>([]);
   useLayoutEffect(() => { commentsListRef.current = commentsList; });
 
-  const topLevelComments = useMemo(
-    () => commentsList.filter((c) => !c.parentId),
-    [commentsList]
-  );
-
-  const { userLikes, handleCommentLike } = useCommentLikes({
-    id, userId, commentsList, setCommentsList,
-  });
-
+  const topLevelComments = useMemo(() => commentsList.filter((c) => !c.parentId), [commentsList]);
+  const { userLikes, handleCommentLike } = useCommentLikes({ id, userId, commentsList, setCommentsList });
   const actions = useCommentActions({
-    id, userId, emailVerified, user,
+    id, userId, emailVerified: user?.emailVerified ?? false, user,
     setCommentsList, pendingCommentsRef, deletingIdsRef, setExpandedReplies,
   });
 
-  const userUsername = (user as any)?.username;
-  const userPhotoURL = user?.photoURL;
+  const uName = (user as any)?.username, uPhoto = user?.photoURL, uDisplay = user?.displayName;
   useEffect(() => {
     if (!userId) return;
-    const cleanUsername = userUsername ? userUsername.replace(/^@/, "") : undefined;
-    setCommentsList((prev) =>
-      prev.map((c) => {
-        if (c.userId !== userId) return c;
-        const resolvedUsername = cleanUsername || c.userUsername || `user_${userId.slice(-5)}`;
-        return {
-          ...c,
-          userUsername: resolvedUsername,
-          userPhotoURL: userPhotoURL || c.userPhotoURL,
-          user: { displayName: `@${resolvedUsername}` },
-        };
-      })
-    );
-  }, [userUsername, userPhotoURL, userId]);
+    setCommentsList((prev) => prev.map((c) => (c.userId !== userId ? c : {
+      ...c, userUsername: uName || c.userUsername, userPhotoURL: uPhoto || c.userPhotoURL,
+      user: { displayName: uDisplay || c.user.displayName },
+    })));
+  }, [uName, uPhoto, uDisplay, userId]);
 
-  const loadInitialComments = useCallback(async (resetOptimistic = false) => {
+  const fetchComments = useCallback(async (isRefresh = false) => {
     if (offlineMode) return;
-    if (resetOptimistic) {
-      pendingCommentsRef.current = [];
-      deletingIdsRef.current     = new Set();
-    }
-    const pageLimit = userId ? COMMENTS_PER_PAGE : 6;
-    setCommentsLoading(true);
+    if (!isRefresh) { pendingCommentsRef.current = []; deletingIdsRef.current = new Set(); setCommentsLoading(true); }
+    else setCommentsRefreshing(true);
     try {
-      const result = await getComments(id, pageLimit, undefined);
+      const result = await getComments(id, userId ? COMMENTS_PER_PAGE : 6, undefined);
       if (result.cursor) lastCommentRef.current = result.cursor;
       setHasMoreComments(result.hasMore);
       setCommentsList(mergeWithOptimistic(result.comments as unknown as CommentItem[], pendingCommentsRef, deletingIdsRef));
     } catch {}
-    setCommentsLoading(false);
+    if (!isRefresh) setCommentsLoading(false); else setCommentsRefreshing(false);
   }, [id, userId, offlineMode]);
 
-  const refreshComments = useCallback(async () => {
-    if (offlineMode) return;
-    setCommentsRefreshing(true);
-    const pageLimit = userId ? COMMENTS_PER_PAGE : 6;
-    try {
-      const result = await getComments(id, pageLimit, undefined);
-      if (result.cursor) lastCommentRef.current = result.cursor;
-      setHasMoreComments(result.hasMore);
-      setCommentsList(mergeWithOptimistic(result.comments as unknown as CommentItem[], pendingCommentsRef, deletingIdsRef));
-    } catch {}
-    setCommentsRefreshing(false);
-  }, [id, userId, offlineMode]);
-
-  useEffect(() => { loadInitialComments(true); }, [loadInitialComments]);
+  useEffect(() => { fetchComments(false); }, [fetchComments]);
 
   const loadMoreComments = useCallback(async () => {
     if (commentsLoading || !hasMoreComments) return;
@@ -110,48 +70,22 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
 
   const toggleReplies = useCallback((commentId: string) => {
     setExpandedReplies((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
-    if (!visibleRepliesCount[commentId]) {
-      setVisibleRepliesCount((prev) => ({ ...prev, [commentId]: REPLIES_PER_PAGE }));
-    }
+    if (!visibleRepliesCount[commentId]) setVisibleRepliesCount((prev) => ({ ...prev, [commentId]: REPLIES_PER_PAGE }));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }, [visibleRepliesCount]);
 
   const showMoreReplies = useCallback((commentId: string) => {
-    setVisibleRepliesCount((prev) => ({
-      ...prev,
-      [commentId]: (prev[commentId] || REPLIES_PER_PAGE) + REPLIES_PER_PAGE,
-    }));
+    setVisibleRepliesCount((prev) => ({ ...prev, [commentId]: (prev[commentId] || REPLIES_PER_PAGE) + REPLIES_PER_PAGE }));
   }, []);
-
-  // Reads commentsList via ref so this callback stays stable even as comments
-  // are added, liked, or paginated — no unnecessary re-renders in consumers.
-  const handleDeleteComment = useCallback(
-    (commentId: string) => actions.handleDeleteComment(commentId, commentsListRef.current),
-    [actions.handleDeleteComment]
-  );
-
-  // Stable callbacks — read via ref so they don't change on every comment update.
-  const getAllDescendantsCb = useCallback(
-    (rootId: string) => getAllDescendants(commentsListRef.current, rootId),
-    []
-  );
-  const getRootCommentIdCb = useCallback(
-    (commentId: string) => getRootCommentId(commentsListRef.current, commentId),
-    []
-  );
 
   return {
     ...actions,
-    commentsList, topLevelComments,
-    userLikes, hasMoreComments,
-    commentsLoading, commentsRefreshing, refreshComments,
-    expandedReplies, visibleRepliesCount,
-    revealedComments, setRevealedComments,
-    getAllDescendants: getAllDescendantsCb,
-    getRootCommentId: getRootCommentIdCb,
-    toggleReplies, showMoreReplies,
-    loadMoreComments,
-    handleCommentLike,
-    handleDeleteComment,
+    commentsList, topLevelComments, userLikes, hasMoreComments, commentsLoading, commentsRefreshing,
+    refreshComments: () => fetchComments(true),
+    expandedReplies, visibleRepliesCount, revealedComments, setRevealedComments,
+    getAllDescendants: useCallback((rootId: string) => getAllDescendants(commentsListRef.current, rootId), []),
+    getRootCommentId: useCallback((commentId: string) => getRootCommentId(commentsListRef.current, commentId), []),
+    toggleReplies, showMoreReplies, loadMoreComments, handleCommentLike,
+    handleDeleteComment: useCallback((cid: string) => actions.handleDeleteComment(cid, commentsListRef.current), [actions.handleDeleteComment]),
   };
 }

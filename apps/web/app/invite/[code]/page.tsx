@@ -11,8 +11,8 @@ export async function generateMetadata({ params }: InvitePageProps): Promise<Met
   const { code } = await params;
   const cleanCode = (code || "").trim().replace(/^@/, "").toLowerCase();
 
-  const title = `Claim Your Silver Welcome Scratch Card — Invited by @${cleanCode} | BinRo`;
-  const description = `Join BinRo through @${cleanCode}'s VIP invite. Scan any QR code safely, check community trust scores, and unlock your Silver Welcome Scratch Card!`;
+  const title = `Join BinRo Safe QR Scanner — Invited by @${cleanCode} | BinRo`;
+  const description = `Join BinRo through @${cleanCode}'s invite. Scan any QR code safely, preview links, check community trust scores, and verify UPI payments!`;
 
   return {
     title,

@@ -7,69 +7,41 @@ import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { parseAnyPaymentQr, isPaymentQr } from "@/services/analysis";
 
-function copyValue(value: string, onDone: () => void) {
-  Clipboard.setStringAsync(value).then(() => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    onDone();
-  });
-}
-
 function CopyButton({ value }: { value: string }) {
   const { colors } = useTheme();
   const [copied, setCopied] = useState(false);
-
-  const handleCopy = () =>
-    copyValue(value, () => {
+  const handleCopy = () => {
+    Clipboard.setStringAsync(value).then(() => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setCopied(true);
       setTimeout(() => setCopied(false), 2200);
     });
-
+  };
   return (
     <Pressable
       onPress={handleCopy}
-      style={[
-        styles.copyBtn,
-        {
-          backgroundColor: copied ? colors.safe + "18" : colors.surfaceLight,
-          borderColor: copied ? colors.safe : colors.surfaceBorder,
-        },
-      ]}
+      style={[styles.copyBtn, {
+        backgroundColor: copied ? colors.safe + "18" : colors.surfaceLight,
+        borderColor: copied ? colors.safe : colors.surfaceBorder,
+      }]}
     >
-      <Ionicons
-        name={copied ? "checkmark-circle" : "copy-outline"}
-        size={14}
-        color={copied ? colors.safe : colors.textMuted}
-      />
-      <Text style={[styles.copyText, { color: copied ? colors.safe : colors.textMuted }]}>
-        {copied ? "Copied!" : "Copy"}
-      </Text>
+      <Ionicons name={copied ? "checkmark-circle" : "copy-outline"} size={14} color={copied ? colors.safe : colors.textMuted} />
+      <Text style={[styles.copyText, { color: copied ? colors.safe : colors.textMuted }]}>{copied ? "Copied!" : "Copy"}</Text>
     </Pressable>
   );
 }
 
-function CleanInfoCard({
-  title,
-  stripText,
-  copyText,
-}: {
-  title: string;
-  stripText: string;
-  copyText: string;
-}) {
+function CleanInfoCard({ title, stripText, copyText }: { title: string; stripText: string; copyText: string }) {
   const { colors } = useTheme();
   return (
     <Animated.View entering={FadeInDown.duration(260)}>
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
         <View style={styles.row}>
-          <Text style={[styles.domain, { color: colors.text }]} numberOfLines={1}>
-            {title}
-          </Text>
+          <Text style={[styles.domain, { color: colors.text }]} numberOfLines={1}>{title}</Text>
           <CopyButton value={copyText} />
         </View>
         <View style={[styles.urlStrip, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-          <Text style={[styles.urlText, { color: colors.textSecondary }]} selectable numberOfLines={2}>
-            {stripText}
-          </Text>
+          <Text style={[styles.urlText, { color: colors.textSecondary }]} selectable numberOfLines={2}>{stripText}</Text>
         </View>
       </View>
     </Animated.View>
@@ -84,22 +56,13 @@ function TextContentCard({ content }: { content: string }) {
     <Animated.View entering={FadeInDown.duration(260)}>
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
         <View style={styles.row}>
-          <Text style={[styles.domain, { color: colors.text }]} numberOfLines={1}>
-            Text
-          </Text>
+          <Text style={[styles.domain, { color: colors.text }]} numberOfLines={1}>Text</Text>
           <CopyButton value={content} />
         </View>
-        <View
-          style={[
-            styles.rawBox,
-            { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder },
-          ]}
-        >
-          <Text style={[styles.rawText, { color: colors.text }]} selectable numberOfLines={expanded ? undefined : 4}>
-            {content}
-          </Text>
+        <View style={[styles.rawBox, { backgroundColor: isDark ? colors.surfaceLight : colors.background, borderColor: colors.surfaceBorder }]}>
+          <Text style={[styles.rawText, { color: colors.text }]} selectable numberOfLines={expanded ? undefined : 4}>{content}</Text>
           {long && (
-            <Pressable onPress={() => setExpanded((value) => !value)}>
+            <Pressable onPress={() => setExpanded((v) => !v)}>
               <Text style={[styles.expand, { color: colors.primary }]}>{expanded ? "Show less" : "Show more"}</Text>
             </Pressable>
           )}
@@ -109,41 +72,23 @@ function TextContentCard({ content }: { content: string }) {
   );
 }
 
-function WebsiteContentCard({
-  content,
-  onOpenContent,
-  hideOpenAction,
-}: {
-  content: string;
-  onOpenContent: () => void;
-  hideOpenAction?: boolean;
-}) {
+function WebsiteContentCard({ content, onOpenContent, hideOpenAction }: { content: string; onOpenContent: () => void; hideOpenAction?: boolean }) {
   const { colors } = useTheme();
   const fullUrl = /^https?:\/\//i.test(content) ? content : `https://${content}`;
   let hostname = content;
-  try {
-    hostname = new URL(fullUrl).hostname.replace(/^www\./, "");
-  } catch {}
-
+  try { hostname = new URL(fullUrl).hostname.replace(/^www\./, ""); } catch {}
   return (
     <Animated.View entering={FadeInDown.duration(260)}>
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
         <View style={styles.row}>
-          <Text style={[styles.domain, { color: colors.text }]} numberOfLines={1}>
-            {hostname}
-          </Text>
+          <Text style={[styles.domain, { color: colors.text }]} numberOfLines={1}>{hostname}</Text>
           <CopyButton value={fullUrl} />
         </View>
         <View style={[styles.urlStrip, { backgroundColor: colors.surfaceLight, borderColor: colors.surfaceBorder }]}>
-          <Text style={[styles.urlText, { color: colors.textSecondary }]} selectable numberOfLines={2}>
-            {fullUrl}
-          </Text>
+          <Text style={[styles.urlText, { color: colors.textSecondary }]} selectable numberOfLines={2}>{fullUrl}</Text>
         </View>
         {!hideOpenAction && (
-          <Pressable
-            onPress={onOpenContent}
-            style={[styles.openBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}
-          >
+          <Pressable onPress={onOpenContent} style={[styles.openBtn, { backgroundColor: colors.primaryDim, borderColor: colors.primary + "30" }]}>
             <Text style={[styles.openLabel, { color: colors.primary }]}>Open</Text>
             <Ionicons name="open-outline" size={14} color={colors.primary} />
           </Pressable>
@@ -154,95 +99,41 @@ function WebsiteContentCard({
 }
 
 export const QrContentCard = memo(function QrContentCard({
-  content,
-  contentType,
-  onOpenContent,
-  hideOpenAction,
+  content, contentType, onOpenContent, hideOpenAction,
 }: {
-  content: string;
-  contentType: string;
-  onOpenContent: () => void;
-  hideOpenAction?: boolean;
+  content: string; contentType: string; onOpenContent: () => void; hideOpenAction?: boolean;
 }) {
   const clean = content?.trim() || "";
   const isPayment = contentType === "payment" || isPaymentQr(clean);
-  const parsedPayment = useMemo(
-    () => (isPayment ? parseAnyPaymentQr(clean) : null),
-    [isPayment, clean]
-  );
+  const parsed = useMemo(() => (isPayment ? parseAnyPaymentQr(clean) : null), [isPayment, clean]);
 
   if (isPayment) {
-    const recipientAddress = parsedPayment?.vpa || parsedPayment?.recipientId || clean;
-    const headerTitle = parsedPayment?.recipientName || recipientAddress || "Content";
-    const stripParts: string[] = [recipientAddress];
-    if (parsedPayment?.isAmountPreFilled && parsedPayment.amount) {
-      const amt = parseFloat(parsedPayment.amount);
-      if (!isNaN(amt)) {
-        stripParts.push(
-          parsedPayment.currency
-            ? `${parsedPayment.currency} ${amt.toLocaleString()}`
-            : `${amt.toLocaleString()}`
-        );
-      } else {
-        stripParts.push(
-          `${parsedPayment.currency ? parsedPayment.currency + " " : ""}${parsedPayment.amount}`
-        );
-      }
+    const recipient = parsed?.vpa || parsed?.recipientId || clean;
+    const title = parsed?.recipientName || recipient || "Payment";
+    const parts = [recipient];
+    if (parsed?.isAmountPreFilled && parsed.amount) {
+      const amt = parseFloat(parsed.amount);
+      const val = isNaN(amt) ? parsed.amount : amt.toLocaleString();
+      parts.push(parsed.currency ? `${parsed.currency} ${val}` : val);
     }
-    if (parsedPayment?.note) stripParts.push(parsedPayment.note);
-
-    return (
-      <CleanInfoCard
-        title={headerTitle}
-        stripText={stripParts.join(" • ")}
-        copyText={recipientAddress}
-      />
-    );
+    if (parsed?.note) parts.push(parsed.note);
+    return <CleanInfoCard title={title} stripText={parts.join(" • ")} copyText={recipient} />;
   }
-
   if (contentType === "phone" || /^tel:/i.test(clean)) {
-    const rawNumber = clean.replace(/^tel:/i, "").trim() || clean;
-    return (
-      <CleanInfoCard
-        title={rawNumber}
-        stripText={rawNumber}
-        copyText={rawNumber}
-      />
-    );
+    const num = clean.replace(/^tel:/i, "").trim() || clean;
+    return <CleanInfoCard title={num} stripText={num} copyText={num} />;
   }
-
   if (contentType === "email" || /^mailto:/i.test(clean)) {
-    const email = clean.replace(/^mailto:/i, "").split("?")[0].trim() || clean;
-    return (
-      <CleanInfoCard
-        title={email}
-        stripText={email}
-        copyText={email}
-      />
-    );
+    const em = clean.replace(/^mailto:/i, "").split("?")[0].trim() || clean;
+    return <CleanInfoCard title={em} stripText={em} copyText={em} />;
   }
-
   if (contentType === "sms" || /^smsto?:/i.test(clean)) {
-    const smsTarget = clean.replace(/^smsto?:/i, "").trim() || clean;
-    return (
-      <CleanInfoCard
-        title={smsTarget}
-        stripText={smsTarget}
-        copyText={smsTarget}
-      />
-    );
+    const sms = clean.replace(/^smsto?:/i, "").trim() || clean;
+    return <CleanInfoCard title={sms} stripText={sms} copyText={sms} />;
   }
-
   if (contentType === "url" || /^https?:\/\//i.test(clean)) {
-    return (
-      <WebsiteContentCard
-        content={clean}
-        onOpenContent={onOpenContent}
-        hideOpenAction={hideOpenAction}
-      />
-    );
+    return <WebsiteContentCard content={clean} onOpenContent={onOpenContent} hideOpenAction={hideOpenAction} />;
   }
-
   return <TextContentCard content={clean} />;
 });
 
@@ -250,29 +141,13 @@ const styles = StyleSheet.create({
   card: { borderRadius: 18, padding: 14, marginBottom: 12, borderWidth: 1, gap: 10 },
   row: { flexDirection: "row", alignItems: "center", gap: 10 },
   domain: { fontSize: 15, fontFamily: "Inter_700Bold", flex: 1 },
-  copyBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    height: 28,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
+  copyBtn: { flexDirection: "row", alignItems: "center", gap: 3, height: 28, paddingHorizontal: 8, borderRadius: 8, borderWidth: 1 },
   copyText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
   rawBox: { borderRadius: 12, padding: 12, borderWidth: 1, gap: 6 },
   rawText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20 },
   expand: { fontSize: 12, fontFamily: "Inter_600SemiBold", marginTop: 4 },
   urlStrip: { borderRadius: 10, paddingVertical: 9, paddingHorizontal: 11, borderWidth: 1 },
   urlText: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
-  openBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    borderRadius: 12,
-    paddingVertical: 11,
-    borderWidth: 1,
-  },
+  openBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 12, paddingVertical: 11, borderWidth: 1 },
   openLabel: { fontSize: 13, fontFamily: "Inter_700Bold" },
 });

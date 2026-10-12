@@ -60,13 +60,8 @@ export default function HomePage() {
                 </Link>
               </li>
               <li>
-                <Link href="/rewards">
-                  Scratch Cards — Daily Scan Milestones &amp; Merchant Vouchers
-                </Link>
-              </li>
-              <li>
                 <Link href="/referrals">
-                  Refer &amp; Earn — Give Silver, Earn Gold VIP Scratch Cards
+                  Refer &amp; Earn — Invite Friends &amp; Safe Scanning Network
                 </Link>
               </li>
               <li>

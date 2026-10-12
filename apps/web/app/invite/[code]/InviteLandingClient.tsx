@@ -111,9 +111,9 @@ export default function InviteLandingClient({ code }: InviteLandingClientProps) 
             </Link>
           </div>
           <div className={styles.headerRight}>
-            <Link href="/rewards" className={styles.signInPill}>
-              <Ionicons name="gift-outline" size={16} color={colors.primary} />
-              <span>Rewards</span>
+            <Link href="/referrals" className={styles.signInPill}>
+              <Ionicons name="people-outline" size={16} color={colors.primary} />
+              <span>Referrals</span>
             </Link>
           </div>
         </header>
@@ -178,10 +178,10 @@ export default function InviteLandingClient({ code }: InviteLandingClientProps) 
               margin: 0,
             }}
           >
-            Scan any QR code safely with BinRo. Unpack destination links, inspect UPI payment recipients, and unlock your <strong>Silver Welcome Scratch Card</strong> on your first scan!
+            Scan any QR code safely with BinRo. Unpack destination links, inspect UPI payment recipients, and verify security trust scores before opening.
           </p>
 
-          {/* Silver Card Gift Preview */}
+          {/* Clean Referral Invite Preview */}
           <div
             style={{
               width: "100%",
@@ -192,7 +192,7 @@ export default function InviteLandingClient({ code }: InviteLandingClientProps) 
               background: isDark
                 ? "linear-gradient(135deg, #1e293b, #334155)"
                 : "linear-gradient(135deg, #f1f5f9, #e2e8f0)",
-              border: `2px dashed ${colors.primary}50`,
+              border: `1px solid ${colors.surfaceBorder}`,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -210,14 +210,14 @@ export default function InviteLandingClient({ code }: InviteLandingClientProps) 
                 justifyContent: "center",
               }}
             >
-              <Ionicons name="gift" size={32} color={colors.primary} />
+              <Ionicons name="shield-checkmark" size={30} color={colors.primary} />
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: "16px", fontWeight: 700, color: colors.text }}>
-                Silver Welcome Scratch Card
+                Safe QR Scanner Invite
               </div>
               <div style={{ fontSize: "13px", color: colors.textSecondary, marginTop: "2px" }}>
-                Curated offers from AJIO, boAt, Nykaa &amp; Flipkart
+                Real-time safety ratings, destination link inspection &amp; UPI checks
               </div>
             </div>
             <div
@@ -229,7 +229,7 @@ export default function InviteLandingClient({ code }: InviteLandingClientProps) 
                 borderRadius: "8px",
               }}
             >
-              🔒 Unlocks automatically on your 1st verified QR scan
+              🛡️ Official community invite code
             </div>
           </div>
 
@@ -248,7 +248,7 @@ export default function InviteLandingClient({ code }: InviteLandingClientProps) 
                       fontWeight: 600,
                     }}
                   >
-                    This is your personal referral link! Share it with friends to earn Gold VIP Cards.
+                    This is your personal referral link! Share it with friends to invite them.
                   </div>
                 ) : alreadyClaimed ? (
                   <div
@@ -261,7 +261,7 @@ export default function InviteLandingClient({ code }: InviteLandingClientProps) 
                       fontWeight: 600,
                     }}
                   >
-                    ✓ Referral linked to code {wallet?.referredByCode || cleanCode}. Scan any QR to unlock your card!
+                    ✓ Referral linked to code {wallet?.referredByCode || cleanCode}. Scan your first QR code to verify connection!
                   </div>
                 ) : (wallet?.lifetimeEligibleScans || 0) > 0 || (wallet?.dailyEligibleScans || 0) > 0 ? (
                   <div
@@ -305,7 +305,7 @@ export default function InviteLandingClient({ code }: InviteLandingClientProps) 
                     }}
                   >
                     <Ionicons name="checkmark-circle" size={18} color="#fff" />
-                    <span>{claiming ? "Applying Gift..." : `Claim Silver Gift with Code ${cleanCode.toUpperCase()}`}</span>
+                    <span>{claiming ? "Applying Code..." : `Claim Invite with Code ${cleanCode.toUpperCase()}`}</span>
                   </button>
                 )}
 
@@ -495,21 +495,21 @@ export default function InviteLandingClient({ code }: InviteLandingClientProps) 
                 width: "40px",
                 height: "40px",
                 borderRadius: "12px",
-                backgroundColor: `${colors.warning}18`,
+                backgroundColor: `${colors.primary}18`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
               }}
             >
-              <Ionicons name="gift-outline" size={22} color={colors.warning} />
+              <Ionicons name="people-outline" size={22} color={colors.primary} />
             </div>
             <div>
               <div style={{ fontSize: "15px", fontWeight: 700, color: colors.text }}>
-                Scratch Cards &amp; Partner Deals
+                Verified Referral Network
               </div>
               <div style={{ fontSize: "13px", color: colors.textSecondary, marginTop: "2px", lineHeight: 1.4 }}>
-                Unlock daily rewards and exclusive partner savings as you scan QR codes and help keep the community safe.
+                Connect with friends and build trusted scanning networks with real-time community safety ratings.
               </div>
             </div>
           </div>

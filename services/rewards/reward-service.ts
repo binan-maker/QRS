@@ -1300,18 +1300,6 @@ export async function applyReferralCodeForUser(
   await clearPendingReferralCode();
 
   const isAlreadyActiveScanner = (wallet.lifetimeEligibleScans || 0) > 0;
-  const friendCard = await allocateScratchCard({
-    userId: invitedUserId,
-    tier: "silver",
-    sourceType: "referral_friend",
-    sourceLabel: `Gift from friend (${referrerDisplayCode})`,
-    status: isAlreadyActiveScanner ? "unlocked" : "locked",
-    unlockRequirementText: isAlreadyActiveScanner
-      ? null
-      : `Gift from code ${referrerDisplayCode} — Scan your first QR code to unlock & scratch!`,
-    offers,
-    idempotencyKey: `referral_friend_${invitedUserId}`,
-  });
 
   if (referrerUserId) {
     let invitedUsername = "friend";
@@ -1340,7 +1328,7 @@ export async function applyReferralCodeForUser(
       invitedUserDisplayName: invitedDisplayName,
       invitedUserPhotoUrl: invitedPhotoUrl,
       status: isAlreadyActiveScanner ? "qualified" : "pending_first_scan",
-      friendCardId: friendCard.id,
+      friendCardId: null,
       referrerCardId: null,
       qualifiedAt: isAlreadyActiveScanner ? nowIso : null,
       createdAt: nowIso,
@@ -1353,7 +1341,7 @@ export async function applyReferralCodeForUser(
         referrer_code: code,
         invited_user_id: invitedUserId,
         status: newRefRecord.status,
-        friend_card_id: friendCard.id,
+        friend_card_id: null,
         qualified_at: newRefRecord.qualifiedAt,
         created_at: nowIso,
         updated_at: nowIso,
@@ -1378,9 +1366,8 @@ export async function applyReferralCodeForUser(
   return {
     ok: true,
     message: isAlreadyActiveScanner
-      ? `Unlocked your Silver Welcome Card from code ${referrerDisplayCode}!`
-      : `Saved gift from referral code ${referrerDisplayCode}! Scan 1 QR code to unlock your Silver Scratch Card.`,
-    card: friendCard,
+      ? `Referral code ${referrerDisplayCode} applied! Connection verified.`
+      : `Saved referral code ${referrerDisplayCode}! Complete your first scan to verify your referral.`,
   };
 }
 
@@ -1400,23 +1387,14 @@ async function qualifyReferralOnFirstScan(
     if (!refRow || !refRow.referrer_user_id) return;
 
     const referrerId = String(refRow.referrer_user_id);
-    const referrerCard = await allocateScratchCard({
-      userId: referrerId,
-      tier: "gold",
-      sourceType: "referral_host",
-      sourceLabel: "Verified Friend Referral Reward (Gold VIP)",
-      status: "unlocked",
-      offers,
-      idempotencyKey: `referral_host_${referrerId}_${invitedUserId}`,
-    });
-
     const now = new Date().toISOString();
+
     await supabase
       .from("referrals")
       .update({
         status: "qualified",
         qualifying_qr_code_id: qrId,
-        referrer_card_id: referrerCard.id,
+        referrer_card_id: null,
         qualified_at: now,
         updated_at: now,
       })
@@ -1436,7 +1414,7 @@ async function qualifyReferralOnFirstScan(
         const list: ReferralRecord[] = JSON.parse(raw);
         const updated = list.map((item) =>
           item.invitedUserId === invitedUserId
-            ? { ...item, status: "qualified" as const, qualifiedAt: now, referrerCardId: referrerCard.id }
+            ? { ...item, status: "qualified" as const, qualifiedAt: now, referrerCardId: null }
             : item
         );
         await AsyncStorage.setItem(`${LOCAL_REFERRALS_PREFIX}${referrerId}`, JSON.stringify(updated));
@@ -1568,7 +1546,7 @@ export async function getUserReferralsDashboard(
 
 export function buildReferralShareMessage(code: string): string {
   const clean = code.trim().toLowerCase();
-  return `🛡️ Scan any QR code safely with BinRo! Preview hidden links, inspect payment recipients, and check real-time trust scores before you open or pay.\n\nSign up with my invite link to unlock an exclusive Silver Welcome Scratch Card:\nhttps://www.binro.in/register?ref=${clean}\n\nReferral Code: ${clean.toUpperCase()}`;
+  return `🛡️ Scan any QR code safely with BinRo! Preview hidden links, inspect payment recipients, and check real-time trust scores before you open or pay.\n\nSign up with my invite link:\nhttps://www.binro.in/register?ref=${clean}\n\nReferral Code: ${clean.toUpperCase()}`;
 }
 
 export function getWhatsAppShareUrl(code: string): string {
@@ -1579,14 +1557,14 @@ export function getWhatsAppShareUrl(code: string): string {
 export function getTelegramShareUrl(code: string): string {
   const clean = code.replace(/^@/, "").toLowerCase();
   const url = `https://www.binro.in/register?ref=${clean}`;
-  const text = `Join BinRo with my invite to get a Silver Welcome Scratch Card and scan QR codes safely!`;
+  const text = `Join BinRo with my invite to scan QR codes safely and check trust scores!`;
   return `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
 }
 
 export function getTwitterShareUrl(code: string): string {
   const clean = code.replace(/^@/, "").toLowerCase();
   const url = `https://www.binro.in/register?ref=${clean}`;
-  const text = `Check QR codes before you scan with @BinRoApp. Use my link to claim your Silver Welcome Scratch Card:`;
+  const text = `Check QR codes before you scan with @BinRoApp. Use my invite link:`;
   return `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
 }
 

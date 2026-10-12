@@ -6,8 +6,8 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { SectionHeader } from "@/shared/components/ui/SectionHeader";
 import CommentItem from "@/features/qr-detail/components/CommentItem";
-import type { CommentItem as CommentItemType } from "@/features/qr-detail/types";
-import { formatCompactNumber } from "@/shared/utils/formatters";
+import type { CommentItem as CommentItemType } from "@/features/qr-detail/hooks/comment-types";
+import { formatCompactNumber, smartName } from "@/shared/utils/formatters";
 
 interface ReplyTo {
   id: string;
@@ -36,7 +36,7 @@ interface Props {
   deletingCommentId: string | null;
   revealedComments: Set<string>;
   setRevealedComments: (fn: (prev: Set<string>) => Set<string>) => void;
-  expandedReplies: Set<string>;
+  expandedReplies: Record<string, boolean>;
   visibleRepliesCount: Record<string, number>;
   handleSubmitComment: () => void;
   handleCommentLike: (id: string, currentLike: string | null) => void;
@@ -50,36 +50,12 @@ interface Props {
 }
 
 export default function CommentsSection({
-  user,
-  totalComments,
-  commentsList,
-  topLevelComments,
-  hasMoreComments,
-  commentsLoading,
-  newComment,
-  setNewComment,
-  replyTo,
-  setReplyTo,
-  commentMenuId,
-  setCommentMenuId,
-  setCommentMenuOwner,
-  submitting,
-  commentInputRef,
-  userLikes,
-  deletingCommentId,
-  revealedComments,
-  setRevealedComments,
-  expandedReplies,
-  visibleRepliesCount,
-  handleSubmitComment,
-  handleCommentLike,
-  handleDeleteComment,
-  getAllDescendants,
-  getRootCommentId,
-  toggleReplies,
-  showMoreReplies,
-  loadMoreComments,
-  onReport = () => {},
+  user, totalComments, commentsList, topLevelComments, hasMoreComments, commentsLoading,
+  newComment, setNewComment, replyTo, setReplyTo, commentMenuId, setCommentMenuId,
+  setCommentMenuOwner, submitting, commentInputRef, userLikes, deletingCommentId,
+  revealedComments, setRevealedComments, expandedReplies, visibleRepliesCount,
+  handleSubmitComment, handleCommentLike, handleDeleteComment, getAllDescendants,
+  getRootCommentId, toggleReplies, showMoreReplies, loadMoreComments,
 }: Props) {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
@@ -89,52 +65,22 @@ export default function CommentsSection({
       if (!user) { router.push("/(auth)/login"); return; }
       handleCommentLike(id, action);
     },
-    [user, handleCommentLike],
+    [user, handleCommentLike]
   );
 
   const onReply = useCallback(
     (c: CommentItemType) => {
       if (!user) { router.push("/(auth)/login"); return; }
-      const cleanHandle = (c.userUsername || (c.userId ? `user_${c.userId.slice(-5)}` : "user"))
-        .replace(/^@/, "");
-      const author = `@${cleanHandle}`;
-      setReplyTo({
-        id: c.id,
-        author,
-        rootId,
-        isNested: !!c.parentId,
-      });
-      // YouTube-style: when replying to a reply (not the root comment),
-      // pre-fill the @mention so the flat thread shows who was replied to.
-      if (c.parentId) {
-        setNewComment(`${author} `);
-      }
+      const rootId = getRootCommentId(c.id);
+      const author = c.userUsername ? `@${c.userUsername}` : smartName(c.user.displayName);
+      setReplyTo({ id: c.id, author, rootId, isNested: !!c.parentId });
+      if (c.parentId) setNewComment(`${author} `);
     },
-    [user, getRootCommentId, setReplyTo, setNewComment],
+    [user, getRootCommentId, setReplyTo, setNewComment]
   );
-
-  const onMenuOpen = useCallback(
-    (cid: string, isOwner: boolean) => { setCommentMenuId(cid); setCommentMenuOwner(isOwner); },
-    [setCommentMenuId, setCommentMenuOwner],
-  );
-
-  const onMenuClose = useCallback(
-    () => setCommentMenuId(null),
-    [setCommentMenuId],
-  );
-
-  const onReveal = useCallback(
-    (cid: string) => setRevealedComments((prev) => { const next = new Set(prev); next.add(cid); return next; }),
-    [setRevealedComments],
-  );
-
-  const onDelete = useCallback(handleDeleteComment, [handleDeleteComment]);
-  const onToggleReplies = useCallback(toggleReplies, [toggleReplies]);
-  const onShowMoreReplies = useCallback(showMoreReplies, [showMoreReplies]);
 
   return (
     <View>
-      {/* Header */}
       <View style={styles.commentsHeader}>
         <View style={styles.commentsTitleRow}>
           <SectionHeader icon="chatbubbles-outline" label="Comments" gradient={[colors.primary, colors.primaryShade]} inline />
@@ -146,9 +92,8 @@ export default function CommentsSection({
         </View>
       </View>
 
-      {/* Comment input / auth prompt */}
       {!user ? (
-          <Pressable onPress={() => router.push("/(auth)/login")} style={styles.inlineCommentBar}>
+        <Pressable onPress={() => router.push("/(auth)/login")} style={styles.inlineCommentBar}>
           <View style={styles.commentInput}>
             <Text style={[styles.commentTextInput, { color: colors.textMuted, paddingTop: 9 }]}>
               Add a comment…
@@ -169,7 +114,6 @@ export default function CommentsSection({
               <Pressable
                 onPress={() => {
                   setReplyTo(null);
-                  // Clear the auto-filled @mention if dismissing a nested reply
                   if (replyTo?.isNested) setNewComment("");
                 }}
                 style={{ marginLeft: "auto" as any }}
@@ -194,7 +138,7 @@ export default function CommentsSection({
               disabled={submitting || !newComment.trim()}
               style={({ pressed }) => [
                 styles.sendBtn,
-                { opacity: (pressed || submitting || !newComment.trim()) ? 0.4 : 1 },
+                { opacity: pressed || submitting || !newComment.trim() ? 0.4 : 1 },
               ]}
             >
               <Ionicons name="send" size={15} color="#000" />
@@ -203,11 +147,6 @@ export default function CommentsSection({
         </View>
       )}
 
-      {/* Comment list — plain View map instead of FlatList to avoid the
-          nested-VirtualizedList "property is not configurable" crash.
-          Parent ScrollView already owns all scrolling; scrollEnabled=false
-          on a FlatList still triggers the VirtualizedList property-redefinition
-          bug in React Native's Fabric renderer. */}
       <View>
         {topLevelComments.length === 0 ? (
           commentsLoading ? (
@@ -225,32 +164,25 @@ export default function CommentsSection({
           topLevelComments.map((comment) => (
             <CommentItem
               key={comment.id}
-              comment={comment as any}
+              comment={comment}
               isReply={false}
               currentUserLike={(userLikes[comment.id] ?? null) as any}
               isMenuOpen={commentMenuId === comment.id}
               isDeleting={deletingCommentId === comment.id}
-              isRevealed={revealedComments.has(comment.id)}
               isCommentOwner={user?.id === comment.userId}
-              canDelete={user?.id === comment.userId}
-              descendants={getAllDescendants(comment.id) as any}
-              expandedReplies={expandedReplies as any}
+              descendants={getAllDescendants(comment.id)}
+              expandedReplies={expandedReplies}
               visibleRepliesCount={visibleRepliesCount}
-              allComments={commentsList as any}
               userLikes={userLikes as any}
               commentMenuId={commentMenuId}
               deletingCommentId={deletingCommentId}
-              revealedComments={revealedComments}
               userId={user?.id}
               onLike={onLike}
               onReply={onReply}
-              onMenuOpen={onMenuOpen}
-              onMenuClose={onMenuClose}
-              onDelete={onDelete}
-              onReport={onReport}
-              onReveal={onReveal}
-              onToggleReplies={onToggleReplies}
-              onShowMoreReplies={onShowMoreReplies}
+              onMenuOpen={(cid, isOwner) => { setCommentMenuId(cid); setCommentMenuOwner(isOwner); }}
+              onMenuClose={() => setCommentMenuId(null)}
+              onToggleReplies={toggleReplies}
+              onShowMoreReplies={showMoreReplies}
             />
           ))
         )}

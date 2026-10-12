@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Refer & Earn — Give Silver, Get Gold VIP Scratch Cards",
+  title: "Invite Friends & Referral Network | BinRo",
   description:
-    "Invite your friends to BinRo. Friends get a Silver Welcome Scratch Card upon joining, and you earn Gold VIP Scratch Cards when they complete their first verified QR scan.",
+    "Invite your friends to BinRo. Help your network inspect destination links, check UPI payment safety, and verify QR security before opening.",
   path: "/referrals",
 });
 

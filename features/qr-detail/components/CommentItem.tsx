@@ -1,17 +1,12 @@
 import React, { memo, useState, type ReactNode } from "react";
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { formatCompactNumber, formatRelativeTime } from "@/shared/utils/formatters";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import type { CommentItem as CommentItemType } from "@/features/qr-detail/types";
-import {
-  REPLIES_PER_PAGE,
-  READ_MORE_THRESHOLD,
-  getInitialColor,
-} from "@/shared/utils/qr-detail-rules";
-import { styles } from "@/features/qr-detail/styles/comment-item";
+import type { CommentItem as CommentItemType } from "@/features/qr-detail/hooks/comment-types";
+import { REPLIES_PER_PAGE, READ_MORE_THRESHOLD, getInitialColor } from "@/shared/utils/qr-detail-rules";
 
 interface Props {
   comment: CommentItemType;
@@ -19,9 +14,7 @@ interface Props {
   currentUserLike: "like" | "dislike" | null;
   isMenuOpen: boolean;
   isDeleting: boolean;
-  isRevealed: boolean;
   isCommentOwner: boolean;
-  canDelete: boolean;
   descendants: CommentItemType[];
   expandedReplies: Record<string, boolean>;
   visibleRepliesCount: Record<string, number>;
@@ -29,16 +22,11 @@ interface Props {
   onReply: (comment: CommentItemType) => void;
   onMenuOpen: (id: string, isOwner: boolean) => void;
   onMenuClose: () => void;
-  onDelete: (id: string) => void;
-  onReport: (id: string) => void;
-  onReveal: (id: string) => void;
   onToggleReplies: (id: string) => void;
   onShowMoreReplies: (id: string) => void;
-  allComments: CommentItemType[];
   userLikes: Record<string, "like" | "dislike">;
   commentMenuId: string | null;
   deletingCommentId: string | null;
-  revealedComments: Set<string>;
   userId?: string;
 }
 
@@ -76,11 +64,10 @@ function CommentAvatar({ size, photoURL, initial, gradient }: {
 function ActionPill({
   icon, count, active, activeColor, onPress, surfaceBg,
 }: {
-  icon: string; count: number; active: boolean;
-  activeColor: string; onPress: () => void; surfaceBg: string;
+  icon: string; count: number; active: boolean; activeColor: string; onPress: () => void; surfaceBg: string;
 }) {
   return (
-    <Pressable onPress={onPress} style={styles.actionBtn} hitSlop={6}>
+    <Pressable onPress={onPress} hitSlop={6}>
       <View style={[styles.actionPill, { backgroundColor: surfaceBg }]}>
         <Ionicons name={icon as any} size={13} color={active ? activeColor : "#94A3B8"} />
         {count > 0 && (
@@ -93,12 +80,15 @@ function ActionPill({
   );
 }
 
+const AVATAR_CENTER = 17;
+const ELBOW_H_WIDTH = 16;
+
 const CommentItem = memo(function CommentItem({
   comment, isReply = false, currentUserLike, isMenuOpen, isDeleting,
   isCommentOwner, descendants, expandedReplies, visibleRepliesCount,
-  onLike, onReply, onMenuOpen, onMenuClose, onDelete, onReport, onReveal,
+  onLike, onReply, onMenuOpen, onMenuClose,
   onToggleReplies, onShowMoreReplies,
-  allComments, userLikes, commentMenuId, deletingCommentId, revealedComments, userId,
+  userLikes, commentMenuId, deletingCommentId, userId,
 }: Props) {
   const { colors, isDark } = useTheme();
   const [textExpanded, setTextExpanded] = useState(false);
@@ -111,113 +101,93 @@ const CommentItem = memo(function CommentItem({
 
   const displayName = comment.userUsername
     ? `@${comment.userUsername}`
-    : comment.userId
-      ? `@user_${comment.userId.slice(-5)}`
-      : "@user";
+    : comment.userId ? `@user_${comment.userId.slice(-5)}` : "@user";
   const avatarInitial = comment.userUsername ? comment.userUsername.charAt(0).toUpperCase() : "U";
   const avatarGradient = getInitialColor(displayName);
   const avatarSize = isReply ? 28 : 34;
   const surfaceBg = isDark ? colors.surfaceLight : colors.background;
   const threadColor = isDark ? "rgba(148,163,184,0.25)" : "rgba(148,163,184,0.35)";
 
-  function renderBody() {
-    const isLong = comment.text.length > READ_MORE_THRESHOLD;
-    const displayText = isLong && !textExpanded ? comment.text.slice(0, READ_MORE_THRESHOLD) : comment.text;
+  const isLong = comment.text.length > READ_MORE_THRESHOLD;
+  const displayText = isLong && !textExpanded ? comment.text.slice(0, READ_MORE_THRESHOLD) : comment.text;
 
-    return (
-      <View style={styles.commentBody}>
-        <View style={styles.commentHeader}>
-          <View style={styles.authorPressable}>
-            <Text style={[styles.authorName, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
-              {displayName}
-            </Text>
-          </View>
-          <Text style={[styles.commentTime, { color: colors.textMuted }]} numberOfLines={1}>
-            {formatRelativeTime(comment.createdAt)}
-          </Text>
-          <Pressable
-            onPress={() => isMenuOpen ? onMenuClose() : onMenuOpen(comment.id, isCommentOwner)}
-            style={[styles.menuBtn, { marginLeft: "auto" as any }]}
-            hitSlop={8}
-          >
-            {isDeleting ? (
-              <ActivityIndicator size="small" color={colors.danger} />
-            ) : (
-              <Ionicons name="ellipsis-horizontal" size={16} color={colors.textMuted} />
-            )}
-          </Pressable>
+  const renderBody = () => (
+    <View style={styles.commentBody}>
+      <View style={styles.commentHeader}>
+        <View style={styles.authorPressable}>
+          <Text style={[styles.authorName, { color: colors.text }]} numberOfLines={1}>{displayName}</Text>
         </View>
-
-        <View>
-          <Text style={[styles.commentText, { color: colors.text }]}>
-            {((): ReactNode => {
-              if (displayText.startsWith("@")) {
-                const si = displayText.indexOf(" ");
-                if (si > 0) {
-                  return (
-                    <>
-                      <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}>
-                        {displayText.slice(0, si)}
-                      </Text>
-                      {displayText.slice(si)}
-                    </>
-                  );
-                }
-              }
-              return displayText;
-            })()}
-            {isLong && !textExpanded && (
-              <Text style={[styles.readMoreText, { color: colors.primary }]} onPress={() => setTextExpanded(true)}>
-                {" "}... Read more
-              </Text>
-            )}
-          </Text>
-          {isLong && textExpanded && (
-            <Text style={[styles.readMoreText, { color: colors.primary, marginTop: 3 }]} onPress={() => setTextExpanded(false)}>
-              Show less
-            </Text>
+        <Text style={[styles.commentTime, { color: colors.textMuted }]} numberOfLines={1}>
+          {formatRelativeTime(comment.createdAt)}
+        </Text>
+        <Pressable
+          onPress={() => (isMenuOpen ? onMenuClose() : onMenuOpen(comment.id, isCommentOwner))}
+          style={[styles.menuBtn, { marginLeft: "auto" as any }]}
+          hitSlop={8}
+        >
+          {isDeleting ? (
+            <ActivityIndicator size="small" color={colors.danger} />
+          ) : (
+            <Ionicons name="ellipsis-horizontal" size={16} color={colors.textMuted} />
           )}
-        </View>
-
-        <View style={styles.actionRow}>
-          <ActionPill
-            icon={currentUserLike === "like" ? "thumbs-up" : "thumbs-up-outline"}
-            count={comment.likeCount}
-            active={currentUserLike === "like"}
-            activeColor={colors.primary}
-            onPress={() => onLike(comment.id, "like")}
-            surfaceBg={surfaceBg}
-          />
-          <ActionPill
-            icon={currentUserLike === "dislike" ? "thumbs-down" : "thumbs-down-outline"}
-            count={comment.dislikeCount}
-            active={currentUserLike === "dislike"}
-            activeColor={colors.danger}
-            onPress={() => onLike(comment.id, "dislike")}
-            surfaceBg={surfaceBg}
-          />
-          <Pressable onPress={() => onReply(comment)} style={styles.actionBtn} hitSlop={6}>
-            <View style={[styles.actionPill, { backgroundColor: surfaceBg }]}>
-              <Ionicons name="return-down-forward-outline" size={13} color={colors.textMuted} />
-              <Text style={[styles.actionCount, { color: colors.textMuted }]}>Reply</Text>
-            </View>
-          </Pressable>
-        </View>
+        </Pressable>
       </View>
-    );
-  }
+
+      <Text style={[styles.commentText, { color: colors.text }]}>
+        {displayText.startsWith("@") && displayText.includes(" ") ? (
+          <>
+            <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}>
+              {displayText.slice(0, displayText.indexOf(" "))}
+            </Text>
+            {displayText.slice(displayText.indexOf(" "))}
+          </>
+        ) : displayText}
+        {isLong && !textExpanded && (
+          <Text style={[styles.readMoreText, { color: colors.primary }]} onPress={() => setTextExpanded(true)}>
+            {" "}... Read more
+          </Text>
+        )}
+      </Text>
+      {isLong && textExpanded && (
+        <Text style={[styles.readMoreText, { color: colors.primary, marginTop: 3 }]} onPress={() => setTextExpanded(false)}>
+          Show less
+        </Text>
+      )}
+
+      <View style={styles.actionRow}>
+        <ActionPill
+          icon={currentUserLike === "like" ? "thumbs-up" : "thumbs-up-outline"}
+          count={comment.likeCount}
+          active={currentUserLike === "like"}
+          activeColor={colors.primary}
+          onPress={() => onLike(comment.id, "like")}
+          surfaceBg={surfaceBg}
+        />
+        <ActionPill
+          icon={currentUserLike === "dislike" ? "thumbs-down" : "thumbs-down-outline"}
+          count={comment.dislikeCount}
+          active={currentUserLike === "dislike"}
+          activeColor={colors.danger}
+          onPress={() => onLike(comment.id, "dislike")}
+          surfaceBg={surfaceBg}
+        />
+        <Pressable onPress={() => onReply(comment)} hitSlop={6}>
+          <View style={[styles.actionPill, { backgroundColor: surfaceBg }]}>
+            <Ionicons name="return-down-forward-outline" size={13} color={colors.textMuted} />
+            <Text style={[styles.actionCount, { color: colors.textMuted }]}>Reply</Text>
+          </View>
+        </Pressable>
+      </View>
+    </View>
+  );
 
   if (!isReply) {
     return (
       <View>
         <View style={styles.commentRow}>
           <View style={styles.avatarColumn}>
-            <View style={{ flexShrink: 0 }}>
-              <CommentAvatar size={avatarSize} photoURL={comment.userPhotoURL} initial={avatarInitial} gradient={avatarGradient} />
-            </View>
-            {replyCount > 0 && isExpanded && (
-              <View style={[styles.threadStem, { backgroundColor: threadColor }]} />
-            )}
+            <CommentAvatar size={avatarSize} photoURL={comment.userPhotoURL} initial={avatarInitial} gradient={avatarGradient} />
+            {replyCount > 0 && isExpanded && <View style={[styles.threadStem, { backgroundColor: threadColor }]} />}
           </View>
           {renderBody()}
         </View>
@@ -247,7 +217,6 @@ const CommentItem = memo(function CommentItem({
                       <View style={[styles.elbowH, { backgroundColor: threadColor }]} />
                     </View>
                   </View>
-
                   <View style={{ flex: 1 }}>
                     <CommentItem
                       comment={reply}
@@ -255,9 +224,7 @@ const CommentItem = memo(function CommentItem({
                       currentUserLike={userLikes[reply.id] ?? null}
                       isMenuOpen={commentMenuId === reply.id}
                       isDeleting={deletingCommentId === reply.id}
-                      isRevealed={revealedComments.has(reply.id)}
                       isCommentOwner={userId === reply.userId}
-                      canDelete={userId === reply.userId}
                       descendants={[]}
                       expandedReplies={{}}
                       visibleRepliesCount={{}}
@@ -265,16 +232,11 @@ const CommentItem = memo(function CommentItem({
                       onReply={onReply}
                       onMenuOpen={onMenuOpen}
                       onMenuClose={onMenuClose}
-                      onDelete={onDelete}
-                      onReport={onReport}
-                      onReveal={onReveal}
                       onToggleReplies={onToggleReplies}
                       onShowMoreReplies={onShowMoreReplies}
-                      allComments={allComments}
                       userLikes={userLikes}
                       commentMenuId={commentMenuId}
                       deletingCommentId={deletingCommentId}
-                      revealedComments={revealedComments}
                       userId={userId}
                     />
                   </View>
@@ -307,3 +269,34 @@ const CommentItem = memo(function CommentItem({
 });
 
 export default CommentItem;
+
+const styles = StyleSheet.create({
+  commentRow: { flexDirection: "row", gap: 10, paddingTop: 12, paddingBottom: 6, paddingHorizontal: 2 },
+  avatarColumn: { flexShrink: 0, alignItems: "center", width: 34 },
+  threadStem: { width: 2, flex: 1, borderRadius: 1, marginTop: 4, minHeight: 8 },
+  replyCommentRow: { flexDirection: "row", gap: 8, paddingTop: 8, paddingBottom: 6 },
+  commentBody: { flex: 1, gap: 4 },
+  commentHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  authorPressable: { flex: 1, minWidth: 0 },
+  authorName: { fontSize: 12, fontFamily: "Inter_700Bold" },
+  commentTime: { fontSize: 11, fontFamily: "Inter_400Regular", flexShrink: 0 },
+  readMoreText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  menuBtn: { padding: 2 },
+  commentText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
+  actionRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 },
+  actionPill: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 100 },
+  actionCount: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  repliesToggle: { flexDirection: "row", alignItems: "center", paddingLeft: AVATAR_CENTER - 1, paddingVertical: 4, paddingBottom: 6 },
+  toggleConnector: { width: ELBOW_H_WIDTH + 2, height: 2, borderRadius: 1, marginRight: 6 },
+  repliesToggleInner: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 100, borderWidth: 1 },
+  repliesToggleText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  repliesWrapper: { paddingLeft: AVATAR_CENTER - 1, paddingBottom: 4 },
+  replyThreadRow: { flexDirection: "row" },
+  replyConnectorCol: { width: ELBOW_H_WIDTH + 2, alignItems: "flex-start", position: "relative" },
+  replyVertLine: { position: "absolute", left: 0, top: 0, bottom: 0, width: 2, borderRadius: 1 },
+  replyElbow: { flexDirection: "row", alignItems: "flex-end", marginTop: 20, height: 2, width: "100%" },
+  elbowV: { width: 2, height: 14, position: "absolute", left: 0, bottom: 0, borderRadius: 1 },
+  elbowH: { flex: 1, height: 2, marginLeft: 2, borderRadius: 1 },
+  showMoreBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8, paddingLeft: ELBOW_H_WIDTH + 4 },
+  showMoreText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+});

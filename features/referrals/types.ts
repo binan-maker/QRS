@@ -8,7 +8,6 @@ export interface HeroSlide {
   titleTop: string;
   titleHighlight: string;
   subtitle: string;
-  themeType: "gold" | "silver";
 }
 
 export type RefereeStatus = "already_referred" | "expired" | "eligible";

@@ -119,7 +119,7 @@ export interface UserReferralsDashboard {
   totalInvited: number;
   totalQualified: number;
   totalPending: number;
-  goldCardsEarned: number;
+  goldCardsEarned?: number;
   referrals: ReferralRecord[];
 }
 

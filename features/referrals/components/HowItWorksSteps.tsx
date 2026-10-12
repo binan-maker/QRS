@@ -1,9 +1,15 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text } from "react-native";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { styles } from "../styles";
 
-export function HowItWorksSteps() {
+const STEPS = [
+  { num: "1", title: "Share invite link", desc: "Send your unique code or link to friends" },
+  { num: "2", title: "Friend joins & scans", desc: "Friend signs up and completes their first scan" },
+  { num: "3", title: "Verified connection", desc: "Your referral network connects and builds trust" },
+];
+
+export const HowItWorksSteps = memo(function HowItWorksSteps() {
   const { colors, isDark } = useTheme();
 
   return (
@@ -21,79 +27,33 @@ export function HowItWorksSteps() {
           },
         ]}
       >
-        {/* Step 1 */}
-        <View style={styles.stepItemRow}>
-          <View
-            style={[
-              styles.stepBadge,
-              {
-                backgroundColor: isDark ? "rgba(255, 255, 255, 0.08)" : "#F1F5F9",
-                borderColor: colors.surfaceBorder,
-              },
-            ]}
-          >
-            <Text style={[styles.stepBadgeText, { color: colors.text }]}>1</Text>
-          </View>
-          <View style={styles.stepTextWrap}>
-            <Text style={[styles.stepTitle, { color: colors.text }]}>
-              Share invite link
-            </Text>
-            <Text style={[styles.stepDesc, { color: colors.textSecondary }]}>
-              Send your code or link to friends
-            </Text>
-          </View>
-        </View>
-
-        <View style={[styles.stepDivider, { backgroundColor: colors.surfaceBorder }]} />
-
-        {/* Step 2 */}
-        <View style={styles.stepItemRow}>
-          <View
-            style={[
-              styles.stepBadge,
-              {
-                backgroundColor: isDark ? "rgba(255, 255, 255, 0.08)" : "#F1F5F9",
-                borderColor: colors.surfaceBorder,
-              },
-            ]}
-          >
-            <Text style={[styles.stepBadgeText, { color: colors.text }]}>2</Text>
-          </View>
-          <View style={styles.stepTextWrap}>
-            <Text style={[styles.stepTitle, { color: colors.text }]}>
-              Friend scans QR
-            </Text>
-            <Text style={[styles.stepDesc, { color: colors.textSecondary }]}>
-              Friend signs up and completes 1st scan
-            </Text>
-          </View>
-        </View>
-
-        <View style={[styles.stepDivider, { backgroundColor: colors.surfaceBorder }]} />
-
-        {/* Step 3 */}
-        <View style={styles.stepItemRow}>
-          <View
-            style={[
-              styles.stepBadge,
-              {
-                backgroundColor: isDark ? "rgba(255, 255, 255, 0.08)" : "#F1F5F9",
-                borderColor: colors.surfaceBorder,
-              },
-            ]}
-          >
-            <Text style={[styles.stepBadgeText, { color: colors.text }]}>3</Text>
-          </View>
-          <View style={styles.stepTextWrap}>
-            <Text style={[styles.stepTitle, { color: colors.text }]}>
-              Get rewards
-            </Text>
-            <Text style={[styles.stepDesc, { color: colors.textSecondary }]}>
-              You get Gold VIP, friend gets Silver
-            </Text>
-          </View>
-        </View>
+        {STEPS.map((step, idx) => (
+          <React.Fragment key={step.num}>
+            {idx > 0 && <View style={[styles.stepDivider, { backgroundColor: colors.surfaceBorder }]} />}
+            <View style={styles.stepItemRow}>
+              <View
+                style={[
+                  styles.stepBadge,
+                  {
+                    backgroundColor: isDark ? "rgba(255, 255, 255, 0.08)" : "#F1F5F9",
+                    borderColor: colors.surfaceBorder,
+                  },
+                ]}
+              >
+                <Text style={[styles.stepBadgeText, { color: colors.text }]}>{step.num}</Text>
+              </View>
+              <View style={styles.stepTextWrap}>
+                <Text style={[styles.stepTitle, { color: colors.text }]}>
+                  {step.title}
+                </Text>
+                <Text style={[styles.stepDesc, { color: colors.textSecondary }]}>
+                  {step.desc}
+                </Text>
+              </View>
+            </View>
+          </React.Fragment>
+        ))}
       </View>
     </View>
   );
-}
+});

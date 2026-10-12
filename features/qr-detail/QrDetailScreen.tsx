@@ -1,13 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  RefreshControl,
-  KeyboardAvoidingView,
-  Share,
-  type LayoutChangeEvent,
-} from "react-native";
+import { View, Text, Pressable, RefreshControl, KeyboardAvoidingView, Share, type LayoutChangeEvent } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,11 +11,8 @@ import { useAndroidNavBarScreen } from "@/shared/hooks/useAndroidNavBar";
 import { useNavHide } from "@/shared/hooks/useNavHide";
 import { useQrDetail } from "@/features/qr-detail/hooks/useQrDetail";
 import { makeStyles, offlineSectionStyles } from "@/features/qr-detail/styles";
-import {
-  REPORT_LABELS,
-  REPORT_ICONS,
-  normalizeQrDetailContentType,
-} from "@/shared/utils/qr-detail-rules";
+import { REPORT_LABELS, REPORT_ICONS } from "@/features/qr-detail/utils/report-toast";
+import { normalizeQrDetailContentType } from "@/features/qr-detail/content-types";
 import { getQrShareUrl } from "@/shared/utils/qr-share";
 import { isPaymentQr } from "@/services/analysis";
 import { detectContentType } from "@/shared/utils/qr-content";
@@ -55,41 +44,25 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
   useAndroidNavBarScreen(colors.background, isDark);
   const topInset = useTopInset();
 
-  const params = useLocalSearchParams<{
-    id?: string;
-    hintContent?: string;
-    hintContentType?: string;
-  }>();
-
+  const params = useLocalSearchParams<{ id?: string; hintContent?: string; hintContentType?: string }>();
   const id = props?.id || params.id || "";
-  const hint =
-    props?.hint ||
-    (params.hintContent
-      ? {
-          content: params.hintContent,
-          contentType: normalizeQrDetailContentType(params.hintContentType),
-        }
-      : undefined);
+  const hint = props?.hint || (params.hintContent
+    ? { content: params.hintContent, contentType: normalizeQrDetailContentType(params.hintContentType) }
+    : undefined);
 
   const [overflowOpen, setOverflowOpen] = useState(false);
-  const [toastState, setToastState] = useState<{
-    message: string;
-    icon: keyof typeof Ionicons.glyphMap;
-    key: number;
-  }>({ message: "", icon: "checkmark-circle", key: 0 });
+  const [toastState, setToastState] = useState<{ message: string; icon: keyof typeof Ionicons.glyphMap; key: number }>({
+    message: "", icon: "checkmark-circle", key: 0,
+  });
   const reportSectionY = useRef(0);
   const { navAnimatedStyle, onNavAnimatedScroll, setNavHeight } = useNavHide();
   const [navBarH, setNavBarH] = useState(0);
 
-  const showToast = useCallback(
-    (message: string, icon: keyof typeof Ionicons.glyphMap = "checkmark-circle") => {
-      setToastState((prev) => ({ message, icon, key: prev.key + 1 }));
-    },
-    []
-  );
+  const showToast = useCallback((message: string, icon: keyof typeof Ionicons.glyphMap = "checkmark-circle") => {
+    setToastState((prev) => ({ message, icon, key: prev.key + 1 }));
+  }, []);
 
   const styles = useMemo(() => makeStyles(colors), [colors]);
-
   const q = useQrDetail(id, hint);
 
   useEffect(() => {
@@ -98,21 +71,14 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
 
   const trust = q.trustInfo;
   const content = q.qrCode?.content || q.offlineContent || "";
-  const isPayment =
-    (q.qrCode?.contentType || q.offlineContentType)?.toLowerCase() === "payment" ||
-    (content.length > 0 && isPaymentQr(content));
+  const isPayment = (q.qrCode?.contentType || q.offlineContentType)?.toLowerCase() === "payment" || (content.length > 0 && isPaymentQr(content));
   const rawContentType = q.qrCode?.contentType || q.offlineContentType;
-  const contentType = isPayment
-    ? "payment"
-    : normalizeQrDetailContentType(rawContentType || (content ? detectContentType(content) : "text"));
+  const contentType = isPayment ? "payment" : normalizeQrDetailContentType(rawContentType || (content ? detectContentType(content) : "text"));
   const hasContent = content.length > 0;
 
   const handleReportPress = useCallback(() => {
     setOverflowOpen(false);
-    if (!user) {
-      router.push("/(auth)/login");
-      return;
-    }
+    if (!user) { router.push("/(auth)/login"); return; }
     setTimeout(() => {
       q.scrollRef.current?.scrollTo({ y: reportSectionY.current, animated: true });
     }, 280);
@@ -124,26 +90,16 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
       showToast("This QR cannot be shared yet", "alert-circle-outline");
       return;
     }
-
     try {
-      await Share.share({
-        title: "Share QR Details",
-        message: `View this QR code's TrustScore! ${shareUrl}`,
-      });
+      await Share.share({ title: "Share QR Details", message: `View this QR code's TrustScore! ${shareUrl}` });
     } catch {
       showToast("Unable to open sharing", "alert-circle-outline");
     }
   }, [id, showToast]);
 
-  const isDataLoading =
-    q.isInitialLoading ||
-    q.loading ||
-    (!q.offlineMode && !q.reportsReady && !q.loadError) ||
-    (!hasContent && !q.loadError);
+  const isDataLoading = q.isInitialLoading || q.loading || (!q.offlineMode && !q.reportsReady && !q.loadError) || (!hasContent && !q.loadError);
 
-  if (isDataLoading) {
-    return <LoadingSkeleton topInset={topInset} />;
-  }
+  if (isDataLoading) return <LoadingSkeleton topInset={topInset} />;
 
   if (q.loadError) {
     return (
@@ -174,12 +130,8 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding" keyboardVerticalOffset={0}>
         <View style={styles.container}>
-          {/* Absolute animated navBar */}
           <Animated.View
-            style={[
-              { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background },
-              navAnimatedStyle,
-            ]}
+            style={[{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.background }, navAnimatedStyle]}
             onLayout={(e: LayoutChangeEvent) => {
               const h = e.nativeEvent.layout.height;
               setNavBarH(h);
@@ -187,12 +139,7 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
             }}
           >
             <View style={{ paddingTop: topInset }}>
-              <QrDetailNavBar
-                offlineMode={q.offlineMode}
-                onBack={safeBack}
-                onShare={handleShare}
-                onOverflowOpen={() => setOverflowOpen(true)}
-              />
+              <QrDetailNavBar offlineMode={q.offlineMode} onBack={safeBack} onShare={handleShare} onOverflowOpen={() => setOverflowOpen(true)} />
             </View>
           </Animated.View>
 
@@ -219,45 +166,22 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
               />
             }
           >
-            {/* Early community card when no rating exists yet */}
             {q.initialDataReady && (q.reportsReady || q.offlineMode) && trust.score < 0 && (
               <EarlyCommunityCard isLoggedIn={!!user} onRatePress={handleReportPress} />
             )}
 
-            {/* Content card */}
-            <View>
-              <QrContentCard
-                content={content}
-                contentType={contentType}
-                onOpenContent={q.handleOpenContent}
-                hideOpenAction={false}
-              />
-            </View>
+            <QrContentCard content={content} contentType={contentType} onOpenContent={q.handleOpenContent} hideOpenAction={false} />
 
-            {/* Trust score & community metrics */}
             {q.initialDataReady && (q.reportsReady || q.offlineMode) && (
-              <View>
-                <TrustScoreCard
-                  trustInfo={trust}
-                  reportCounts={q.reportCounts}
-                  totalScans={q.totalScans}
-                />
-              </View>
+              <TrustScoreCard trustInfo={trust} reportCounts={q.reportCounts} totalScans={q.totalScans} />
             )}
 
-            {/* Community report / voting section */}
             {user && (
-              <View
-                onLayout={(e: LayoutChangeEvent) => {
-                  reportSectionY.current = e.nativeEvent.layout.y;
-                }}
-              >
+              <View onLayout={(e: LayoutChangeEvent) => { reportSectionY.current = e.nativeEvent.layout.y; }}>
                 {q.offlineMode ? (
                   <View style={offlineSectionStyles.row}>
                     <Ionicons name="cloud-offline-outline" size={16} color={colors.textMuted} />
-                    <Text style={[offlineSectionStyles.text, { color: colors.textMuted }]}>
-                      Connect to the internet to submit your rating
-                    </Text>
+                    <Text style={[offlineSectionStyles.text, { color: colors.textMuted }]}>Connect to the internet to submit your rating</Text>
                   </View>
                 ) : (
                   <ReportGrid
@@ -268,8 +192,7 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
                     loading={q.reportLoading}
                     onReport={(type) => {
                       const isRemoving = q.userReport === type;
-                      const reported = q.handleReport(type);
-                      if (!reported) return;
+                      if (!q.handleReport(type)) return;
                       if (isRemoving) {
                         showToast(`Removed ${REPORT_LABELS[type] ?? type} vote`, "close-circle-outline");
                       } else {
@@ -281,41 +204,38 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
               </View>
             )}
 
-            {/* Community comments */}
             {!q.offlineMode && (
-              <View>
-                <CommentsSection
-                  user={user}
-                  totalComments={q.totalComments}
-                  commentsList={q.commentsList as any}
-                  topLevelComments={q.topLevelComments as any}
-                  hasMoreComments={q.hasMoreComments}
-                  commentsLoading={q.commentsLoading}
-                  newComment={q.newComment}
-                  setNewComment={q.setNewComment}
-                  replyTo={q.replyTo}
-                  setReplyTo={q.setReplyTo}
-                  commentMenuId={q.commentMenuId}
-                  setCommentMenuId={q.setCommentMenuId}
-                  setCommentMenuOwner={q.setCommentMenuOwner}
-                  submitting={q.submitting}
-                  commentInputRef={q.commentInputRef}
-                  userLikes={q.userLikes}
-                  deletingCommentId={q.deletingCommentId}
-                  revealedComments={q.revealedComments}
-                  setRevealedComments={q.setRevealedComments}
-                  expandedReplies={q.expandedReplies as any}
-                  visibleRepliesCount={q.visibleRepliesCount}
-                  handleSubmitComment={q.handleSubmitComment}
-                  handleCommentLike={q.handleCommentLike as any}
-                  handleDeleteComment={q.handleDeleteComment}
-                  getAllDescendants={q.getAllDescendants as any}
-                  getRootCommentId={q.getRootCommentId}
-                  toggleReplies={q.toggleReplies}
-                  showMoreReplies={q.showMoreReplies}
-                  loadMoreComments={q.loadMoreComments}
-                />
-              </View>
+              <CommentsSection
+                user={user}
+                totalComments={q.totalComments}
+                commentsList={q.commentsList as any}
+                topLevelComments={q.topLevelComments as any}
+                hasMoreComments={q.hasMoreComments}
+                commentsLoading={q.commentsLoading}
+                newComment={q.newComment}
+                setNewComment={q.setNewComment}
+                replyTo={q.replyTo}
+                setReplyTo={q.setReplyTo}
+                commentMenuId={q.commentMenuId}
+                setCommentMenuId={q.setCommentMenuId}
+                setCommentMenuOwner={q.setCommentMenuOwner}
+                submitting={q.submitting}
+                commentInputRef={q.commentInputRef}
+                userLikes={q.userLikes}
+                deletingCommentId={q.deletingCommentId}
+                revealedComments={q.revealedComments}
+                setRevealedComments={q.setRevealedComments}
+                expandedReplies={q.expandedReplies as any}
+                visibleRepliesCount={q.visibleRepliesCount}
+                handleSubmitComment={q.handleSubmitComment}
+                handleCommentLike={q.handleCommentLike as any}
+                handleDeleteComment={q.handleDeleteComment}
+                getAllDescendants={q.getAllDescendants as any}
+                getRootCommentId={q.getRootCommentId}
+                toggleReplies={q.toggleReplies}
+                showMoreReplies={q.showMoreReplies}
+                loadMoreComments={q.loadMoreComments}
+              />
             )}
           </Animated.ScrollView>
         </View>
