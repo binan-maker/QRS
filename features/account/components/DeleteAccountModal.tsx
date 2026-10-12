@@ -1,207 +1,38 @@
 import {
   View, Text, StyleSheet, Pressable,
-  TextInput, ActivityIndicator, Alert,
+  TextInput, ActivityIndicator,
 } from "react-native";
-import { useState, useRef, useEffect } from "react";
-import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "@/shared/utils/haptics";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
-import { deleteUserAccount } from "@/lib/data-service";
-import { authAdapter } from "@/lib/auth";
 import BottomSheet from "@/shared/components/ui/BottomSheet";
+import { useAccountDeletion, CONFIRM_PHRASE } from "../hooks/useAccountDeletion";
 
 interface DeleteAccountModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-const CONFIRM_PHRASE = "DELETE MY ACCOUNT";
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function isNetworkError(e: any): boolean {
-  const msg = (e?.message || "").toLowerCase();
-  return (
-    msg.includes("network") ||
-    msg.includes("offline") ||
-    msg.includes("timeout") ||
-    e?.code === "auth/network-request-failed"
-  );
-}
-
-function isGoogleProvider(): boolean {
-  return authAdapter.getProviderIds().includes("google.com");
-}
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
 export default function DeleteAccountModal({ visible, onClose }: DeleteAccountModalProps) {
   const { colors } = useTheme();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
 
-  const [confirmText,   setConfirmText]   = useState("");
-  const [password,      setPassword]      = useState("");
-  const [showPassword,  setShowPassword]  = useState(false);
-  const [deleting,      setDeleting]      = useState(false);
-  // step 1 = confirm phrase  /  step 2 = re-auth (email/password or Google notice)
-  const [step, setStep] = useState<1 | 2>(1);
-
-  const isConfirmMatch = confirmText.trim().toUpperCase() === CONFIRM_PHRASE;
-
-  // Prevent duplicate taps or re-entry while a deletion is in progress.
-  const deleteInFlightRef = useRef(false);
-  // Prevent async state updates after the sheet unmounts.
-  const mountedRef = useRef(true);
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => { mountedRef.current = false; };
-  }, []);
-
-  // Reset the form whenever the sheet becomes visible.
-  useEffect(() => {
-    if (visible) {
-      setConfirmText("");
-      setPassword("");
-      setShowPassword(false);
-      setStep(1);
-      deleteInFlightRef.current = false;
-    }
-  }, [visible]);
-
-  function handleClose() {
-    if (deleting) return; // don't allow close mid-deletion
-    setConfirmText("");
-    setPassword("");
-    setStep(1);
-    onClose();
-  }
-
-  // ── Core deletion logic ───────────────────────────────────────────────────
-  //
-  // Order (prevents partial deletion):
-  //   1. Optional password re-authentication — fail fast if wrong
-  //   2. authAdapter.deleteUser  — requires recent auth; fails before any data is touched
-  //   3. deleteUserAccount       — marks Firestore isDeleted, kicks off background cleanup
-  //   4. signOut                 — clears local session
-  //
-  // If step 2 fails (requires-recent-login) we advance to step 2 UI and leave
-  // Firestore untouched.  If step 3 fails the auth account is already gone so
-  // the user effectively cannot sign back in — we still navigate away cleanly.
-  async function handleDeleteAccount() {
-    if (!user) return;
-    if (!isConfirmMatch && step === 1) return;
-    if (deleteInFlightRef.current) return;
-    deleteInFlightRef.current = true;
-
-    if (mountedRef.current) setDeleting(true);
-
-    try {
-      const currentUser = authAdapter.getCurrentUser();
-      if (!currentUser) throw new Error("No authenticated user found.");
-
-      // ── Step 1 optional: reauthenticate with password ─────────────────────
-      // Only attempt if the user actually provided a password in step 2.
-      // Any reauthentication failure is surfaced immediately — we never swallow
-      // it and proceed with a stale session.
-      if (step === 2 && password.trim() && currentUser.email) {
-        try {
-          await authAdapter.reauthenticate(currentUser, currentUser.email, password.trim());
-        } catch (reAuthErr: any) {
-          if (mountedRef.current) setDeleting(false);
-          deleteInFlightRef.current = false;
-          if (reAuthErr?.code === "auth/wrong-password" || reAuthErr?.code === "auth/invalid-credential") {
-            Alert.alert("Wrong Password", "The password you entered is incorrect. Please try again.");
-          } else if (isNetworkError(reAuthErr)) {
-            Alert.alert("No Connection", "Could not verify your identity. Please check your internet connection and try again.");
-          } else {
-            Alert.alert("Authentication Failed", reAuthErr?.message || "Could not verify your identity. Please try again.");
-          }
-          return;
-        }
-      }
-
-      // ── Step 2: Verify active session token before touching data ──────────
-      const activeToken = await currentUser.getIdToken();
-      if (!activeToken) {
-        if (mountedRef.current) {
-          setDeleting(false);
-          setStep(2);
-        }
-        deleteInFlightRef.current = false;
-        return;
-      }
-
-      // ── Step 3: Supabase Storage & Database cleanup (MUST run while session JWT is active!)
-      // Wipes avatars/{userId}/* in Storage and deletes/anonymizes all user rows
-      // across comment_likes, qr_reports, qr_scans, qr_comments, qr_codes, usernames, and users.
-      try {
-        await deleteUserAccount(user.id);
-      } catch {}
-
-      // ── Step 4: Permanently delete the Supabase Auth account (auth.users) ─
-      try {
-        await authAdapter.deleteUser(currentUser);
-      } catch (authErr: any) {
-        if (mountedRef.current) setDeleting(false);
-        deleteInFlightRef.current = false;
-        if (authErr?.code === "auth/requires-recent-login") {
-          if (mountedRef.current) setStep(2);
-          return;
-        }
-        if (isNetworkError(authErr)) {
-          Alert.alert("No Connection", "Your account could not be deleted. Please check your internet connection and try again.");
-          return;
-        }
-        Alert.alert("Could Not Delete Account", authErr?.message || "Account deletion failed. Please try again later.");
-        return;
-      }
-
-      // ── Step 4: sign out and navigate ─────────────────────────────────────
-      try {
-        await signOut();
-      } catch {
-        // signOut failure after auth account deletion is non-fatal; Supabase
-        // will eventually clear the stale token.
-      }
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-      // Navigate before resetting form state to avoid setting state after unmount.
-      router.replace("/(tabs)/" as any);
-
-      // Reset form only if still mounted (e.g. the sheet didn't unmount with navigation).
-      if (mountedRef.current) {
-        setConfirmText("");
-        setPassword("");
-        setStep(1);
-        onClose();
-      }
-
-    } catch (e: any) {
-      // Catch-all for unexpected errors not handled above.
-      if (mountedRef.current) {
-        setDeleting(false);
-        deleteInFlightRef.current = false;
-      }
-      if (isNetworkError(e)) {
-        Alert.alert("No Connection", "Your account could not be deleted. Please check your internet connection and try again.");
-      } else {
-        Alert.alert("Error", e?.message || "Could not delete account. Please try again.");
-      }
-    } finally {
-      // Ensure deleting is reset on every code path, including unexpected ones.
-      if (mountedRef.current) {
-        setDeleting(false);
-        deleteInFlightRef.current = false;
-      }
-    }
-  }
+  const {
+    confirmText,
+    setConfirmText,
+    password,
+    setPassword,
+    showPassword,
+    setShowPassword,
+    deleting,
+    step,
+    isConfirmMatch,
+    isGoogleUser,
+    handleDeleteAccount,
+    handleClose,
+  } = useAccountDeletion({ visible, onClose });
 
   if (!user) return null;
-
-  const isGoogleUser = isGoogleProvider();
 
   return (
     <BottomSheet

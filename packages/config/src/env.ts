@@ -33,8 +33,6 @@ export const apiEnvSchema = z.object({
 
   // Auth / security
   SESSION_SECRET: z.string().min(32).optional(),
-  
-  OPENAI_API_KEY: z.string().optional(),
 });
 
 // ─── Web (Next.js) environment ────────────────────────────────────────────────

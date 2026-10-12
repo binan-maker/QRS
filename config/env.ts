@@ -22,7 +22,6 @@ export interface ApiEnv {
   SUPABASE_SERVICE_ROLE_KEY?: string;
   SUPABASE_DATABASE_URL?: string;
   SESSION_SECRET?: string;
-  OPENAI_API_KEY?: string;
 }
 
 // ── Typed environment access (mobile) ─────────────────────────────────────────

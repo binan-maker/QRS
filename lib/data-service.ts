@@ -54,21 +54,14 @@ export {
   type UsernameData,
 } from "@/services/user/username";
 
-// 6. User favorites
-export {
-  isUserFavorite,
-  toggleFavorite,
-  getUserFavorites,
-} from "@/services/user/favorites";
-
-// 7. Privacy settings
+// 6. Privacy settings
 export {
   getPrivacySettings,
   updatePrivacySettings,
   type PrivacySettings,
 } from "@/services/user/privacy";
 
-// 8. Comments read & write
+// 7. Comments read & write
 export {
   addComment,
   toggleCommentLike,

@@ -393,7 +393,7 @@ export async function fetchWebQrComments(
       !String(r.text ?? "").startsWith("__qr_vote__:"),
   );
 
-  // Enrich with public_profiles / users
+  // Enrich with users
   const userIds = Array.from(
     new Set(rows.map((r) => String(r.user_id ?? "")).filter(Boolean)),
   );

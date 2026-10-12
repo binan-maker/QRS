@@ -1,3 +1,5 @@
+export { default as RewardsScreen } from "./RewardsScreen";
+export { default } from "./RewardsScreen";
 export { RewardCard, getCardBadgeInfo, CARD_WIDTH, CARD_HEIGHT } from "./components/RewardCard";
 export { MerchantLogo } from "./components/MerchantLogo";
 export { ScratchModal } from "./components/ScratchModel";

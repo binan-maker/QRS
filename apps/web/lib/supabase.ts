@@ -9,7 +9,6 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 export const SUPABASE_TABLES = {
   USERS: "users",
   USERNAMES: "usernames",
-  PUBLIC_PROFILES_VIEW: "public_profiles",
   QR_CODES: "qr_codes",
   QR_SCANS: "qr_scans",
   QR_COMMENTS: "qr_comments",
@@ -19,48 +18,36 @@ export const SUPABASE_TABLES = {
   USER_SCRATCH_CARDS: "user_scratch_cards",
 } as const;
 
-export const SUPABASE_VIEWS = {
-  PUBLIC_PROFILES: "public_profiles",
-} as const;
-
 export const SUPABASE_BUCKETS = {
   AVATARS: "avatars",
 } as const;
 
 export function getSupabaseEnvConfig() {
-  const url =
+  const envUrl = (
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
     process.env.EXPO_PUBLIC_SUPABASE_URL ||
     process.env.SUPABASE_URL ||
-    "https://placeholder.supabase.co";
+    ""
+  ).trim();
 
-  const anonKey =
+  const envAnonKey = (
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.SUPABASE_ANON_KEY ||
-    "placeholder-anon-key";
+    ""
+  ).trim();
 
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const serviceRoleKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 
-  const isConfigured = Boolean(
-    url &&
-      anonKey &&
-      !url.includes("placeholder") &&
-      !url.includes("YOUR_PROJECT_REF") &&
-      anonKey !== "placeholder-anon-key" &&
-      anonKey !== "your_supabase_anon_key"
-  );
-
-  const hasServiceRole = Boolean(
-    isConfigured &&
-      serviceRoleKey &&
-      serviceRoleKey !== "your_service_role_key" &&
-      serviceRoleKey !== "placeholder-service-role-key"
-  );
+  // Configured solely if real credentials are provided in .env.
+  // When credentials are not provided (e.g. kept local for credential safety),
+  // isConfigured evaluates cleanly to false without fragile placeholder string checks.
+  const isConfigured = Boolean(envUrl && envAnonKey);
+  const hasServiceRole = Boolean(isConfigured && serviceRoleKey);
 
   return {
-    url,
-    anonKey,
+    url: envUrl || "https://placeholder.supabase.co",
+    anonKey: envAnonKey || "placeholder-anon-key",
     serviceRoleKey,
     isConfigured,
     hasServiceRole,

@@ -87,7 +87,6 @@ const STUBBED_PACKAGES = {
   ws:                       EMPTY_STUB,   // WebSocket server
   "source-map":             EMPTY_STUB,   // build tool
   bcryptjs:                 EMPTY_STUB,   // server-side hashing
-  openai:                   EMPTY_STUB,   // called server-side via Express
   esbuild:                  EMPTY_STUB,   // build tool
   pg:                       EMPTY_STUB,   // node postgres driver
   "pg-native":              EMPTY_STUB,

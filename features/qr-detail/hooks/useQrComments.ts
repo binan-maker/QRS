@@ -15,7 +15,7 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
 
   const [commentsList, setCommentsList]             = useState<CommentItem[]>([]);
   const [hasMoreComments, setHasMoreComments]       = useState(false);
-  const [commentsLoading, setCommentsLoading]       = useState(false);
+  const [commentsLoading, setCommentsLoading]       = useState(!offlineMode);
   const [commentsRefreshing, setCommentsRefreshing] = useState(false);
   const [expandedReplies, setExpandedReplies]       = useState<Record<string, boolean>>({});
   const [visibleRepliesCount, setVisibleRepliesCount] = useState<Record<string, number>>({});

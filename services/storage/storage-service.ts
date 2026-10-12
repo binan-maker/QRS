@@ -82,6 +82,15 @@ export async function uploadBase64Image(
 }
 
 async function compressImage(blob: Blob, maxWidth: number, quality: number): Promise<Blob> {
+  // If not in a browser DOM environment (e.g. React Native, Node.js, SSR), safely return the uncompressed blob
+  if (
+    typeof window === "undefined" ||
+    typeof document === "undefined" ||
+    typeof Image === "undefined"
+  ) {
+    return blob;
+  }
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {

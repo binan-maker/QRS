@@ -6,7 +6,7 @@ export interface DisplayBonusCard {
   merchantName: string;
   status: "unlocked" | "scratched" | "expired" | "locked";
   validityText: string;
-  bannerUrl: string;
+  bannerUrl?: string | null;
   merchantLogoUrl?: string | null;
   subtitle?: string | null;
   creativeUrls?: string[];
@@ -14,6 +14,7 @@ export interface DisplayBonusCard {
   isWide?: boolean;
   createdAt?: string | null;
   scratchedAt?: string | null;
+  expiresAt?: string | null;
   offer: RewardOffer;
 }
 

@@ -11,7 +11,6 @@ type AuthenticatedUser = {
 const TABLES: Record<string, string> = {
   users: "users",
   usernames: "usernames",
-  publicProfiles: "public_profiles",
   qrCodes: "qr_codes",
   qrs: "qr_codes",
   comments: "qr_comments",

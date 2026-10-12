@@ -319,11 +319,11 @@ export async function deleteUserAccount(userId: string): Promise<void> {
     await supabase.from(SUPABASE_TABLES.USERS).delete().eq("id", userId);
   } catch {}
 
-  // 3. Clear local mobile caches (AvatarContext, profile cache, and AsyncStorage)
+  // 3. Clear local mobile caches (AvatarContext, profile cache, and universal storage)
   try {
     clearUserProfileCache();
     clearAvatarFromOutside();
-    const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
+    const { universalAsyncStorage: AsyncStorage } = await import("@shared/utils/universal-storage");
     await AsyncStorage.multiRemove([
       "avatar_url_v1",
       "avatar_version_v1",

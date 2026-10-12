@@ -1241,7 +1241,9 @@ export function subscribeToQrReports(
     try {
       const { counts, weighted } = await getQrReportData(qrId);
       if (!cancelled) onUpdate(counts, weighted);
-    } catch {}
+    } catch {
+      if (!cancelled) onUpdate({}, {});
+    }
   };
 
   void refresh();

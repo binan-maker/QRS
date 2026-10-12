@@ -48,6 +48,10 @@ export function useQrDetail(
 
   const totalComments = qrData.qrCode?.commentCount ?? comments.commentsList.length;
 
+  const isInitialLoading =
+    (!qrData.offlineMode && !qrData.loadError) &&
+    (qrData.loading || !reports.reportsReady);
+
   return {
     ...qrData,
     ...reports,
@@ -55,5 +59,6 @@ export function useQrDetail(
     totalComments,
     trustInfo,
     scrollRef,
+    isInitialLoading,
   };
 }

@@ -57,7 +57,6 @@ export const TABLES = {
  */
 export const COLLECTIONS = {
   USERS: TABLES.USERS,
-  PUBLIC_PROFILES: "public_profiles",
   USERNAMES: TABLES.USERNAMES,
   QR_CODES: TABLES.QR_CODES,
   QRS: TABLES.QR_CODES,

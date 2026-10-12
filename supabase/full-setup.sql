@@ -62,23 +62,7 @@ ALTER TABLE public.usernames ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ DEF
 
 CREATE INDEX IF NOT EXISTS idx_usernames_user_id ON public.usernames (user_id);
 
--- 4. PUBLIC PROFILES VIEW (Read-only view hiding private email addresses)
-DROP VIEW IF EXISTS public.public_profiles CASCADE;
-CREATE VIEW public.public_profiles AS
-SELECT
-  id,
-  display_name,
-  username,
-  COALESCE(photo_url, avatar_url) AS photo_url,
-  COALESCE(avatar_url, photo_url) AS avatar_url,
-  scan_count,
-  comment_count,
-  total_likes_received,
-  created_at
-FROM public.users
-WHERE COALESCE(is_deleted, FALSE) = FALSE;
-
--- 5. QR CODES REGISTRY (public.qr_codes)
+-- 4. QR CODES REGISTRY (public.qr_codes)
 CREATE TABLE IF NOT EXISTS public.qr_codes (
   id TEXT PRIMARY KEY,
   content TEXT NOT NULL DEFAULT '',

@@ -132,7 +132,13 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
     }
   }, [id, showToast]);
 
-  if (q.loading || (!hasContent && !q.loadError)) {
+  const isDataLoading =
+    q.isInitialLoading ||
+    q.loading ||
+    (!q.offlineMode && !q.reportsReady && !q.loadError) ||
+    (!hasContent && !q.loadError);
+
+  if (isDataLoading) {
     return <LoadingSkeleton topInset={topInset} />;
   }
 
@@ -211,7 +217,7 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
             }
           >
             {/* Early community card when no rating exists yet */}
-            {q.initialDataReady && !q.offlineMode && trust.score < 0 && (
+            {q.initialDataReady && (q.reportsReady || q.offlineMode) && trust.score < 0 && (
               <EarlyCommunityCard isLoggedIn={!!user} onRatePress={handleReportPress} />
             )}
 
@@ -226,7 +232,7 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
             </View>
 
             {/* Trust score & community metrics */}
-            {q.initialDataReady && !q.offlineMode && (
+            {q.initialDataReady && (q.reportsReady || q.offlineMode) && (
               <View>
                 <TrustScoreCard
                   trustInfo={trust}
@@ -251,33 +257,7 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
                     </Text>
                   </View>
                 ) : (
-                  <>
-                    <Pressable
-                      onPress={() => router.push("/(tabs)/rewards")}
-                      style={({ pressed }) => ({
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        backgroundColor: `${colors.primary}12`,
-                        borderColor: `${colors.primary}35`,
-                        borderWidth: 1,
-                        borderRadius: 14,
-                        paddingHorizontal: 14,
-                        paddingVertical: 10,
-                        marginBottom: 12,
-                        opacity: pressed ? 0.85 : 1,
-                      })}
-                    >
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
-                        <Ionicons name="gift-outline" size={18} color={colors.primary} />
-                        <Text style={{ fontSize: 13, color: colors.text, fontWeight: "600", flex: 1, lineHeight: 18 }}>
-                          Rate safety or leave a review to earn progress toward your daily Scratch Card!
-                        </Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-                    </Pressable>
-
-                    <ReportGrid
+                  <ReportGrid
                     reportCounts={q.reportCounts}
                     userReport={q.userReport}
                     isLoggedIn={true}
@@ -294,7 +274,6 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
                       }
                     }}
                   />
-                  </>
                 )}
               </View>
             )}

@@ -4,7 +4,7 @@ import {
   createServerSupabaseClient,
   createAdminSupabaseClient,
 } from "@/lib/supabase";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { universalAsyncStorage as AsyncStorage } from "@shared/utils/universal-storage";
 import { useAuthStore } from "@/store/authStore";
 import { getCurrentToken } from "@/lib/auth";
 import { queryClient } from "@/lib/query-client";

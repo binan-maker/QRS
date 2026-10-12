@@ -38,11 +38,20 @@ export function useQrData(
   const { isOnline } = useNetworkStatus();
 
   const [qrCode, setQrCode] = useState<QrCodeData | null>(null);
-  const [loading, setLoading] = useState<boolean>(!hint?.content);
+  const [loading, setLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<boolean>(false);
   const [offlineMode, setOfflineMode] = useState<boolean>(false);
   const [totalScans, setTotalScans] = useState<number>(0);
-  const [initialDataReady, setInitialDataReady] = useState<boolean>(Boolean(hint?.content));
+  const [initialDataReady, setInitialDataReady] = useState<boolean>(false);
+
+  // Safety fallback: ensure loading state never hangs longer than 2.5s
+  useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+      setInitialDataReady(true);
+    }, 2500);
+    return () => clearTimeout(safetyTimer);
+  }, [id]);
 
   const offlineContent = hint?.content;
   const offlineContentType = hint?.contentType;

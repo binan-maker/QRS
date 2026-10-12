@@ -71,6 +71,7 @@ export function useQrReports(
     setReportCounts({});
     setWeightedCounts({});
     setUserReport(null);
+    setReportsReadyForId(null);
     setReportError(null);
   }, [id]);
 
@@ -190,6 +191,13 @@ export function useQrReports(
     if (offlineMode) return;
 
     let cancelled = false;
+    // Safety fallback: ensure reports are marked ready within 1500ms so skeleton never hangs forever
+    const safetyTimer = setTimeout(() => {
+      if (!cancelled) {
+        setReportsReadyForId((curr) => curr || id);
+      }
+    }, 1500);
+
     const unsub = subscribeToQrReports(id, (counts, weighted) => {
       if (cancelled) return;
       serverCountsRef.current = counts;
@@ -206,6 +214,7 @@ export function useQrReports(
 
     return () => {
       cancelled = true;
+      clearTimeout(safetyTimer);
       unsub();
     };
   }, [id, offlineMode, applyOptimisticDelta]);

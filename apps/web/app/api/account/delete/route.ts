@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     // Release claimed usernames
     await dbClient.from(SUPABASE_TABLES.USERNAMES).delete().eq("user_id", userId);
 
-    // Scrub and delete row from public.users (public_profiles view updates automatically)
+    // Scrub and mark deleted in public.users
     await dbClient
       .from(SUPABASE_TABLES.USERS)
       .update({

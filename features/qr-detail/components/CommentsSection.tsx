@@ -209,11 +209,17 @@ export default function CommentsSection({
           bug in React Native's Fabric renderer. */}
       <View>
         {topLevelComments.length === 0 ? (
-          <View style={styles.noComments}>
-            <Ionicons name="chatbubbles-outline" size={36} color={colors.textMuted} />
-            <Text style={styles.noCommentsText}>No comments yet</Text>
-            <Text style={styles.noCommentsSubtext}>Be the first to share your thoughts</Text>
-          </View>
+          commentsLoading ? (
+            <View style={{ paddingVertical: 24, alignItems: "center", justifyContent: "center" }}>
+              <ActivityIndicator size="small" color={colors.primary} />
+            </View>
+          ) : (
+            <View style={styles.noComments}>
+              <Ionicons name="chatbubbles-outline" size={36} color={colors.textMuted} />
+              <Text style={styles.noCommentsText}>No comments yet</Text>
+              <Text style={styles.noCommentsSubtext}>Be the first to share your thoughts</Text>
+            </View>
+          )
         ) : (
           topLevelComments.map((comment) => (
             <CommentItem

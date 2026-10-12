@@ -26,8 +26,8 @@ export interface StructuredUserProfile {
 }
 
 /**
- * Synchronizes full user details into Supabase `users` and `public_profiles`
- * tables so all details are structured and persistent.
+ * Synchronizes full user details into Supabase `users` table so all details
+ * are structured and persistent.
  */
 export async function syncStructuredUserProfile(
   profile: StructuredUserProfile,
@@ -115,7 +115,6 @@ export async function syncStructuredUserProfile(
  * - `qr_comments`: soft-deletes / deletes comments
  * - `comment_likes`: removes all user likes
  * - `qr_scans`: cleans up all scan records for the user
- * - `public_profiles`: deletes the public profile
  * - `usernames`: deletes claimed handles
  * - `users`: marks deleted and wipes sensitive data
  * - LocalStorage: clears cached avatars, scans, and session tokens
