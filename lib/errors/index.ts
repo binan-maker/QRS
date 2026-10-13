@@ -189,3 +189,6 @@ export function errorMessage(error: unknown): string {
   if (typeof error === "string") return error;
   return "An unexpected error occurred";
 }
+
+// ── Global Handlers Re-export ─────────────────────────────────────────────────
+export * from "./handlers";

@@ -5,7 +5,7 @@
 // All other files use the adapter interface from lib/storage.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/core/supabase";
 import type { StorageAdapter, UploadOptions, UploadableData } from "../adapter";
 
 // Generic app uploads use the avatars bucket. Feature-specific callers use

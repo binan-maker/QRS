@@ -70,7 +70,7 @@ export function useProfile() {
       await updateUserPhotoURL(user.id, newPhotoUrl);
 
       if (!newPhotoUrl.startsWith("data:")) {
-        const { supabase } = await import("@/lib/supabase");
+        const { supabase } = await import("@/lib/core/supabase");
         await supabase.auth.updateUser({
           data: { avatar_url: newPhotoUrl, photo_url: newPhotoUrl, custom_avatar_url: newPhotoUrl },
         }).catch(() => {});
@@ -149,7 +149,7 @@ export function useProfile() {
         deleteProfilePhoto(user.id, prevUrl).catch(() => {});
       }
       await updateUserPhotoURL(user.id, null);
-      const { supabase } = await import("@/lib/supabase");
+      const { supabase } = await import("@/lib/core/supabase");
       await supabase.auth.updateUser({
         data: { avatar_url: null, photo_url: null, custom_avatar_url: null },
       }).catch(() => {});

@@ -30,7 +30,7 @@ import {
   LegalPara as Para,
   LegalBullet as Bullet,
   LegalWarningBox as WarnBox,
-} from "./components/LegalComponents";
+} from "../components";
 
 export default function TermsScreen() {
   const { colors } = useTheme();

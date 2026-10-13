@@ -1,5 +1,5 @@
 import { db } from "@/lib/db/client";
-import { supabase, SUPABASE_TABLES, SUPABASE_BUCKETS } from "@/lib/supabase";
+import { supabase, SUPABASE_TABLES, SUPABASE_BUCKETS } from "@/lib/core/supabase";
 import { storageAdapter } from "@/lib/storage";
 import { tsToString } from "../utils";
 import type { UserStats } from "../types";

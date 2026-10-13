@@ -4,8 +4,8 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { getUserScansPaginated, syncLocalScansToCloud } from "@/lib/data-service";
-import { isWebSupabaseConfigured } from "@/lib/supabase";
-import { queryClient as globalQueryClient } from "@/lib/query-client";
+import { isWebSupabaseConfigured } from "@/lib/core/supabase";
+import { queryClient as globalQueryClient } from "@/lib/core/query-client";
 import { mergeAndDeduplicateScans } from "@/services/scan-history/dedup";
 import {
   getCachedHistoryPage,

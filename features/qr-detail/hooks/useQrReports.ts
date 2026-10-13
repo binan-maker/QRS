@@ -10,7 +10,7 @@ import {
 } from "@/services/moderation/report-service";
 import { calculateTrustScore } from "@/services/trust/trust-service";
 import { invalidateQrCache } from "@/services/cache/qr-cache";
-import { queryClient } from "@/lib/query-client";
+import { queryClient } from "@/lib/core/query-client";
 import { db } from "@/lib/db/client";
 import { COLLECTIONS } from "@/shared/constants/collections";
 

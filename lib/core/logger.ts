@@ -2,7 +2,7 @@
 // CENTRALIZED LOGGER — replaces scattered console.log calls.
 // ───────────────────────────────────────────────────────────────────────────────
 // Usage:
-//   import { createLogger } from "@/lib/logger";
+//   import { createLogger } from "@/lib/core/logger"; // or import { createLogger } from "@/lib";
 //   const log = createLogger("user-service");
 //   log.debug("Profile loaded", { userId });
 //   log.error("Upload failed", error);

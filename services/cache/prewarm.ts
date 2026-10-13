@@ -2,7 +2,7 @@ import {
   getCachedHistoryPage,
   getCachedScanStats,
 } from "./qr-cache";
-import { queryClient } from "@/lib/query-client";
+import { queryClient } from "@/lib/core/query-client";
 import type { ScanStatsResult } from "@/services/scan-history/scan-stats";
 
 // Track which user IDs have already been pre-warmed this session so

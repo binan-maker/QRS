@@ -31,7 +31,7 @@ import {
   LegalPara as Para,
   LegalSubHead as SubHead,
   LegalBullet as Bullet,
-} from "./components/LegalComponents";
+} from "../components";
 
 export default function PrivacyPolicyScreen() {
   const { colors } = useTheme();

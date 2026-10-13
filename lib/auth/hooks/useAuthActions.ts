@@ -13,7 +13,7 @@ import { mapAuthError, getAuthErrorMessage, buildAuthUser } from "@/lib/auth/uti
 import { trackLoginCompleted } from "@/lib/core/analytics";
 import { db } from "@/lib/db";
 import { COLLECTIONS } from "@/shared/constants/collections";
-import { queryClient } from "@/lib/query-client";
+import { queryClient } from "@/lib/core/query-client";
 import { clearAppSessionData } from "@/services/cache";
 import { cacheAuthUser, clearCachedAuthUser } from "@/lib/auth/session-cache";
 import type { AuthUser } from "@/lib/auth/types";

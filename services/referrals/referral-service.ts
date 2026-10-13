@@ -1,4 +1,4 @@
-import { supabase, isWebSupabaseConfigured } from "../../lib/supabase";
+import { supabase, isWebSupabaseConfigured } from "@/lib/core/supabase";
 import { universalAsyncStorage as AsyncStorage } from "../../shared/utils/universal-storage";
 import type { ReferralRecord, RewardWallet, UserReferralsDashboard } from "./types";
 

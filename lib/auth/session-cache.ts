@@ -3,7 +3,7 @@ import {
   getStartupPref,
   isStartupPrefsLoaded,
   STARTUP_PREF_KEYS,
-} from "@/lib/startup-prefs";
+} from "@/lib/core/startup-prefs";
 import type { AuthUser } from "./types";
 
 let memoryOverride: AuthUser | null | undefined;

@@ -1,6 +1,6 @@
 import { universalAsyncStorage as AsyncStorage } from "@shared/utils/universal-storage";
 import { db } from "@/lib/db/client";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/core/supabase";
 import { tsToMs } from "../integrity/time-utils";
 import { checkCommentEligibility, recordComment } from "../integrity";
 import type { CommentItem } from "../types";

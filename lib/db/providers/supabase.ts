@@ -2,7 +2,7 @@
 // SUPABASE DB PROVIDER — Lean, robust DbAdapter + RealtimeAdapter for Supabase
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { supabase } from "../../supabase";
+import { supabase } from "@/lib/core/supabase";
 import type { DbAdapter, RealtimeAdapter, QueryOptions, DbDocument, BatchWriter } from "../adapter";
 
 const toSnake = (s: string) => s.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();

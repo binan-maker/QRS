@@ -11,7 +11,7 @@ import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import { router } from "expo-router";
-import { createLogger } from "@/lib/logger";
+import { createLogger } from "./logger";
 
 const log = createLogger("push-notifications");
 

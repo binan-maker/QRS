@@ -1,5 +1,5 @@
 import { db } from "../../lib/db/client";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "@/lib/core/supabase";
 import { getCachedUserProfile, setCachedUserProfile } from "./cache";
 import type { UsernameData } from "../types";
 import { COLLECTIONS } from "../../shared/constants/collections";

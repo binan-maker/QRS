@@ -7,7 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
  * Most production crashes actually come from:
  *
  *   1. Unhandled promise rejections inside event handlers, timers, or
- *      Firebase callbacks (e.g. permission_denied, network timeouts).
+ *      Firebase/Supabase callbacks (e.g. permission_denied, network timeouts).
  *   2. Native bridge errors that bubble up to the global ErrorUtils handler.
  *
  * Without these handlers the app either silently hangs (rejection lost) or
@@ -23,7 +23,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const STORAGE_KEY = "binro_recent_errors";
 const MAX_BREADCRUMBS = 10;
 
-type Breadcrumb = {
+export type Breadcrumb = {
   ts: number;
   source: string;
   message: string;

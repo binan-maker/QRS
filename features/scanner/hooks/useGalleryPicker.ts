@@ -50,7 +50,7 @@ export async function pickAndDecodeImage(
 
 async function decodeImageViaServer(base64: string, token: string): Promise<string | null> {
   try {
-    const { getApiUrl } = await import("@/lib/query-client");
+    const { getApiUrl } = await import("@/lib/core/query-client");
     const res = await fetch(new URL("/api/qr/decode-image", getApiUrl()).toString(), {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

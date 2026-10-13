@@ -3,4 +3,4 @@ export {
   SUPABASE_BUCKETS,
   getSupabaseEnvConfig,
   SUPABASE_CONFIG,
-} from "@/lib/supabase";
+} from "@/lib/core/supabase";

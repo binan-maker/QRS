@@ -3,11 +3,11 @@ import {
   supabase,
   createServerSupabaseClient,
   createAdminSupabaseClient,
-} from "@/lib/supabase";
+} from "@/lib/core/supabase";
 import { universalAsyncStorage as AsyncStorage } from "@shared/utils/universal-storage";
 import { useAuthStore } from "@/store/authStore";
 import { getCurrentToken } from "@/lib/auth";
-import { queryClient } from "@/lib/query-client";
+import { queryClient } from "@/lib/core/query-client";
 import {
   invalidateHistoryCache,
   invalidateHomeScansCache,

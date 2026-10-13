@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { db } from "../../lib/db/client";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "@/lib/core/supabase";
 import { COLLECTIONS } from "../../shared/constants/collections";
 import { getAnonymousQrContent } from "../cache/anonymous-session";
 import { detectContentType } from "../qr-content-type";

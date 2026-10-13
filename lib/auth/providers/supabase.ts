@@ -5,7 +5,7 @@
 // All other files use the adapter interface from lib/auth.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { supabase } from "../../supabase";
+import { supabase } from "@/lib/core/supabase";
 import type { AuthAdapter, AuthAdapterUser } from "../adapter";
 import type { User } from "@supabase/supabase-js";
 import { API_BASE_URL } from "@/config";
