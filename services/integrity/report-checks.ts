@@ -1,12 +1,12 @@
-import { db } from "../../lib/db/client";
 import type { AccountTier } from "./types";
-import { tsToMs, formatTimeRemaining, timeUntilWindowReset, isWithin24h, isWithinMs } from "./time-utils";
+import { formatTimeRemaining, timeUntilWindowReset, isWithin24h, isWithinMs } from "./time-utils";
 import { getAccountTier } from "./tiers";
-import { COLLECTIONS } from "../../shared/constants/collections";
 
 const HOURLY_REPORT_WINDOW_MS = 3_600_000;
 const HOURLY_REPORT_LIMIT_PER_USER = 100; // raised so per-QR limit is hit first
-const HOURLY_REPORT_LIMIT_PER_QR   = 20;  // 20 interactions per QR per hour
+const HOURLY_REPORT_LIMIT_PER_QR = 20; // 20 interactions per QR per hour
+const MAX_USER_BUCKETS = 200;
+const MAX_PER_QR_ENTRIES = 50;
 
 interface RateBucket {
   dailyWindowStart: number;
@@ -21,6 +21,10 @@ const userRateBuckets = new Map<string, RateBucket>();
 function getOrCreateBucket(userId: string): RateBucket {
   let bucket = userRateBuckets.get(userId);
   if (!bucket) {
+    if (userRateBuckets.size >= MAX_USER_BUCKETS) {
+      const oldestKey = userRateBuckets.keys().next().value;
+      if (oldestKey) userRateBuckets.delete(oldestKey);
+    }
     bucket = {
       dailyWindowStart: 0,
       dailyCount: 0,
@@ -39,7 +43,6 @@ export async function checkReportEligibility(
   emailVerified: boolean,
   isChangingReport?: boolean
 ): Promise<{ allowed: true; weight: number; tier: AccountTier } | never> {
-
   const tierResult = await getAccountTier(userId, emailVerified);
   const tier = tierResult as AccountTier;
 
@@ -56,7 +59,7 @@ export async function checkReportEligibility(
     }
 
     if (isWithinMs(bucket.hourlyWindowStart, HOURLY_REPORT_WINDOW_MS) && bucket.hourlyCount >= HOURLY_REPORT_LIMIT_PER_USER) {
-      const remainingMs = (bucket.hourlyWindowStart + HOURLY_REPORT_WINDOW_MS) - Date.now();
+      const remainingMs = bucket.hourlyWindowStart + HOURLY_REPORT_WINDOW_MS - Date.now();
       throw new Error(
         `You've reported ${HOURLY_REPORT_LIMIT_PER_USER} times in the last hour. Please wait ${formatTimeRemaining(remainingMs)} before reporting again.`
       );
@@ -64,7 +67,7 @@ export async function checkReportEligibility(
 
     const perQr = bucket.perQr.get(qrId);
     if (perQr && isWithinMs(perQr.windowStart, HOURLY_REPORT_WINDOW_MS) && perQr.count >= HOURLY_REPORT_LIMIT_PER_QR) {
-      const remainingMs = (perQr.windowStart + HOURLY_REPORT_WINDOW_MS) - Date.now();
+      const remainingMs = perQr.windowStart + HOURLY_REPORT_WINDOW_MS - Date.now();
       throw new Error(
         `You've already reported this QR code ${HOURLY_REPORT_LIMIT_PER_QR} times in the last hour. Please wait ${formatTimeRemaining(remainingMs)}.`
       );
@@ -92,66 +95,19 @@ export async function recordReport(userId: string, qrId: string): Promise<void> 
     bucket.hourlyCount = 1;
   }
 
+  // Prune expired perQr entries if reaching threshold
+  if (bucket.perQr.size >= MAX_PER_QR_ENTRIES) {
+    for (const [key, val] of Array.from(bucket.perQr.entries())) {
+      if (!isWithinMs(val.windowStart, HOURLY_REPORT_WINDOW_MS)) {
+        bucket.perQr.delete(key);
+      }
+    }
+  }
+
   const perQr = bucket.perQr.get(qrId);
   if (perQr && isWithinMs(perQr.windowStart, HOURLY_REPORT_WINDOW_MS)) {
     perQr.count += 1;
   } else {
     bucket.perQr.set(qrId, { windowStart: now, count: 1 });
-  }
-}
-
-export async function analyzeReportsForCollusion(qrId: string): Promise<{
-  suspicious: boolean;
-  reason: string | null;
-  safeWeightMultiplier: number;
-  negativeWeightMultiplier: number;
-}> {
-  try {
-    const { docs } = await db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.REPORTS]);
-    const activeDocs = docs.filter((d) => !d.data.userRemoved);
-    if (activeDocs.length < 3) {
-      return { suspicious: false, reason: null, safeWeightMultiplier: 1, negativeWeightMultiplier: 1 };
-    }
-
-    const now = Date.now();
-    const oneHourAgo = now - 3600000;
-    const allSafe = activeDocs.filter((d) => d.data.reportType === "safe");
-    const allNeg = activeDocs.filter((d) => d.data.reportType !== "safe");
-    const fastSafe = allSafe.filter((d) => tsToMs(d.data.createdAt) > oneHourAgo);
-    const fastNeg = allNeg.filter((d) => tsToMs(d.data.createdAt) > oneHourAgo);
-
-    if (fastSafe.length >= 8) {
-      const lowTierSafe = fastSafe.filter((d) => (d.data.weight || 1) <= 0.3);
-      if (lowTierSafe.length / fastSafe.length > 0.5) {
-        return { suspicious: true, reason: "Coordinated safe-voting detected: many low-trust accounts voted safe in a short time.", safeWeightMultiplier: 0.1, negativeWeightMultiplier: 1 };
-      }
-      return { suspicious: true, reason: "Unusually high safe-voting velocity detected.", safeWeightMultiplier: 0.4, negativeWeightMultiplier: 1 };
-    }
-
-    if (fastNeg.length >= 8) {
-      const lowTierNeg = fastNeg.filter((d) => (d.data.weight || 1) <= 0.3);
-      if (lowTierNeg.length / fastNeg.length > 0.5) {
-        return { suspicious: true, reason: "Coordinated negative-voting detected: many low-trust accounts voted scam/fake in a short time.", safeWeightMultiplier: 1, negativeWeightMultiplier: 0.1 };
-      }
-      return { suspicious: true, reason: "Unusually high negative-voting velocity detected.", safeWeightMultiplier: 1, negativeWeightMultiplier: 0.4 };
-    }
-
-    if (allSafe.length >= 4) {
-      const lowTierSafe = allSafe.filter((d) => (d.data.weight || 1) <= 0.3);
-      if (lowTierSafe.length / allSafe.length > 0.7) {
-        return { suspicious: true, reason: "Majority of safe reports are from new or low-credibility accounts.", safeWeightMultiplier: 0.2, negativeWeightMultiplier: 1 };
-      }
-    }
-
-    if (allNeg.length >= 4) {
-      const lowTierNeg = allNeg.filter((d) => (d.data.weight || 1) <= 0.3);
-      if (lowTierNeg.length / allNeg.length > 0.7) {
-        return { suspicious: true, reason: "Majority of scam/fake reports are from new or low-credibility accounts.", safeWeightMultiplier: 1, negativeWeightMultiplier: 0.2 };
-      }
-    }
-
-    return { suspicious: false, reason: null, safeWeightMultiplier: 1, negativeWeightMultiplier: 1 };
-  } catch {
-    return { suspicious: false, reason: null, safeWeightMultiplier: 1, negativeWeightMultiplier: 1 };
   }
 }

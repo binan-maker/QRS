@@ -1,7 +1,7 @@
 import {
   getCachedHistoryPage,
   getCachedScanStats,
-} from "@/services/cache/qr-cache";
+} from "./qr-cache";
 import { queryClient } from "@/lib/query-client";
 import type { ScanStatsResult } from "@/services/scan-history/scan-stats";
 

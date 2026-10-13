@@ -2,6 +2,7 @@
 // Consolidates teardown of all in-memory, query client, and persistent caches
 // upon user sign-out or session invalidation, preserving clear boundary separation.
 
+import { universalAsyncStorage as AsyncStorage } from "@shared/utils/universal-storage";
 import { clearAllMemCache, clearAllAsyncStorageCache } from "./qr-cache";
 import { clearAllAnonymousSessions } from "./anonymous-session";
 import { clearPrewarmState } from "./prewarm";
@@ -35,12 +36,11 @@ export function clearImmediateSessionCaches(): void {
 }
 
 /**
- * Asynchronously clears persisted AsyncStorage caches belonging to the signed-out
+ * Asynchronously clears persisted storage caches belonging to the signed-out
  * user (scan history, cached QR content blobs, and local download keys).
  */
 export async function clearPersistentSessionCaches(signedOutUserId?: string | null): Promise<void> {
   try {
-    const AsyncStorage = (await import("@react-native-async-storage/async-storage")).default;
     if (signedOutUserId) {
       await AsyncStorage.removeItem(`local_scan_history_${signedOutUserId}`).catch(() => {});
     }

@@ -13,6 +13,7 @@ import { COLLECTIONS } from "@/shared/constants/collections";
 import { API_BASE_URL } from "@/config";
 
 // In-memory reaction & dislike tracking (since comment_likes only stores likes and qr_comments only has `likes`)
+const MAX_COMMENT_CACHE_ENTRIES = 200;
 const memoryCommentReactions = new Map<string, "like" | "dislike" | null>();
 const memoryCommentDislikes = new Map<string, number>();
 
@@ -21,6 +22,10 @@ export function getCachedCommentDislikes(commentId: string): number {
 }
 
 export function setCachedCommentDislikes(commentId: string, count: number): void {
+  if (memoryCommentDislikes.size >= MAX_COMMENT_CACHE_ENTRIES && !memoryCommentDislikes.has(commentId)) {
+    const oldestKey = memoryCommentDislikes.keys().next().value;
+    if (oldestKey) memoryCommentDislikes.delete(oldestKey);
+  }
   memoryCommentDislikes.set(commentId, Math.max(0, count));
 }
 
@@ -29,7 +34,12 @@ export function getCachedUserReaction(commentId: string, userId: string): "like"
 }
 
 export function setCachedUserReaction(commentId: string, userId: string, reaction: "like" | "dislike" | null): void {
-  memoryCommentReactions.set(`${commentId}:${userId}`, reaction);
+  const key = `${commentId}:${userId}`;
+  if (memoryCommentReactions.size >= MAX_COMMENT_CACHE_ENTRIES && !memoryCommentReactions.has(key)) {
+    const oldestKey = memoryCommentReactions.keys().next().value;
+    if (oldestKey) memoryCommentReactions.delete(oldestKey);
+  }
+  memoryCommentReactions.set(key, reaction);
 }
 
 async function ensureCommentParentRecords(

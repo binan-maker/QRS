@@ -1,6 +1,3 @@
-// Weight validation happens at the server-authoritative Express route layer
-// before this service is called.
-
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { db } from "../../lib/db/client";
 import { supabase } from "../../lib/supabase";
@@ -12,7 +9,23 @@ import {
   recordReport,
 } from "../integrity";
 
-// Universal storage helper (localStorage on web browser, AsyncStorage on React Native, safe no-op on SSR)
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+export interface QrReportMeta {
+  content?: string;
+  contentType?: string;
+}
+
+export interface VoteRecord {
+  userId: string;
+  reportType: string | null;
+  weight: number;
+  userRemoved: boolean;
+  timestampMs: number;
+}
+
+// ── Cross-Platform Storage ────────────────────────────────────────────────────
+
 async function getStorageItem(key: string): Promise<string | null> {
   try {
     if (typeof window !== "undefined" && window.localStorage) {
@@ -39,24 +52,10 @@ async function setStorageItem(key: string, value: string): Promise<void> {
   } catch {}
 }
 
-export interface QrReportMeta {
-  content?: string;
-  contentType?: string;
-}
+// ── In-Memory Bounded Vote Cache ──────────────────────────────────────────────
 
-export interface VoteRecord {
-  userId: string;
-  reportType: string | null;
-  weight: number;
-  userRemoved: boolean;
-  timestampMs: number;
-}
-
-const VOTE_SHADOW_PREFIX = "__qr_vote__:";
-
-// In-memory cache of latest per-QR user votes for instant read consistency
+const MAX_CACHED_QRS = 100;
 const memoryQrVotes = new Map<string, Map<string, VoteRecord>>();
-const syncedShadowKeys = new Set<string>();
 
 function parseTimeMs(val: any): number {
   if (!val) return 0;
@@ -66,7 +65,7 @@ function parseTimeMs(val: any): number {
   return Number.isFinite(ms) ? ms : 0;
 }
 
-function normalizeVoteType(raw: unknown): string | null {
+export function normalizeVoteType(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
   const cleaned = raw.trim().toLowerCase();
   if (!cleaned || cleaned === "removed" || cleaned === "none" || cleaned === "null") {
@@ -77,10 +76,16 @@ function normalizeVoteType(raw: unknown): string | null {
 }
 
 function setMemoryVote(qrId: string, record: VoteRecord): void {
-  if (!memoryQrVotes.has(qrId)) {
-    memoryQrVotes.set(qrId, new Map());
+  let qrMap = memoryQrVotes.get(qrId);
+  if (!qrMap) {
+    if (memoryQrVotes.size >= MAX_CACHED_QRS) {
+      const oldestKey = memoryQrVotes.keys().next().value;
+      if (oldestKey) memoryQrVotes.delete(oldestKey);
+    }
+    qrMap = new Map();
+    memoryQrVotes.set(qrId, qrMap);
   }
-  memoryQrVotes.get(qrId)!.set(record.userId, record);
+  qrMap.set(record.userId, record);
 }
 
 export function seedQrReportCountsInMemory(
@@ -140,7 +145,7 @@ async function loadLocalQrVotesMap(qrId: string): Promise<Map<string, VoteRecord
     }
   } catch {}
 
-  // If result has ANY real vote, purge synthetic __seed_ entries immediately to prevent double counting
+  // If real user votes exist, purge synthetic seed entries to prevent double counting
   const hasRealVote = Array.from(result.keys()).some((k) => !k.startsWith("__seed_"));
   if (hasRealVote) {
     for (const k of Array.from(result.keys())) {
@@ -156,106 +161,19 @@ async function loadLocalQrVotesMap(qrId: string): Promise<Map<string, VoteRecord
   return result;
 }
 
-async function persistVoteShadowComment(
+async function saveVoteLocalCache(
   qrId: string,
   userId: string,
-  reportType: string | null,
-  weight: number,
-  userRemoved: boolean,
-  timestampMs: number,
-  isoNow: string
+  record: VoteRecord
 ): Promise<void> {
-  try {
-    const shadowPayload = `${VOTE_SHADOW_PREFIX}${JSON.stringify({
-      userId,
-      reportType: userRemoved ? null : normalizeVoteType(reportType),
-      weight,
-      userRemoved,
-      timestampMs,
-    })}`;
-
-    const { data: existingRows } = await supabase
-      .from("qr_comments")
-      .select("id")
-      .eq("qr_code_id", qrId)
-      .eq("user_id", userId)
-      .like("text", `${VOTE_SHADOW_PREFIX}%`)
-      .limit(5);
-
-    if (Array.isArray(existingRows) && existingRows.length > 0) {
-      const firstId = existingRows[0].id;
-      const { error: updErr } = await supabase
-        .from("qr_comments")
-        .update({
-          text: shadowPayload,
-          is_deleted: true,
-          updated_at: isoNow,
-        })
-        .eq("id", firstId);
-      if (!updErr) return;
-
-      await supabase
-        .from("qr_comments")
-        .update({
-          text: shadowPayload,
-          is_deleted: true,
-        })
-        .eq("id", firstId);
-      return;
-    }
-
-    const { error: insErr } = await supabase.from("qr_comments").insert({
-      qr_code_id: qrId,
-      user_id: userId,
-      user_name: "vote",
-      text: shadowPayload,
-      is_deleted: true,
-      created_at: isoNow,
-      updated_at: isoNow,
-    });
-    if (insErr) {
-      await supabase.from("qr_comments").insert({
-        qr_code_id: qrId,
-        user_id: userId,
-        user_name: "vote",
-        text: shadowPayload,
-        is_deleted: true,
-      });
-    }
-  } catch {}
-}
-
-async function saveVoteOverride(
-  qrId: string,
-  userId: string,
-  reportType: string | null,
-  weight: number,
-  userRemoved: boolean,
-  accountAgeDays: number,
-  emailVerified: boolean,
-  isoNow: string
-): Promise<void> {
-  const timestampMs = parseTimeMs(isoNow) || Date.now();
-  const normalizedType = userRemoved ? null : normalizeVoteType(reportType);
-  const record: VoteRecord = {
-    userId,
-    reportType: normalizedType,
-    weight,
-    userRemoved,
-    timestampMs,
-  };
-
-  // Clear any synthetic seed entries once a real user vote is recorded
   const memMap = memoryQrVotes.get(qrId);
   if (memMap) {
     for (const key of Array.from(memMap.keys())) {
       if (key.startsWith("__seed_")) memMap.delete(key);
     }
   }
-
   setMemoryVote(qrId, record);
 
-  // 1. Save to localStorage / AsyncStorage per-QR map and per-user key
   try {
     const existingMap = await loadLocalQrVotesMap(qrId);
     for (const key of Array.from(existingMap.keys())) {
@@ -271,106 +189,9 @@ async function saveVoteOverride(
       setStorageItem(`qr_vote_override_${qrId}_${userId}`, JSON.stringify(record)),
     ]);
   } catch {}
-
-  await Promise.allSettled([
-    // 2. Save to rtdb_store
-    supabase.from("rtdb_store").upsert(
-      {
-        path: `qr_vote:${qrId}:${userId}`,
-        value: {
-          qrCodeId: qrId,
-          userId,
-          reportType: normalizedType,
-          weight,
-          userRemoved,
-          updatedAt: isoNow,
-          timestampMs,
-        },
-        updated_at: isoNow,
-      },
-      { onConflict: "path" }
-    ),
-    // 3. Append to audit_logs
-    supabase.from("audit_logs").insert({
-      qr_id: qrId,
-      user_id: userId,
-      action: userRemoved ? "vote:removed" : `vote:${normalizedType}`,
-      vote_weight: weight,
-      account_age_days: accountAgeDays,
-      email_verified: emailVerified,
-      created_at: isoNow,
-    }),
-    // 4. Save in user's own public.users.consent JSONB
-    (async () => {
-      const { data: userRow } = await supabase
-        .from("users")
-        .select("consent")
-        .eq("id", userId)
-        .maybeSingle();
-      const existingConsent =
-        userRow?.consent && typeof userRow.consent === "object" && !Array.isArray(userRow.consent)
-          ? (userRow.consent as Record<string, any>)
-          : {};
-      const existingQrVotes =
-        existingConsent.qrVotes && typeof existingConsent.qrVotes === "object"
-          ? (existingConsent.qrVotes as Record<string, any>)
-          : {};
-      const updatedConsent = {
-        ...existingConsent,
-        qrVotes: {
-          ...existingQrVotes,
-          [qrId]: {
-            reportType: normalizedType,
-            weight,
-            userRemoved,
-            updatedAt: isoNow,
-            timestampMs,
-          },
-        },
-      };
-      await supabase
-        .from("users")
-        .update({ consent: updatedConsent, updated_at: isoNow })
-        .eq("id", userId);
-    })(),
-    // 5. Save soft-deleted shadow row in qr_comments (publicly readable by anon on web)
-    persistVoteShadowComment(
-      qrId,
-      userId,
-      normalizedType,
-      weight,
-      userRemoved,
-      timestampMs,
-      isoNow
-    ),
-  ]);
 }
 
-function parseShadowCommentVote(row: any): VoteRecord | null {
-  const rawText = typeof row?.text === "string" ? row.text : "";
-  if (!rawText.startsWith(VOTE_SHADOW_PREFIX)) return null;
-  try {
-    const parsed = JSON.parse(rawText.slice(VOTE_SHADOW_PREFIX.length));
-    const uid = parsed?.userId || row?.user_id || row?.userId;
-    if (!uid) return null;
-    const normType = normalizeVoteType(parsed?.reportType);
-    const isRemoved = Boolean(parsed?.userRemoved || !normType);
-    const ts =
-      Number(parsed?.timestampMs) ||
-      parseTimeMs(row?.updated_at ?? row?.updatedAt) ||
-      parseTimeMs(row?.created_at ?? row?.createdAt) ||
-      5;
-    return {
-      userId: String(uid),
-      reportType: isRemoved ? null : normType,
-      weight: Number(parsed?.weight || 1),
-      userRemoved: isRemoved,
-      timestampMs: ts,
-    };
-  } catch {
-    return null;
-  }
-}
+// ── Reading & Aggregating Community Votes ─────────────────────────────────────
 
 export async function getMergedQrVotes(
   qrId: string,
@@ -381,7 +202,6 @@ export async function getMergedQrVotes(
 
   const mergeCandidate = (candidate: VoteRecord) => {
     if (!candidate.userId) return;
-    // Remove synthetic seed entries once real DB votes arrive
     if (!candidate.userId.startsWith("__seed_")) {
       for (const k of Array.from(byUser.keys())) {
         if (k.startsWith("__seed_")) byUser.delete(k);
@@ -402,219 +222,34 @@ export async function getMergedQrVotes(
     }
   };
 
-  const [
-    reportsRes,
-    rawReportsRes,
-    auditRes,
-    rtdbRes,
-    usersConsentRes,
-    shadowCommentsRes,
-    sessionRes,
-  ] = await Promise.allSettled([
-    customClient
-      ? Promise.resolve(null)
-      : db.query([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.REPORTS], { limit: 500 }),
-    client.from("qr_reports").select("*").eq("qr_code_id", qrId).limit(500),
-    client
-      .from("audit_logs")
-      .select("*")
-      .eq("qr_id", qrId)
-      .like("action", "vote:%")
-      .order("created_at", { ascending: true })
-      .limit(500),
-    client
-      .from("rtdb_store")
-      .select("*")
-      .like("path", `qr_vote:${qrId}:%`)
-      .limit(500),
-    client
-      .from("users")
-      .select("id, consent")
-      .not("consent", "is", null)
-      .limit(500),
-    client
-      .from("qr_comments")
-      .select("*")
+  try {
+    // Query public.qr_reports directly (clean, index-backed single query)
+    const { data: dbReports } = await client
+      .from("qr_reports")
+      .select("user_id, report_type, weight, user_removed, updated_at, created_at")
       .eq("qr_code_id", qrId)
-      .like("text", `${VOTE_SHADOW_PREFIX}%`)
-      .limit(500),
-    client.auth.getSession(),
-  ]);
+      .limit(500);
 
-  let hasPublicRowForCurrentUid = false;
-  const currentUid =
-    sessionRes.status === "fulfilled" ? sessionRes.value?.data?.session?.user?.id : null;
+    if (Array.isArray(dbReports)) {
+      for (const row of dbReports) {
+        const uid = String(row.user_id || "");
+        if (!uid) continue;
+        const normType = normalizeVoteType(row.report_type);
+        const isRemoved = Boolean(row.user_removed || !normType);
+        const weight = Number(row.weight ?? 1);
+        const ts = Math.max(parseTimeMs(row.updated_at), parseTimeMs(row.created_at), 1);
 
-  if (reportsRes.status === "fulfilled" && reportsRes.value?.docs) {
-    for (const d of reportsRes.value.docs) {
-      const data = d.data;
-      const uid = data.userId || data.reporterId || d.id;
-      if (!uid) continue;
-      if (currentUid && String(uid) === currentUid) hasPublicRowForCurrentUid = true;
-      const rawWeight = data.weight !== undefined && data.weight !== null ? Number(data.weight) : 1;
-      const normType = normalizeVoteType(data.reportType ?? data.type);
-      const isRemoved = Boolean(data.userRemoved || !normType || rawWeight <= 0);
-      const ts = Math.max(parseTimeMs(data.updatedAt), parseTimeMs(data.createdAt), 1);
-      mergeCandidate({
-        userId: String(uid),
-        reportType: isRemoved ? null : normType,
-        weight: rawWeight > 0 ? rawWeight : 1,
-        userRemoved: isRemoved,
-        timestampMs: ts,
-      });
-    }
-  }
-
-  if (rawReportsRes.status === "fulfilled" && Array.isArray(rawReportsRes.value?.data)) {
-    for (const r of rawReportsRes.value.data as any[]) {
-      const uid = r.user_id || r.userId || r.reporter_id || r.reporterId || r.id;
-      if (!uid) continue;
-      if (currentUid && String(uid) === currentUid) hasPublicRowForCurrentUid = true;
-      const rawWeight = r.weight !== undefined && r.weight !== null ? Number(r.weight) : 1;
-      const normType = normalizeVoteType(r.report_type ?? r.reportType ?? r.type);
-      const isRemoved = Boolean(
-        r.user_removed ?? r.userRemoved ?? (!normType || rawWeight <= 0)
-      );
-      const ts = Math.max(
-        parseTimeMs(r.updated_at ?? r.updatedAt),
-        parseTimeMs(r.created_at ?? r.createdAt),
-        1
-      );
-      mergeCandidate({
-        userId: String(uid),
-        reportType: isRemoved ? null : normType,
-        weight: rawWeight > 0 ? rawWeight : 1,
-        userRemoved: isRemoved,
-        timestampMs: ts,
-      });
-    }
-  }
-
-  if (auditRes.status === "fulfilled" && Array.isArray(auditRes.value?.data)) {
-    for (const row of auditRes.value.data as any[]) {
-      const uid = row.user_id ?? row.userId;
-      const action: string = row.action || "";
-      if (!uid || !action.startsWith("vote:")) continue;
-      const rawVoteType = action.slice("vote:".length);
-      const normType = normalizeVoteType(rawVoteType);
-      const isRemoved = rawVoteType === "removed" || !normType;
-      const ts = parseTimeMs(row.created_at ?? row.createdAt) || 2;
-      mergeCandidate({
-        userId: String(uid),
-        reportType: isRemoved ? null : normType,
-        weight: Number(row.vote_weight ?? row.voteWeight ?? 1),
-        userRemoved: isRemoved,
-        timestampMs: ts,
-      });
-    }
-  }
-
-  if (rtdbRes.status === "fulfilled" && Array.isArray(rtdbRes.value?.data)) {
-    for (const row of rtdbRes.value.data as any[]) {
-      const val = row?.value;
-      if (!val || typeof val !== "object") continue;
-      const uid = val.userId || String(row.path || "").split(":")[2];
-      if (!uid) continue;
-      const normType = normalizeVoteType(val.reportType);
-      const isRemoved = Boolean(val.userRemoved || !normType);
-      const ts =
-        Number(val.timestampMs) ||
-        parseTimeMs(val.updatedAt) ||
-        parseTimeMs(row.updated_at) ||
-        3;
-      mergeCandidate({
-        userId: String(uid),
-        reportType: isRemoved ? null : normType,
-        weight: Number(val.weight || 1),
-        userRemoved: isRemoved,
-        timestampMs: ts,
-      });
-    }
-  }
-
-  if (usersConsentRes.status === "fulfilled" && Array.isArray(usersConsentRes.value?.data)) {
-    for (const uRow of usersConsentRes.value.data as any[]) {
-      const uid = uRow?.id;
-      const qrVote = (uRow?.consent as any)?.qrVotes?.[qrId];
-      if (uid && qrVote && typeof qrVote === "object") {
-        const normType = normalizeVoteType(qrVote.reportType);
-        const isRemoved = Boolean(qrVote.userRemoved || !normType);
-        const ts = Number(qrVote.timestampMs) || parseTimeMs(qrVote.updatedAt) || 4;
         mergeCandidate({
-          userId: String(uid),
+          userId: uid,
           reportType: isRemoved ? null : normType,
-          weight: Number(qrVote.weight || 1),
+          weight: weight > 0 ? weight : 1,
           userRemoved: isRemoved,
           timestampMs: ts,
         });
       }
     }
-  }
-
-  if (
-    shadowCommentsRes.status === "fulfilled" &&
-    Array.isArray(shadowCommentsRes.value?.data)
-  ) {
-    for (const cRow of shadowCommentsRes.value.data as any[]) {
-      const parsed = parseShadowCommentVote(cRow);
-      if (parsed) {
-        if (currentUid && parsed.userId === currentUid) hasPublicRowForCurrentUid = true;
-        mergeCandidate(parsed);
-      }
-    }
-  }
-
-  if (currentUid) {
-    try {
-      const { data: userRow } = await client
-        .from("users")
-        .select("consent")
-        .eq("id", currentUid)
-        .maybeSingle();
-      const qrVote = (userRow?.consent as any)?.qrVotes?.[qrId];
-      if (qrVote && typeof qrVote === "object") {
-        const normType = normalizeVoteType(qrVote.reportType);
-        const isRemoved = Boolean(qrVote.userRemoved || !normType);
-        const ts = Number(qrVote.timestampMs) || parseTimeMs(qrVote.updatedAt) || 4;
-        mergeCandidate({
-          userId: currentUid,
-          reportType: isRemoved ? null : normType,
-          weight: Number(qrVote.weight || 1),
-          userRemoved: isRemoved,
-          timestampMs: ts,
-        });
-      }
-    } catch {}
-
-    // Self-heal: if authenticated user has a local/consent vote not yet in qr_reports/qr_comments, publish it
-    const myVote = byUser.get(currentUid);
-    const syncKey = `${qrId}:${currentUid}:${myVote?.reportType ?? "none"}:${myVote?.userRemoved ?? false}`;
-    if (myVote && !hasPublicRowForCurrentUid && !syncedShadowKeys.has(syncKey)) {
-      syncedShadowKeys.add(syncKey);
-      const isoNow = new Date(myVote.timestampMs || Date.now()).toISOString();
-      void Promise.allSettled([
-        ensureQrCodeExists(qrId),
-        persistToQrReportsTable(
-          qrId,
-          currentUid,
-          myVote.reportType || "safe",
-          myVote.weight || 1,
-          0,
-          true,
-          myVote.userRemoved,
-          isoNow
-        ),
-        persistVoteShadowComment(
-          qrId,
-          currentUid,
-          myVote.reportType,
-          myVote.weight || 1,
-          myVote.userRemoved,
-          myVote.timestampMs || Date.now(),
-          isoNow
-        ),
-      ]);
-    }
+  } catch (err) {
+    console.warn("[report-service] getMergedQrVotes fetch warning:", err);
   }
 
   return byUser;
@@ -653,8 +288,8 @@ export async function getQrReportData(qrId: string): Promise<{
   const byUser = await getMergedQrVotes(qrId);
   const direct = summarizeVotes(byUser);
 
-  // On web browser, if direct client query has 0 votes (e.g. unauthenticated visitor with strict RLS),
-  // also check the Next.js server votes endpoint.
+  // On web browser, if 0 votes found (e.g. unauthenticated visitor with strict RLS),
+  // fallback to the Next.js server endpoint
   if (
     typeof window !== "undefined" &&
     typeof document !== "undefined" &&
@@ -689,7 +324,7 @@ export async function getQrWeightedReportCounts(qrId: string): Promise<Record<st
 }
 
 export async function getUserQrReport(qrId: string, userId: string): Promise<string | null> {
-  // Check in-memory and local storage override first so we have the latest timestamped intent
+  // Check memory and local storage first for latest optimistic user vote
   let best: VoteRecord | null = memoryQrVotes.get(qrId)?.get(userId) ?? null;
 
   try {
@@ -709,150 +344,37 @@ export async function getUserQrReport(qrId: string, userId: string): Promise<str
     }
   } catch {}
 
-  const [docRes, rawReportRes, auditRes, rtdbRes, userRes, shadowRes] = await Promise.allSettled([
-    db.get([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.REPORTS, userId]),
-    supabase
+  // Fetch user vote from public.qr_reports
+  try {
+    const { data: row } = await supabase
       .from("qr_reports")
-      .select("*")
+      .select("report_type, weight, user_removed, updated_at, created_at")
       .eq("qr_code_id", qrId)
       .eq("user_id", userId)
-      .limit(5),
-    supabase
-      .from("audit_logs")
-      .select("*")
-      .eq("qr_id", qrId)
-      .eq("user_id", userId)
-      .like("action", "vote:%")
-      .order("created_at", { ascending: false })
-      .limit(1),
-    supabase
-      .from("rtdb_store")
-      .select("*")
-      .eq("path", `qr_vote:${qrId}:${userId}`)
-      .maybeSingle(),
-    supabase
-      .from("users")
-      .select("consent")
-      .eq("id", userId)
-      .maybeSingle(),
-    supabase
-      .from("qr_comments")
-      .select("*")
-      .eq("qr_code_id", qrId)
-      .eq("user_id", userId)
-      .like("text", `${VOTE_SHADOW_PREFIX}%`)
-      .limit(5),
-  ]);
+      .maybeSingle();
 
-  if (docRes.status === "fulfilled" && docRes.value) {
-    const data = docRes.value;
-    const rawWeight = data.weight !== undefined && data.weight !== null ? Number(data.weight) : 1;
-    const normType = normalizeVoteType(data.reportType ?? data.type);
-    const isRemoved = Boolean(data.userRemoved || !normType || rawWeight <= 0);
-    const ts = Math.max(parseTimeMs(data.updatedAt), parseTimeMs(data.createdAt), 1);
-    if (!best || ts > best.timestampMs) {
-      best = {
-        userId,
-        reportType: isRemoved ? null : normType,
-        weight: rawWeight > 0 ? rawWeight : 1,
-        userRemoved: isRemoved,
-        timestampMs: ts,
-      };
-    }
-  }
-
-  if (rawReportRes.status === "fulfilled" && Array.isArray(rawReportRes.value?.data) && rawReportRes.value.data[0]) {
-    for (const r of rawReportRes.value.data as any[]) {
-      const rawWeight = r.weight !== undefined && r.weight !== null ? Number(r.weight) : 1;
-      const normType = normalizeVoteType(r.report_type ?? r.reportType ?? r.type);
-      const isRemoved = Boolean(r.user_removed ?? r.userRemoved ?? (!normType || rawWeight <= 0));
-      const ts = Math.max(parseTimeMs(r.updated_at), parseTimeMs(r.created_at), 1);
+    if (row) {
+      const normType = normalizeVoteType(row.report_type);
+      const isRemoved = Boolean(row.user_removed || !normType);
+      const ts = Math.max(parseTimeMs(row.updated_at), parseTimeMs(row.created_at), 1);
       if (!best || ts >= best.timestampMs) {
         best = {
           userId,
           reportType: isRemoved ? null : normType,
-          weight: rawWeight > 0 ? rawWeight : 1,
+          weight: Number(row.weight || 1),
           userRemoved: isRemoved,
           timestampMs: ts,
         };
       }
     }
-  }
-
-  if (auditRes.status === "fulfilled" && Array.isArray(auditRes.value?.data) && auditRes.value.data[0]) {
-    const row = auditRes.value.data[0] as any;
-    const action: string = row.action || "";
-    const rawVoteType = action.slice("vote:".length);
-    const normType = normalizeVoteType(rawVoteType);
-    const isRemoved = rawVoteType === "removed" || !normType;
-    const ts = parseTimeMs(row.created_at ?? row.createdAt) || 2;
-    if (!best || ts >= best.timestampMs) {
-      best = {
-        userId,
-        reportType: isRemoved ? null : normType,
-        weight: Number(row.vote_weight ?? row.voteWeight ?? 1),
-        userRemoved: isRemoved,
-        timestampMs: ts,
-      };
-    }
-  }
-
-  if (rtdbRes.status === "fulfilled" && rtdbRes.value?.data) {
-    const row = rtdbRes.value.data as any;
-    const val = row.value;
-    if (val && typeof val !== "object") {
-      // ignore
-    } else if (val && typeof val === "object") {
-      const normType = normalizeVoteType(val.reportType);
-      const isRemoved = Boolean(val.userRemoved || !normType);
-      const ts =
-        Number(val.timestampMs) ||
-        parseTimeMs(val.updatedAt) ||
-        parseTimeMs(row.updated_at) ||
-        3;
-      if (!best || ts >= best.timestampMs) {
-        best = {
-          userId,
-          reportType: isRemoved ? null : normType,
-          weight: Number(val.weight || 1),
-          userRemoved: isRemoved,
-          timestampMs: ts,
-        };
-      }
-    }
-  }
-
-  if (userRes.status === "fulfilled" && userRes.value?.data) {
-    const qrVote = (userRes.value.data?.consent as any)?.qrVotes?.[qrId];
-    if (qrVote && typeof qrVote === "object") {
-      const normType = normalizeVoteType(qrVote.reportType);
-      const isRemoved = Boolean(qrVote.userRemoved || !normType);
-      const ts = Number(qrVote.timestampMs) || parseTimeMs(qrVote.updatedAt) || 4;
-      if (!best || ts >= best.timestampMs) {
-        best = {
-          userId,
-          reportType: isRemoved ? null : normType,
-          weight: Number(qrVote.weight || 1),
-          userRemoved: isRemoved,
-          timestampMs: ts,
-        };
-      }
-    }
-  }
-
-  if (shadowRes.status === "fulfilled" && Array.isArray(shadowRes.value?.data)) {
-    for (const cRow of shadowRes.value.data as any[]) {
-      const parsed = parseShadowCommentVote(cRow);
-      if (parsed && (!best || parsed.timestampMs >= best.timestampMs)) {
-        best = parsed;
-      }
-    }
-  }
+  } catch {}
 
   if (!best || best.userRemoved) return null;
   setMemoryVote(qrId, best);
   return best.reportType ?? null;
 }
+
+// ── Database Integrity Helpers ────────────────────────────────────────────────
 
 async function ensureQrCodeExists(qrId: string, qrMeta?: QrReportMeta): Promise<void> {
   try {
@@ -949,6 +471,8 @@ async function ensureUserRecordExists(
   }
 }
 
+// ── Persistence to qr_reports ─────────────────────────────────────────────────
+
 async function persistToQrReportsTable(
   qrId: string,
   userId: string,
@@ -957,173 +481,49 @@ async function persistToQrReportsTable(
   accountAgeDays: number,
   emailVerified: boolean,
   userRemoved: boolean,
-  now: string
+  isoNow: string
 ): Promise<void> {
-  const { data: existingRows } = await supabase
-    .from("qr_reports")
-    .select("*")
-    .eq("qr_code_id", qrId)
-    .eq("user_id", userId)
-    .limit(10);
-
-  const hasExistingRows = Array.isArray(existingRows) && existingRows.length > 0;
-
-  if (hasExistingRows) {
-    if (userRemoved) {
-      // Try DELETE first so tables without user_removed column also remove the vote cleanly
-      const { data: deletedRows, error: deleteErr } = await supabase
-        .from("qr_reports")
-        .delete()
-        .eq("qr_code_id", qrId)
-        .eq("user_id", userId)
-        .select();
-
-      if (!deleteErr && Array.isArray(deletedRows) && deletedRows.length > 0) {
-        return;
-      }
-    }
-
-    // 1. Try direct UPDATE on qr_reports
-    const { data: updatedRows, error: updateErr } = await supabase
-      .from("qr_reports")
-      .update({
-        report_type: reportType,
-        weight: userRemoved ? 0 : weight,
-        account_age_days: accountAgeDays,
-        email_verified: emailVerified,
-        user_removed: userRemoved,
-        removed_at: userRemoved ? now : null,
-        updated_at: now,
-      })
-      .eq("qr_code_id", qrId)
-      .eq("user_id", userId)
-      .select();
-
-    if (!updateErr && Array.isArray(updatedRows) && updatedRows.length > 0) {
-      return;
-    }
-
-    // Fallback update with minimal columns if optional columns don't exist
-    if (updateErr) {
-      if (userRemoved) {
-        const { data: zeroUpdated, error: zeroErr } = await supabase
-          .from("qr_reports")
-          .update({ weight: 0 })
-          .eq("qr_code_id", qrId)
-          .eq("user_id", userId)
-          .select();
-        if (!zeroErr && Array.isArray(zeroUpdated) && zeroUpdated.length > 0) {
-          return;
-        }
-      } else {
-        const { data: minUpdatedWithWeight, error: minWeightErr } = await supabase
-          .from("qr_reports")
-          .update({ report_type: reportType, weight })
-          .eq("qr_code_id", qrId)
-          .eq("user_id", userId)
-          .select();
-        if (!minWeightErr && Array.isArray(minUpdatedWithWeight) && minUpdatedWithWeight.length > 0) {
-          return;
-        }
-        const { data: minUpdated, error: minUpdateErr } = await supabase
-          .from("qr_reports")
-          .update({ report_type: reportType })
-          .eq("qr_code_id", qrId)
-          .eq("user_id", userId)
-          .select();
-        if (!minUpdateErr && Array.isArray(minUpdated) && minUpdated.length > 0) {
-          return;
-        }
-      }
-    }
-
-    // 2. If UPDATE affected 0 rows (missing FOR UPDATE RLS policy), try DELETE + INSERT
-    const { data: deletedRows, error: deleteErr } = await supabase
-      .from("qr_reports")
-      .delete()
-      .eq("qr_code_id", qrId)
-      .eq("user_id", userId)
-      .select();
-
-    if (!deleteErr && Array.isArray(deletedRows) && deletedRows.length > 0) {
-      if (userRemoved) return;
-      const { error: reinsertErr } = await supabase.from("qr_reports").insert({
-        qr_code_id: qrId,
-        user_id: userId,
-        report_type: reportType,
-        weight,
-        account_age_days: accountAgeDays,
-        email_verified: emailVerified,
-        user_removed: false,
-        removed_at: null,
-        created_at: now,
-        updated_at: now,
-      });
-      if (!reinsertErr) return;
-
-      await supabase.from("qr_reports").insert({
-        qr_code_id: qrId,
-        user_id: userId,
-        report_type: reportType,
-      });
-      return;
-    }
-
-    // 3. If DELETE also affected 0 rows, try INSERT
-    const { error: insErr } = await supabase.from("qr_reports").insert({
-      qr_code_id: qrId,
-      user_id: userId,
-      report_type: reportType,
-      weight: userRemoved ? 0 : weight,
-      account_age_days: accountAgeDays,
-      email_verified: emailVerified,
-      user_removed: userRemoved,
-      removed_at: userRemoved ? now : null,
-      created_at: now,
-      updated_at: now,
-    });
-    if (insErr && !userRemoved) {
-      await supabase.from("qr_reports").insert({
-        qr_code_id: qrId,
-        user_id: userId,
-        report_type: reportType,
-      });
-    }
-    return;
-  }
-
-  if (userRemoved) return;
-
-  // First-time insert into qr_reports (with minimal-column fallback if optional columns are absent)
-  const { error: insertErr } = await supabase.from("qr_reports").insert({
+  // Direct upsert on (qr_code_id, user_id)
+  const payload = {
     qr_code_id: qrId,
     user_id: userId,
     report_type: reportType,
-    weight,
+    weight: userRemoved ? 0 : weight,
     account_age_days: accountAgeDays,
     email_verified: emailVerified,
-    user_removed: false,
-    removed_at: null,
-    created_at: now,
-    updated_at: now,
-  });
+    user_removed: userRemoved,
+    removed_at: userRemoved ? isoNow : null,
+    updated_at: isoNow,
+  };
 
-  if (insertErr) {
-    const { error: fallbackErr } = await supabase.from("qr_reports").insert({
-      qr_code_id: qrId,
-      user_id: userId,
-      report_type: reportType,
-      weight,
+  const { error: upsertErr } = await supabase
+    .from("qr_reports")
+    .upsert(payload, { onConflict: "qr_code_id,user_id" });
+
+  if (!upsertErr) return;
+
+  // Fallback: check if existing row exists, then update or insert
+  const { data: existing } = await supabase
+    .from("qr_reports")
+    .select("id")
+    .eq("qr_code_id", qrId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existing?.id) {
+    await supabase
+      .from("qr_reports")
+      .update(payload)
+      .eq("id", existing.id);
+  } else {
+    await supabase.from("qr_reports").insert({
+      ...payload,
+      created_at: isoNow,
     });
-    if (fallbackErr) {
-      await supabase.from("qr_reports").insert({
-        qr_code_id: qrId,
-        user_id: userId,
-        report_type: reportType,
-      });
-    }
   }
 }
+
+// ── Main Action: Submitting a Report / Vote ───────────────────────────────────
 
 export async function reportQrCode(
   qrId: string,
@@ -1132,11 +532,12 @@ export async function reportQrCode(
   emailVerified: boolean = false,
   qrMeta?: QrReportMeta
 ): Promise<{ action: "created" | "updated" | "removed" }> {
-  // Ensure parent foreign-key rows exist in qr_codes and users before writing to qr_reports
+  // Ensure foreign-key parent rows exist
   await ensureQrCodeExists(qrId, qrMeta);
 
   const existingReport = await getUserQrReport(qrId, userId);
-  const now = db.timestamp();
+  const isoNow = new Date().toISOString();
+  const timestampMs = Date.now();
 
   let accountAgeDays = 0;
   let effectiveEmailVerified = emailVerified;
@@ -1157,60 +558,65 @@ export async function reportQrCode(
 
   const normalizedTargetType = normalizeVoteType(reportType) || reportType;
 
-  // Same type tapped again → unreport (toggle off).
+  // Same type tapped again → unreport / remove vote (toggle off)
   if (existingReport === normalizedTargetType) {
-    await Promise.all([
-      persistToQrReportsTable(
-        qrId,
-        userId,
-        normalizedTargetType,
-        0,
-        accountAgeDays,
-        effectiveEmailVerified,
-        true,
-        now
-      ),
-      saveVoteOverride(
-        qrId,
-        userId,
-        normalizedTargetType,
-        0,
-        true,
-        accountAgeDays,
-        effectiveEmailVerified,
-        now
-      ),
-    ]);
+    const removalRecord: VoteRecord = {
+      userId,
+      reportType: null,
+      weight: 0,
+      userRemoved: true,
+      timestampMs,
+    };
+
+    // Optimistic cache update immediately
+    await saveVoteLocalCache(qrId, userId, removalRecord);
+
+    // Persist to Supabase
+    await persistToQrReportsTable(
+      qrId,
+      userId,
+      normalizedTargetType,
+      0,
+      accountAgeDays,
+      effectiveEmailVerified,
+      true,
+      isoNow
+    );
+
     return { action: "removed" };
   }
 
-  // Switching an existing vote should not count against rate limits.
-  // isChangingReport=true bypasses the per-QR and hourly counters in checkReportEligibility.
+  // Switching an existing vote does not count against new-report rate limits
   const isChangingReport = existingReport !== null;
-  const { weight } = await checkReportEligibility(userId, qrId, effectiveEmailVerified, isChangingReport);
+  const { weight } = await checkReportEligibility(
+    userId,
+    qrId,
+    effectiveEmailVerified,
+    isChangingReport
+  );
 
-  await Promise.all([
-    persistToQrReportsTable(
-      qrId,
-      userId,
-      normalizedTargetType,
-      weight,
-      accountAgeDays,
-      effectiveEmailVerified,
-      false,
-      now
-    ),
-    saveVoteOverride(
-      qrId,
-      userId,
-      normalizedTargetType,
-      weight,
-      false,
-      accountAgeDays,
-      effectiveEmailVerified,
-      now
-    ),
-  ]);
+  const newRecord: VoteRecord = {
+    userId,
+    reportType: normalizedTargetType,
+    weight,
+    userRemoved: false,
+    timestampMs,
+  };
+
+  // Optimistic cache update immediately
+  await saveVoteLocalCache(qrId, userId, newRecord);
+
+  // Persist to Supabase
+  await persistToQrReportsTable(
+    qrId,
+    userId,
+    normalizedTargetType,
+    weight,
+    accountAgeDays,
+    effectiveEmailVerified,
+    false,
+    isoNow
+  );
 
   if (!isChangingReport) {
     await recordReport(userId, qrId);
@@ -1218,6 +624,8 @@ export async function reportQrCode(
 
   return { action: isChangingReport ? "updated" : "created" };
 }
+
+// ── Realtime Subscription ─────────────────────────────────────────────────────
 
 export function subscribeToQrReports(
   qrId: string,
@@ -1227,6 +635,7 @@ export function subscribeToQrReports(
   ) => void
 ): () => void {
   let cancelled = false;
+
   const refresh = async () => {
     try {
       const { counts, weighted } = await getQrReportData(qrId);
@@ -1238,12 +647,27 @@ export function subscribeToQrReports(
 
   void refresh();
 
-  const unsub = db.onQuery([COLLECTIONS.QR_CODES, qrId, COLLECTIONS.REPORTS], { limit: 500 }, () => {
-    if (!cancelled) {
-      void refresh();
-    }
-  });
+  // Supabase Realtime channel subscription for changes to qr_reports
+  let channel: any = null;
+  try {
+    channel = supabase
+      .channel(`qr_reports_${qrId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "qr_reports",
+          filter: `qr_code_id=eq.${qrId}`,
+        },
+        () => {
+          if (!cancelled) void refresh();
+        }
+      )
+      .subscribe();
+  } catch {}
 
+  // Periodic poll fallback for offline / reconnection resilience
   const intervalId = setInterval(() => {
     if (!cancelled) {
       void refresh();
@@ -1253,6 +677,10 @@ export function subscribeToQrReports(
   return () => {
     cancelled = true;
     clearInterval(intervalId);
-    unsub();
+    if (channel) {
+      try {
+        supabase.removeChannel(channel);
+      } catch {}
+    }
   };
 }

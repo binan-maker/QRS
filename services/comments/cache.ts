@@ -2,18 +2,26 @@ import { db } from "@/lib/db/client";
 import type { CommentItem } from "../types";
 import { COLLECTIONS } from "@/shared/constants/collections";
 
+const MAX_PROFILE_CACHE_ENTRIES = 200;
 const userProfileCache = new Map<string, { username?: string; photoURL?: string; expiresAt: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 export function getUserProfileCache(userId: string): { username?: string; photoURL?: string } | null {
   const cached = userProfileCache.get(userId);
-  if (cached && cached.expiresAt > Date.now()) {
-    return { username: cached.username, photoURL: cached.photoURL };
+  if (cached) {
+    if (cached.expiresAt > Date.now()) {
+      return { username: cached.username, photoURL: cached.photoURL };
+    }
+    userProfileCache.delete(userId);
   }
   return null;
 }
 
 export function setUserProfileCache(userId: string, username?: string, photoURL?: string): void {
+  if (userProfileCache.size >= MAX_PROFILE_CACHE_ENTRIES && !userProfileCache.has(userId)) {
+    const oldestKey = userProfileCache.keys().next().value;
+    if (oldestKey) userProfileCache.delete(oldestKey);
+  }
   userProfileCache.set(userId, { username, photoURL, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 

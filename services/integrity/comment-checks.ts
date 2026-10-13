@@ -1,4 +1,7 @@
-import { isWithin24h } from "./time-utils";
+import { isWithin24h, formatTimeRemaining, timeUntilWindowReset } from "./time-utils";
+import { getAccountTier } from "./tiers";
+
+const MAX_COMMENT_RATE_ENTRIES = 200;
 
 interface CommentRateState {
   commentWindowStart: number;
@@ -12,6 +15,10 @@ const commentRateMap = new Map<string, CommentRateState>();
 function getRateState(userId: string): CommentRateState {
   let state = commentRateMap.get(userId);
   if (!state) {
+    if (commentRateMap.size >= MAX_COMMENT_RATE_ENTRIES) {
+      const oldestKey = commentRateMap.keys().next().value;
+      if (oldestKey) commentRateMap.delete(oldestKey);
+    }
     state = {
       commentWindowStart: 0,
       commentCount: 0,
@@ -25,7 +32,7 @@ function getRateState(userId: string): CommentRateState {
 
 export async function checkCommentEligibility(
   userId: string,
-  qrId: string,
+  _qrId: string,
   emailVerified: boolean,
   commentText: string
 ): Promise<void> {
@@ -34,6 +41,19 @@ export async function checkCommentEligibility(
   }
   if (commentText.trim().length > 500) {
     throw new Error("Comment is too long. Maximum 500 characters allowed.");
+  }
+
+  if (userId) {
+    const tier = await getAccountTier(userId, emailVerified);
+    const state = getRateState(userId);
+    if (tier.maxCommentsPerDay !== Infinity) {
+      if (isWithin24h(state.commentWindowStart) && state.commentCount >= tier.maxCommentsPerDay) {
+        const timeRemaining = formatTimeRemaining(timeUntilWindowReset(state.commentWindowStart));
+        throw new Error(
+          `You've reached your daily comment limit (${tier.maxCommentsPerDay}). Please try again in ${timeRemaining}.`
+        );
+      }
+    }
   }
 }
 
@@ -51,7 +71,20 @@ export async function recordComment(userId: string): Promise<void> {
 export async function checkCommentReportEligibility(
   userId: string,
   emailVerified: boolean
-): Promise<void> {}
+): Promise<void> {
+  if (userId) {
+    const tier = await getAccountTier(userId, emailVerified);
+    const state = getRateState(userId);
+    if (tier.maxCommentReportsPerDay !== Infinity) {
+      if (isWithin24h(state.reportWindowStart) && state.reportCount >= tier.maxCommentReportsPerDay) {
+        const timeRemaining = formatTimeRemaining(timeUntilWindowReset(state.reportWindowStart));
+        throw new Error(
+          `You've reached your daily comment report limit (${tier.maxCommentReportsPerDay}). Please try again in ${timeRemaining}.`
+        );
+      }
+    }
+  }
+}
 
 export async function recordCommentReport(userId: string): Promise<void> {
   const state = getRateState(userId);

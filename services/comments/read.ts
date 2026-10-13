@@ -108,18 +108,25 @@ export async function getComments(
     (d) => !d.data.isDeleted && !String(d.data.text || "").startsWith("__qr_vote__:")
   );
 
-  await Promise.all(
-    filtered.map(async (d) => {
-      if (getCachedCommentDislikes(d.id) === 0) {
+  // Hydrate dislikes: check in-memory cache first, then DB fields, with storage as fallback
+  const uncachedDislikes = filtered.filter((d) => getCachedCommentDislikes(d.id) === 0);
+  if (uncachedDislikes.length > 0) {
+    await Promise.all(
+      uncachedDislikes.map(async (d) => {
+        const dbDislikes = Number(d.data.dislikeCount ?? 0);
+        if (dbDislikes > 0) {
+          setCachedCommentDislikes(d.id, dbDislikes);
+          return;
+        }
         try {
           const raw = await AsyncStorage.getItem(`comment_dislikes_${d.id}`);
           if (raw && Number(raw) > 0) {
             setCachedCommentDislikes(d.id, Number(raw));
           }
         } catch {}
-      }
-    })
-  );
+      })
+    );
+  }
 
   const rawComments: CommentItem[] = filtered.map((d) => docToComment(d, qrId));
   const comments = await enrichCommentsWithProfiles(rawComments);

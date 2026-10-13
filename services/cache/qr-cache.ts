@@ -1,30 +1,53 @@
 import { universalAsyncStorage as AsyncStorage } from "@shared/utils/universal-storage";
 
+const MAX_MEM_CACHE_ENTRIES = 200;
 const memCache = new Map<string, { value: unknown; expiresAt: number }>();
 
 async function getCache<T>(key: string): Promise<T | null> {
   const mem = memCache.get(key);
-  if (mem && mem.expiresAt > Date.now()) return mem.value as T;
+  if (mem) {
+    if (mem.expiresAt > Date.now()) return mem.value as T;
+    memCache.delete(key);
+  }
   try {
     const raw = await AsyncStorage.getItem(`cache_${key}`);
     if (!raw) return null;
     const { value, expiresAt } = JSON.parse(raw);
-    if (expiresAt <= Date.now()) { AsyncStorage.removeItem(`cache_${key}`).catch(() => {}); return null; }
+    if (expiresAt <= Date.now()) {
+      AsyncStorage.removeItem(`cache_${key}`).catch(() => {});
+      return null;
+    }
+    if (memCache.size >= MAX_MEM_CACHE_ENTRIES) {
+      const oldestKey = memCache.keys().next().value;
+      if (oldestKey) memCache.delete(oldestKey);
+    }
     memCache.set(key, { value, expiresAt });
     return value as T;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 async function setCache<T>(key: string, value: T, ttlMs: number): Promise<void> {
   const expiresAt = Date.now() + ttlMs;
+  if (memCache.size >= MAX_MEM_CACHE_ENTRIES && !memCache.has(key)) {
+    const oldestKey = memCache.keys().next().value;
+    if (oldestKey) memCache.delete(oldestKey);
+  }
   memCache.set(key, { value, expiresAt });
-  try { await AsyncStorage.setItem(`cache_${key}`, JSON.stringify({ value, expiresAt })); } catch {}
+  try {
+    await AsyncStorage.setItem(`cache_${key}`, JSON.stringify({ value, expiresAt }));
+  } catch {}
 }
 
 export function invalidateCache(keyPrefix: string): void {
-  for (const k of memCache.keys()) {
-    if (k.startsWith(keyPrefix)) memCache.delete(k);
+  for (const k of Array.from(memCache.keys())) {
+    if (k.startsWith(keyPrefix)) {
+      memCache.delete(k);
+      AsyncStorage.removeItem(`cache_${k}`).catch(() => {});
+    }
   }
+  AsyncStorage.removeItem(`cache_${keyPrefix}`).catch(() => {});
 }
 
 export function clearAllMemCache(): void {

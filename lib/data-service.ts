@@ -62,20 +62,18 @@ export {
   type PrivacySettings,
 } from "@/services/user/privacy";
 
-// 7. Comments read & write
+// 7. Comments read, write & report
 export {
   addComment,
   toggleCommentLike,
   softDeleteComment,
   updateComment,
   deleteAllUserComments,
-} from "@/services/comments/write";
-
-export {
   getCommentUserLikes,
   getComments,
   getUserComments,
-} from "@/services/comments/read";
+  reportComment,
+} from "@/services/comments";
 
 // 9. Push notifications
 export {
