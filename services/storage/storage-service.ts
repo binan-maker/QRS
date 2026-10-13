@@ -168,22 +168,3 @@ export async function deleteProfilePhoto(
   }
   await deleteImage(photoUrl);
 }
-
-/**
- * Upload a QR code logo with automatic cleanup of the old logo.
- */
-export async function uploadQrLogo(
-  file: Blob | File,
-  qrId: string,
-  oldLogoUrl?: string | null
-): Promise<string> {
-  try {
-    if (oldLogoUrl && storageAdapter.isOwnUrl(oldLogoUrl)) {
-      deleteImage(oldLogoUrl).catch(() => {});
-    }
-    return await uploadImage(file, "qr-logos", qrId);
-  } catch (error: any) {
-    console.error("[storage] uploadQrLogo failed:", error);
-    throw error;
-  }
-}

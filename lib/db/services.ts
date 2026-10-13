@@ -15,7 +15,6 @@ export * from "@/services/types";
 export * from "@/services/utils";
 export * from "@/services/trust/trust-service";
 export * from "@/services/qr/qr-service";
-export * from "@/services/qr/qr-detail-service";
 export * from "@/services/scan-history";
 export * from "@/services/user";
 export * from "@/services/moderation/report-service";

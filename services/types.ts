@@ -55,34 +55,6 @@ export interface ReportData {
   weight: number;
 }
 
-export type NotificationType =
-  | "new_comment"
-  | "owner_comment"
-  | "comment_reply"
-  | "mention"
-  | string;
-
-export interface Notification {
-  id: string;
-  type: NotificationType;
-  message: string;
-  qrCodeId?: string;
-  fromUsername?: string;
-  read: boolean;
-  createdAt: number;
-}
-
-export interface NotificationData {
-  id: string;
-  userId: string;
-  type: string;
-  message: string;
-  qrCodeId?: string;
-  fromUsername?: string;
-  read: boolean;
-  createdAt: string;
-}
-
 // Trust Score types
 export type { TrustScore, TrustFactor } from "./trust/trust-service";
 

@@ -23,23 +23,6 @@ export interface PrivacySettings {
   showScanActivity: boolean;
 }
 
-export interface PublicProfile {
-  userId: string;
-  displayName: string;
-  username: string;
-  photoURL: string | null;
-  joinedAt: string | null;
-  privacy: PrivacySettings;
-  stats: {
-    qrCount: number;
-    totalScans: number;
-    commentCount: number;
-    totalLikesReceived: number;
-    safeReportsGiven: number;
-    personalScanCount: number;
-  };
-}
-
 export async function getUserStats(userId: string): Promise<UserStats> {
   try {
     let userDoc = getCachedUserProfile(userId);
@@ -160,77 +143,6 @@ export async function getUserPhotoURL(userId: string): Promise<string | null> {
     );
   } catch {}
   return null;
-}
-
-export async function getPublicProfile(username: string): Promise<PublicProfile | null> {
-  try {
-    const unameDoc = await db.get([COLLECTIONS.USERNAMES, username]);
-    if (!unameDoc) return null;
-    const userId = unameDoc.userId as string;
-
-    let userDoc = getCachedUserProfile(userId);
-    const qrResult = await db.query([COLLECTIONS.QR_CODES], {
-      where: [{ field: "ownerId", op: "==", value: userId }],
-      limit: 200,
-    });
-
-    if (!userDoc) {
-      userDoc = await db.get([COLLECTIONS.USERS, userId]);
-      if (userDoc) setCachedUserProfile(userId, userDoc);
-    }
-    if (!userDoc) return null;
-
-    const privacy: PrivacySettings = {
-      isPrivate:       userDoc.privacyIsPrivate    === true,
-      showQrCodes:     userDoc.privacyShowQrCodes  !== false,
-      showStats:       userDoc.privacyShowStats     !== false,
-      showActivity:    userDoc.privacyShowActivity  !== false,
-      showRanking:     userDoc.privacyShowRanking   !== false,
-      showScanActivity: userDoc.privacyShowScanActivity !== false,
-    };
-    const totalScans = qrResult.docs.reduce((sum: number, d: any) => sum + (d.data.scanCount || 0), 0);
-    let joinedAt: string | null = null;
-    if (userDoc.createdAt) {
-      try {
-        joinedAt = userDoc.createdAt.toDate
-          ? userDoc.createdAt.toDate().toISOString()
-          : new Date(userDoc.createdAt).toISOString();
-      } catch {}
-    }
-
-    return {
-      userId,
-      displayName: userDoc.displayName || username,
-      username,
-      photoURL: userDoc.photoURL || null,
-      joinedAt,
-      privacy,
-      stats: {
-        qrCount: qrResult.docs.length,
-        totalScans,
-        commentCount: userDoc.commentCount || 0,
-        totalLikesReceived: userDoc.totalLikesReceived || 0,
-        safeReportsGiven: userDoc.safeReportsGiven || 0,
-        personalScanCount: (userDoc.personalScanCount as number | undefined) ?? 0,
-      },
-    };
-  } catch {
-    return null;
-  }
-}
-
-export async function getPublicQrCodes(userId: string): Promise<any[]> {
-  try {
-    const { docs } = await db.query([COLLECTIONS.USERS, userId, COLLECTIONS.GENERATED_QRS], {
-      orderBy: { field: "createdAt", direction: "desc" },
-      limit: 20,
-    });
-    return docs
-      .filter((d: any) => !d.data.privateMode)
-      .map((d: any) => ({ id: d.id, ...d.data, createdAt: tsToString(d.data.createdAt) }));
-  } catch {
-    return [];
-  }
 }
 
 export async function deleteUserAccount(userId: string): Promise<void> {

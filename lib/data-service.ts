@@ -38,12 +38,9 @@ export {
   updateUserPhotoURL,
   updateUserProfilePhoto,
   getUserPhotoURL,
-  getPublicProfile,
-  getPublicQrCodes,
   deleteUserAccount,
   submitFeedback,
   type UserStats,
-  type PublicProfile,
 } from "@/services/user/profile";
 
 // 5. Username services
@@ -74,15 +71,6 @@ export {
   getUserComments,
   reportComment,
 } from "@/services/comments";
-
-// 9. Push notifications
-export {
-  subscribeToNotifications,
-  subscribeToNotificationCount,
-  markAllNotificationsRead,
-  clearAllNotifications,
-} from "@/services/notifications/notification-service";
-export type { Notification, NotificationType } from "@/services/types";
 
 export * from "@/services/index";
 
