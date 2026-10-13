@@ -67,10 +67,6 @@ CREATE TABLE IF NOT EXISTS public.qr_codes (
   id TEXT PRIMARY KEY,
   content TEXT NOT NULL DEFAULT '',
   content_type TEXT NOT NULL DEFAULT 'url',
-  owner_id UUID,
-  owner_name TEXT,
-  owner_logo_base64 TEXT,
-  is_owner_deleted BOOLEAN NOT NULL DEFAULT FALSE,
   scan_count INTEGER NOT NULL DEFAULT 0,
   comment_count INTEGER NOT NULL DEFAULT 0,
   report_counts JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -322,13 +318,6 @@ BEGIN
   DELETE FROM public.qr_reports WHERE user_id::text = uid::text;
   DELETE FROM public.qr_scans WHERE user_id::text = uid::text;
   DELETE FROM public.qr_comments WHERE user_id::text = uid::text;
-  UPDATE public.qr_codes
-     SET owner_id = NULL,
-         owner_name = '[deleted]',
-         owner_logo_base64 = NULL,
-         is_owner_deleted = TRUE,
-         updated_at = NOW()
-   WHERE owner_id::text = uid::text;
   DELETE FROM public.usernames WHERE user_id::text = uid::text;
   DELETE FROM public.users WHERE id::text = uid::text;
 
