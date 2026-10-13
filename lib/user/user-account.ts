@@ -1,10 +1,10 @@
-import { getWebSupabase } from "@/lib/supabase";
+import { getWebSupabase } from "@/lib/core/supabase";
 
 export {
   checkUsernameAvailability,
   updateUsernamePermanently,
   type UsernameAvailabilityResult,
-} from "@/lib/username-service";
+} from "./username-service";
 
 export async function deleteUserAccountPermanently(userId: string): Promise<void> {
   const supabase = getWebSupabase();

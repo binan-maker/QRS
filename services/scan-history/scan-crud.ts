@@ -16,7 +16,7 @@ import { tsToString } from "../utils";
 import { tsToMs } from "../integrity/time-utils";
 import { incrementSmartCounter } from "@/lib/db/distributed-counter";
 import { COLLECTIONS } from "@/shared/constants/collections";
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/core/logger";
 import { normalizeScanContent } from "./dedup";
 
 const SCAN_SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days

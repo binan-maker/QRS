@@ -15,7 +15,7 @@
 
 import { db } from "./client";
 import { COLLECTIONS } from "@/shared/constants/collections";
-import { createLogger } from "@/lib/logger";
+import { createLogger } from "@/lib/core/logger";
 
 const log = createLogger("distributed-counter");
 

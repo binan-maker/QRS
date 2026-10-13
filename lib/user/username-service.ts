@@ -4,7 +4,7 @@
 // 15-day cooldown policy, and updating user comments across the database.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { getWebSupabase, isWebSupabaseConfigured } from "./supabase";
+import { getWebSupabase, isWebSupabaseConfigured } from "@/lib/core/supabase";
 import {
   sanitizeUsername,
   validateUsername,

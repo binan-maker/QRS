@@ -4,4 +4,4 @@ export {
   sanitizeTextInput,
   isValidUsername,
   isValidQrId,
-} from "../../../lib/security";
+} from "../../../lib/core/security";

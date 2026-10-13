@@ -25,8 +25,8 @@ import {
   getStartupPref,
   isStartupPrefsLoaded,
   STARTUP_PREF_KEYS,
-} from "@/lib/startup-prefs";
-import { supabase, SUPABASE_TABLES, SUPABASE_BUCKETS } from "@/lib/supabase";
+} from "@/lib/core/startup-prefs";
+import { supabase, SUPABASE_TABLES, SUPABASE_BUCKETS } from "@/lib/core/supabase";
 import { useAuthStore } from "@/store/authStore";
 import { cacheAuthUser, getCachedAuthUser } from "@/lib/auth/session-cache";
 

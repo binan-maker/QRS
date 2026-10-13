@@ -17,7 +17,6 @@ BinRo operates as a distributed system designed around high-throughput QR securi
 ├── lib/                  # 🏛️ Core adapters (auth, db, storage), logger, security, startup prewarmers
 ├── config/               # ⚙️ Application constants, API endpoints, environment variable contracts
 ├── store/                # 📦 Global state management (Zustand) with fine-grained selectors
-├── validators/           # 🛡️ Runtime validation schemas for auth, profiles, settings, and scan payloads
 ├── supabase/             # 🗄️ Database schemas, PostgreSQL migrations, and RLS policies
 ├── packages/             # 📦 Modular shared monorepo packages
 │   ├── core/             # Pure entities and error hierarchy (zero external dependencies)
@@ -64,7 +63,6 @@ Universal React Native mobile application built on Expo SDK 54:
    import { ScreenHeader, GradientButton, useTheme } from "@/shared";
    import { analyzeAnyPaymentQr, calculateTrustScore } from "@/services";
    import { logger, authAdapter, dbAdapter } from "@/lib";
-   import { validateEmail, validatePassword } from "@/validators";
    import { useAuthStore, selectIsAuthenticated } from "@/store";
    import { APP_NAME, API_BASE_URL } from "@/config";
    ```

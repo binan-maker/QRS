@@ -14,7 +14,7 @@ import * as WebBrowser from "expo-web-browser";
 import { authAdapter } from "@/lib/auth";
 import { syncUserToDb } from "@/lib/auth/user-sync";
 import { mapAuthError, buildAuthUser } from "@/lib/auth/utils";
-import { trackLoginCompleted } from "@/lib/analytics";
+import { trackLoginCompleted } from "@/lib/core/analytics";
 import { ENV } from "@/config";
 import type { AuthUser } from "@/lib/auth/types";
 import { cacheAuthUser } from "@/lib/auth/session-cache";

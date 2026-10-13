@@ -29,7 +29,7 @@ import { useAuthActions } from "@/lib/auth/hooks/useAuthActions";
 import { getAuthErrorMessage } from "@/lib/auth/utils";
 import type { AuthUser } from "@/lib/auth/types";
 import { getCachedAuthUser } from "@/lib/auth/session-cache";
-import { prefetchStartupPrefs } from "@/lib/startup-prefs";
+import { prefetchStartupPrefs } from "@/lib/core/startup-prefs";
 
 export { getAuthErrorMessage };
 export type { AuthUser };

@@ -19,7 +19,7 @@ import { useAuthScale } from "@/features/auth/hooks/useAuthScale";
 import { useFadeSlide } from "@/features/auth/hooks/useFadeSlide";
 import { useRegisterReferral } from "@/features/auth/hooks/useRegisterReferral";
 import { makeAuthStyles } from "@/features/auth/styles";
-import { validateEmail } from "@/validators";
+import { validateEmail } from "@/shared/utils/email-validator";
 import {
   applyReferralCodeForUser,
   savePendingReferralCode,
@@ -80,7 +80,7 @@ export default function RegisterScreen() {
     } else {
       const emailCheck = validateEmail(email.trim());
       if (!emailCheck.valid) {
-        newFieldErrors.email = emailCheck.error || "Please use a real email address.";
+        newFieldErrors.email = emailCheck.reason || "Please use a real email address.";
         hasFieldError = true;
       }
     }

@@ -24,7 +24,6 @@ module.exports = function (api) {
             "@features": "./features",
             "@lib": "./lib",
             "@store": "./store",
-            "@validators": "./validators",
             "@binro/core": "./packages/core/src",
             "@binro/db": "./packages/db/src",
             "@binro/config": "./packages/config/src",
