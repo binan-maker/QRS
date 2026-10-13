@@ -9,6 +9,4 @@
 
 export * from "./ui";
 export { ErrorBoundary } from "./feedback/ErrorBoundary";
-export { ScreenErrorBoundary } from "./feedback/ScreenErrorBoundary";
 export { default as ConsentModal } from "./consent/ConsentModal";
-export { default as ConsentManager } from "./consent/ConsentManager";
