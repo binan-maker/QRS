@@ -17,6 +17,7 @@ import {
   clearAvatarFromOutside,
 } from "@/shared/contexts/AvatarContext";
 import type { AuthUser } from "@/lib/auth/types";
+import { buildAuthUser } from "@/lib/auth/utils";
 import {
   cacheAuthUser,
   clearCachedAuthUser,
@@ -98,22 +99,11 @@ export function useAuthSession({
               resolvedUser.photoURL
             ) || undefined;
 
-          const authUser: AuthUser = {
-            id: resolvedUser.uid,
-            email: resolvedUser.email ?? "",
-            displayName:
-              (cachedProfile?.displayName as string) ||
-              sameSnapshotUser?.displayName ||
-              resolvedUser.displayName ||
-              resolvedUser.email?.split("@")[0] ||
-              "User",
+          const authUser = buildAuthUser(resolvedUser, {
+            displayName: (cachedProfile?.displayName as string) || sameSnapshotUser?.displayName,
             photoURL: initialPhotoURL,
-            emailVerified: resolvedUser.emailVerified,
-            username:
-              (cachedProfile?.username as string) ||
-              sameSnapshotUser?.username ||
-              undefined,
-          };
+            username: (cachedProfile?.username as string) || sameSnapshotUser?.username,
+          });
 
           setUser(authUser);
           setToken(idToken);

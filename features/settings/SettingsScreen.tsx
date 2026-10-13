@@ -90,6 +90,7 @@ const goToHistory   = useCallback(() => setSection("history"),   [setSection]);
   const goToTrustScores = useCallback(() => safePush("/trust-scores"), []);
 const goToTerms     = useCallback(() => safePush("/terms"),            []);
 const goToPrivacy   = useCallback(() => safePush("/privacy-policy"),   []);
+const goToPrivacySettings = useCallback(() => safePush("/privacy-settings"), []);
 const goToLogin     = useCallback(() => safePush("/(auth)/login"),     []);
 
 // Sub-sections are state changes only (same URL, nothing on the native stack).
@@ -298,16 +299,23 @@ style={({ pressed }) => [styles.signInCard, { opacity: pressed ? 0.9 : 1 }]}
 )}
 </View>
 
-{/* ── PROFILE ── */}
+{/* ── PROFILE & PRIVACY ── */}
 {user && (
 <View style={styles.section}>
-<Text style={styles.sectionLabel}>PROFILE</Text>
+<Text style={styles.sectionLabel}>PROFILE & PRIVACY</Text>
 <View style={styles.menuGroup}>
 <SettingsMenuItem
 icon="person-circle-outline"
 label="Profile Settings"
 sublabel="Name and username"
 onPress={goToProfile}
+/>
+<View style={styles.divider} />
+<SettingsMenuItem
+icon="shield-outline"
+label="Privacy Settings"
+sublabel="Profile visibility and public activity"
+onPress={goToPrivacySettings}
 />
 </View>
 </View>

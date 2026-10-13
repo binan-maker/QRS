@@ -1,6 +1,6 @@
 import { isPaymentQr } from "@/services/analysis/payment-parser";
 import type { QrContentType, QrTypeDefinition } from "./types";
-import { QR_CONTENT_TYPES } from "./definitions";
+import { QR_CONTENT_TYPES } from "./definition";
 
 export function detectContentType(content: string): QrContentType {
   const value = content?.trim();

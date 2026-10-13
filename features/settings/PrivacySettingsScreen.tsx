@@ -55,7 +55,7 @@ export default function PrivacySettingsScreen() {
   const saveInFlightRef = useRef(false);
   // Track whether the screen is mounted to prevent async state after unmount.
   const mountedRef      = useRef(true);
-  // Timestamp of the last Firestore fetch — used for staleness check on focus.
+  // Timestamp of the last database fetch — used for staleness check on focus.
   const lastFetchRef    = useRef<number>(0);
   const STALE_MS        = 5 * 60 * 1000; // matches TTL_PRIVACY in qr-cache
 
@@ -67,7 +67,7 @@ export default function PrivacySettingsScreen() {
   // ── Cache-first load ────────────────────────────────────────────────────────
   // On first mount for a user:
   //   1. Read cache — if hit, show immediately (no spinner).
-  //   2. Always do a background Firestore fetch to keep the cache fresh.
+  //   2. Always do a background database fetch to keep the cache fresh.
   //      If there was no cache the user sees the spinner only for that first fetch.
   const fetchSettings = useCallback(async (force = false) => {
     if (!user) return;
@@ -79,12 +79,12 @@ export default function PrivacySettingsScreen() {
       if (cached && mountedRef.current) {
         setPrivacy(cached);
         setLoading(false);
-        // Still continue to a background Firestore refresh if stale
+        // Still continue to a background database refresh if stale
         if (Date.now() - lastFetchRef.current < STALE_MS) return;
       }
     }
 
-    // Step 2: fetch from Firestore (background if we already have cache)
+    // Step 2: fetch from Supabase (background if we already have cache)
     try {
       const fresh = await getPrivacySettings(uid);
       if (!mountedRef.current) return;
@@ -329,7 +329,7 @@ export default function PrivacySettingsScreen() {
         <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>ACCOUNT</Text>
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
           <Pressable
-            onPress={() => safePush("/account-management")}
+            onPress={() => safePush({ pathname: "/(tabs)/settings" as any, params: { initialSection: "account" } })}
             style={({ pressed }) => [styles.menuRow, { opacity: pressed ? 0.75 : 1 }]}
           >
             <View style={[styles.menuIcon, { backgroundColor: colors.surfaceLight }]}>

@@ -13,7 +13,7 @@ import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 import { authAdapter } from "@/lib/auth";
 import { syncUserToDb } from "@/lib/auth/user-sync";
-import { mapAuthError } from "@/lib/auth/utils";
+import { mapAuthError, buildAuthUser } from "@/lib/auth/utils";
 import { trackLoginCompleted } from "@/lib/analytics";
 import { ENV } from "@/config";
 import type { AuthUser } from "@/lib/auth/types";
@@ -70,18 +70,7 @@ export function useGoogleAuth({ setUser, setToken, sessionRestoredRef }: Params)
       adapterUser.displayName,
       adapterUser.photoURL,
     ).catch(() => null);
-    const authUser: AuthUser = {
-      id: adapterUser.uid,
-      email: adapterUser.email ?? "",
-      displayName:
-        synced?.displayName ??
-        adapterUser.displayName ??
-        adapterUser.email?.split("@")[0] ??
-        "User",
-      photoURL: synced ? synced.photoURL : adapterUser.photoURL,
-      emailVerified: adapterUser.emailVerified,
-      username: synced?.username,
-    };
+    const authUser = buildAuthUser(adapterUser, synced);
     setUser(authUser);
     setToken(token);
     cacheAuthUser(authUser);
@@ -98,18 +87,7 @@ export function useGoogleAuth({ setUser, setToken, sessionRestoredRef }: Params)
         adapterUser.displayName,
         adapterUser.photoURL,
       ).catch(() => null);
-      const authUser: AuthUser = {
-        id: adapterUser.uid,
-        email: adapterUser.email ?? "",
-        displayName:
-          synced?.displayName ??
-          adapterUser.displayName ??
-          adapterUser.email?.split("@")[0] ??
-          "User",
-        photoURL: synced ? synced.photoURL : adapterUser.photoURL,
-        emailVerified: adapterUser.emailVerified,
-        username: synced?.username,
-      };
+      const authUser = buildAuthUser(adapterUser, synced);
       setUser(authUser);
       setToken(idToken);
       cacheAuthUser(authUser);

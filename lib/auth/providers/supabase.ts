@@ -8,6 +8,7 @@
 import { supabase } from "../../supabase";
 import type { AuthAdapter, AuthAdapterUser } from "../adapter";
 import type { User } from "@supabase/supabase-js";
+import { API_BASE_URL } from "@/config";
 
 // ─── User wrapper ──────────────────────────────────────────────────────────────
 
@@ -279,9 +280,8 @@ export const supabaseAuthProvider: AuthAdapter = {
 
     // 1. Try calling the unified Web API endpoint (/api/account/delete) if reachable
     if (typeof fetch === "function") {
-      const domain = process.env.EXPO_PUBLIC_DOMAIN;
-      const candidateUrls = domain
-        ? [`https://${domain.split(":")[0]}/api/account/delete`, "/api/account/delete"]
+      const candidateUrls = API_BASE_URL
+        ? [`${API_BASE_URL}/api/account/delete`, "/api/account/delete"]
         : ["/api/account/delete"];
 
       for (const endpoint of candidateUrls) {
@@ -301,7 +301,7 @@ export const supabaseAuthProvider: AuthAdapter = {
             }
           }
         } catch {
-          // On native mobile or offline relative URL, fall through to direct Supabase RPC
+          // Fall through to direct Supabase RPC
         }
       }
     }
@@ -352,9 +352,10 @@ export const supabaseAuthProvider: AuthAdapter = {
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail || !normalizedEmail.includes("@")) return false;
 
-    // 1. Try the Web API route (/api/auth/check-email)
+    // 1. Try the API route (/api/auth/check-email)
     try {
-      const res = await fetch("/api/auth/check-email", {
+      const endpoint = API_BASE_URL ? `${API_BASE_URL}/api/auth/check-email` : "/api/auth/check-email";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: normalizedEmail }),

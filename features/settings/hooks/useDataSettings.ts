@@ -77,7 +77,7 @@ export function useDataSettings({ userId }: UseDataSettingsOptions) {
 
       // FIX (100-item hard cap): paginate through all cloud scans instead of
       // truncating at 100. Each page is 500 items; most users will finish in
-      // one round-trip. The loop stops when Firestore signals no more pages.
+      // one round-trip. The loop stops when database signals no more pages.
       const allCloudItems: any[] = [];
       let cursor: any = undefined;
       let hasMore = true;

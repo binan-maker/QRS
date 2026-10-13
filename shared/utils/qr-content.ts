@@ -1,9 +1,9 @@
-import { getQrTypeMeta, detectContentType, resolveEffectiveType } from "./qr-types/detector";
-import { truncate } from "./qr-types/definitions";
+import { getQrTypeMeta, detectContentType, resolveEffectiveType } from "./qr-type/detector";
+import { truncate } from "./qr-type/definition";
 
-export * from "./qr-types/types";
-export * from "./qr-types/definitions";
-export * from "./qr-types/detector";
+export * from "./qr-type/types";
+export * from "./qr-type/definition";
+export * from "./qr-type/detector";
 
 export function getDisplayLabel(content: string, contentType?: string): string {
   const type = getQrTypeMeta(contentType || detectContentType(content));

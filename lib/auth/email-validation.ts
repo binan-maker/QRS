@@ -4,7 +4,7 @@
 // so signup is never blocked by backend unavailability.
 
 import { validateEmail } from "@/validators";
-import { API_BASE_URL, RTDB_TIMEOUT_MS } from "@/config";
+import { API_BASE_URL, REQUEST_TIMEOUT_MS } from "@/config";
 
 export async function serverValidateEmail(
   email: string,
@@ -14,7 +14,7 @@ export async function serverValidateEmail(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
-      signal: AbortSignal.timeout(RTDB_TIMEOUT_MS),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     // Only treat the server verdict as authoritative on an explicit HTTP 200.
     // Any 4xx / 5xx / proxy 502 falls back to local validation.

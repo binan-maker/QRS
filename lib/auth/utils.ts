@@ -1,8 +1,12 @@
-import { db } from "@/lib/db";
+import type { AuthUser } from "./types";
+import { generateUniqueUsername } from "@/services/user/username";
+
+// Re-export generateUniqueUsername so any legacy imports remain satisfied without duplication
+export { generateUniqueUsername };
 
 export function getAuthErrorMessage(code: string): string {
   switch (code) {
-    // ── Provider error codes ─────────────────────────────────────────────────
+    // ── Supabase & Standard Auth Credentials ──────────────────────────────────
     case "auth/wrong-password":
     case "auth/invalid-credential":
     case "invalid_credentials":
@@ -23,7 +27,6 @@ export function getAuthErrorMessage(code: string): string {
     case "auth/too-many-requests":
     case "over_request_rate_limit":
     case "over_email_send_rate_limit":
-    case "over_sms_send_rate_limit":
       return "Too many attempts. Please wait a moment and try again.";
     case "auth/network-request-failed":
     case "request_timeout":
@@ -41,19 +44,12 @@ export function getAuthErrorMessage(code: string): string {
     case "auth/operation-not-allowed":
     case "provider_disabled":
     case "email_provider_disabled":
-    case "phone_provider_disabled":
-    case "anonymous_provider_disabled":
     case "oauth_provider_not_supported":
       return "This sign-in method is not enabled. Please contact support.";
-    case "auth/popup-closed-by-user":
-    case "auth/cancelled-popup-request":
-      return "Sign-in was cancelled. Please try again.";
     case "auth/account-exists-with-different-credential":
     case "identity_already_exists":
     case "email_conflict_identity_not_deletable":
       return "An account already exists with this email using a different sign-in method.";
-    case "auth/credential-already-in-use":
-      return "This credential is already linked to another account.";
     case "auth/expired-action-code":
     case "otp_expired":
       return "This link has expired. Please request a new one.";
@@ -61,14 +57,13 @@ export function getAuthErrorMessage(code: string): string {
       return "This link is invalid or has already been used.";
     case "auth/missing-email":
       return "Please enter your email address.";
-    case "auth/quota-exceeded":
-      return "Service is temporarily unavailable. Please try again later.";
     case "auth/session-cookie-expired":
     case "session_expired":
     case "refresh_token_not_found":
     case "refresh_token_already_used":
       return "Your session has expired. Please sign in again.";
-    // ── Google OAuth / Google sign-in ─────────────────────────────────────────
+
+    // ── Google OAuth & Identity Provider ──────────────────────────────────────
     case "bad_oauth_state":
     case "bad_oauth_callback":
       return "Google sign-in could not be completed. Please try again.";
@@ -81,7 +76,8 @@ export function getAuthErrorMessage(code: string): string {
       return "Captcha check failed. Please try again.";
     case "unexpected_failure":
       return "An unexpected error occurred. Please try again.";
-    // ── App-specific ─────────────────────────────────────────────────────────
+
+    // ── App-specific Status Codes ─────────────────────────────────────────────
     case "ACCOUNT_DELETED":
       return "This account has been deleted.";
     default:
@@ -93,9 +89,6 @@ export function getAuthErrorMessage(code: string): string {
 export function mapAuthError(e: any): Error & { code?: string } {
   const code = e?.code ?? "";
   const knownMessage = getAuthErrorMessage(code);
-  // If we got a known mapped message, use it. Otherwise fall back to the
-  // original error message so provider errors aren't silently swallowed
-  // as a generic "Something went wrong."
   const isMapped = knownMessage !== "Something went wrong. Please try again.";
   const message = isMapped
     ? knownMessage
@@ -105,27 +98,44 @@ export function mapAuthError(e: any): Error & { code?: string } {
   return err;
 }
 
-export async function generateUniqueUsername(displayName: string): Promise<string> {
-  const base = displayName
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "")
-    .slice(0, 12) || "user";
-  for (let attempt = 0; attempt < 15; attempt++) {
-    let candidate: string;
-    if (attempt === 0 && base.length >= 3) {
-      candidate = base;
-    } else if (attempt < 5) {
-      candidate = base.slice(0, 10) + Math.floor(100 + Math.random() * 900);
-    } else {
-      candidate = base.slice(0, 8) + Math.floor(10000 + Math.random() * 90000);
-    }
-    try {
-      const data = await db.get(["usernames", candidate]);
-      if (!data) return candidate;
-    } catch {
-      // If we can't check, skip this candidate and try the next
-    }
-  }
-  // Final fallback: timestamp + random suffix — virtually guaranteed unique
-  return "user" + Date.now().toString().slice(-6) + Math.floor(10 + Math.random() * 90);
+/**
+ * Builds the canonical AuthUser representation from adapter user details
+ * and optional synced/cached profile data. Avoids duplicate fallback resolution.
+ */
+export function buildAuthUser(
+  adapterUser: {
+    uid: string;
+    email?: string | null;
+    displayName?: string | null;
+    photoURL?: string | null;
+    emailVerified?: boolean;
+  },
+  syncedProfile?: {
+    displayName?: string | null;
+    photoURL?: string | null;
+    username?: string | null;
+  } | null,
+  cachedProfile?: {
+    displayName?: string | null;
+    photoURL?: string | null;
+    avatarUrl?: string | null;
+    username?: string | null;
+  } | null,
+): AuthUser {
+  return {
+    id: adapterUser.uid,
+    email: adapterUser.email ?? "",
+    displayName:
+      syncedProfile?.displayName ||
+      cachedProfile?.displayName ||
+      adapterUser.displayName ||
+      adapterUser.email?.split("@")[0] ||
+      "User",
+    photoURL:
+      syncedProfile?.photoURL !== undefined
+        ? syncedProfile.photoURL
+        : (cachedProfile?.photoURL ?? cachedProfile?.avatarUrl ?? adapterUser.photoURL ?? null),
+    emailVerified: adapterUser.emailVerified ?? false,
+    username: syncedProfile?.username || cachedProfile?.username || undefined,
+  };
 }

@@ -69,12 +69,11 @@ export function useAccountSettings({ userId, signOut }: UseAccountSettingsOption
   //
   // Deletion order (prevents partial deletion):
   //   1. authAdapter.deleteUser — requires recent auth, fails before any data is touched
-  //   2. deleteUserAccount      — Firestore isDeleted flag + background cleanup
+  //   2. deleteUserAccount      — Database isDeleted flag + background cleanup
   //   3. signOut                — clears local session
   //
-  // If step 1 fails with auth/requires-recent-login the user is told to sign
-  // out and back in — the full DeleteAccountModal (used in account-management.tsx)
-  // handles the multi-step re-auth flow more gracefully.
+  // If step 1 fails with auth/requires-recent-login the user is notified
+  // to sign out and back in before re-attempting deletion.
   const handleDeleteAccount = useCallback(async () => {
     if (deleteConfirmText.toLowerCase() !== "delete") {
       Alert.alert("Confirmation Required", 'Please type "delete" to confirm account deletion.');

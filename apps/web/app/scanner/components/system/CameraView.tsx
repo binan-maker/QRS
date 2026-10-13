@@ -2,10 +2,10 @@
 
 import React, { useEffect, useRef, useCallback } from "react";
 import styles from "../../scanner.module.css";
-import { acquireCameraStream, stopSharedCameraStream, applyTrackTorch, applyTrackZoom } from "./cameraStream";
+import { acquireCameraStream, stopSharedCameraStream, applyTrackTorch, applyTrackZoom } from "./CameraStream";
 import { detectQrFromCanvas, isValidDecodedQr } from "./qrDetector";
 
-export { useCameraPermissions } from "./useCameraPermissions";
+export { useCameraPermissions } from "./useCameraPermission";
 export { stopSharedCameraStream, isValidDecodedQr };
 export { loadJsQr } from "./qrDetector";
 

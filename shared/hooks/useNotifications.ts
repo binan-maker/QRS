@@ -45,7 +45,7 @@ function teardownCountIfUnused() {
 /**
  * Single shared notification-count subscription per user.
  * Multiple components can mount this hook without opening duplicate
- * Firestore listeners. The Firestore listener is torn down once the
+ * Realtime listeners. The listener is torn down once the
  * last subscriber unmounts.
  */
 export function useNotifications() {

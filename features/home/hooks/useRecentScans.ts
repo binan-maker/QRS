@@ -56,7 +56,7 @@ export function useRecentScans() {
     }).catch(() => {});
   }, [user?.id]);
 
-  // ── Cloud scans: last MAX_RECENT from Firestore ───────────────────────────
+  // ── Cloud scans: last MAX_RECENT from database ─────────────────────────────
   const {
     data:      cloudScansRaw,
     refetch:   refetchCloud,
@@ -82,7 +82,7 @@ export function useRecentScans() {
     refetchOnMount:      true,
     // A cached user can render before Supabase has restored the live token.
     // Keep the local/cache path instant, but wait for auth readiness before
-    // making the authenticated Firestore request.
+    // making the authenticated cloud request.
     enabled:             !!user?.id && !authLoading,
     initialData:         warmedHomeScans ?? undefined,
     // Render warmed data immediately, but let the live request refresh it
@@ -175,7 +175,7 @@ export function useRecentScans() {
         await refetchCloud().catch(() => {});
       }
     } finally {
-      // Always stop the spinner — prevents it getting stuck when Firestore
+      // Always stop the spinner — prevents it getting stuck when network
       // is offline or refetchCloud throws an unhandled rejection.
       setRefreshing(false);
     }
@@ -188,7 +188,7 @@ export function useRecentScans() {
   // on a cloud scan found stored=null → early return → card never disappeared.
   //
   // Fix: check whether the scan ID exists in the React Query cloud cache first.
-  // If yes → optimistic cache removal + Firestore soft-delete.
+  // If yes → optimistic cache removal + cloud soft-delete.
   // If no  → it's a local-only scan → remove from AsyncStorage as before.
   const deleteScan = useCallback(async (scanId: string) => {
     if (!user?.id) return;
@@ -243,7 +243,7 @@ export function useRecentScans() {
     recentScans,
     // Show skeleton only until local AsyncStorage is ready.
     // Cloud data merges in silently once it arrives — no need to block the
-    // entire list on a Firestore round-trip.
+    // entire list on a database round-trip.
     isLoading: !localLoaded,
     refreshing,
     onRefresh,

@@ -9,18 +9,13 @@ import { Platform } from "react-native";
 import { authAdapter } from "@/lib/auth";
 import { syncUserToDb } from "@/lib/auth/user-sync";
 import { serverValidateEmail } from "@/lib/auth/email-validation";
-import { mapAuthError, getAuthErrorMessage } from "@/lib/auth/utils";
+import { mapAuthError, getAuthErrorMessage, buildAuthUser } from "@/lib/auth/utils";
 import { trackLoginCompleted } from "@/lib/analytics";
 import { db } from "@/lib/db";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import { queryClient } from "@/lib/query-client";
-import { clearAllMemCache, clearAllAsyncStorageCache } from "@/services/cache/qr-cache";
-import { clearAllAnonymousSessions } from "@/services/cache/anonymous-session";
-import { clearPrewarmState } from "@/services/cache/prewarm";
-import { clearAvatarFromOutside } from "@/shared/contexts/AvatarContext";
+import { clearAppSessionData } from "@/services/cache";
 import { cacheAuthUser, clearCachedAuthUser } from "@/lib/auth/session-cache";
-import { clearUserProfileCache } from "@/services/user/cache";
-import { clearCommentProfileCache } from "@/services/comments/cache";
 import type { AuthUser } from "@/lib/auth/types";
 
 // GoogleSignin is loaded lazily — configure() is handled by useGoogleAuth;
@@ -47,14 +42,9 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
 
   // ── signIn ──────────────────────────────────────────────────────────────────
 
-  async function signIn(email: string, password: string) {
+  async function signIn(email: string, pass: string) {
     try {
-      const adapterUser = await authAdapter.signIn(email, password);
-      if (!adapterUser.emailVerified) {
-        const err = new Error(getAuthErrorMessage("auth/email-not-verified")) as any;
-        err.code = "auth/email-not-verified";
-        throw err;
-      }
+      const adapterUser = await authAdapter.signIn(email, pass);
       const synced = await syncUserToDb(
         adapterUser.uid,
         adapterUser.email,
@@ -64,18 +54,7 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
         adapterUser.emailVerified,
       );
       const idToken = await adapterUser.getIdToken();
-      const authUser: AuthUser = {
-        id: adapterUser.uid,
-        email: adapterUser.email ?? "",
-        displayName:
-          synced?.displayName ??
-          adapterUser.displayName ??
-          adapterUser.email?.split("@")[0] ??
-          "User",
-        photoURL: synced ? synced.photoURL : adapterUser.photoURL,
-        emailVerified: adapterUser.emailVerified,
-        username: synced?.username,
-      };
+      const authUser = buildAuthUser(adapterUser, synced);
       setUser(authUser);
       setToken(idToken);
       cacheAuthUser(authUser);
@@ -137,13 +116,7 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
         adapterUser.emailVerified,
       );
       const idToken = await adapterUser.getIdToken();
-      const authUser: AuthUser = {
-        id: adapterUser.uid,
-        email: adapterUser.email ?? "",
-        displayName: displayName || adapterUser.displayName || adapterUser.email?.split("@")[0] || "User",
-        photoURL: adapterUser.photoURL,
-        emailVerified: true,
-      };
+      const authUser = buildAuthUser(adapterUser, { displayName });
       setUser(authUser);
       setToken(idToken);
       cacheAuthUser(authUser);
@@ -168,14 +141,7 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
     setToken(null);
     clearCachedAuthUser();
     queryClient.clear();
-    clearAllMemCache();
-    clearUserProfileCache();
-    clearCommentProfileCache();
-    clearPrewarmState();
-    clearAllAnonymousSessions();
-    // Clear avatar cache synchronously so the next user never sees a previous
-    // user's avatar even for a single frame.
-    clearAvatarFromOutside();
+    clearAppSessionData(signedOutUserId);
 
     // Provider sign-out must complete before returning so a rapid re-sign-in
     // cannot be torn down by this call finishing after the new session starts.
@@ -187,23 +153,6 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
     } catch {}
 
     isSigningOutRef.current = false;
-
-    // Fire-and-forget: AsyncStorage cleanup (scan / QR cache keys only).
-    (async () => {
-      try {
-        const AsyncStorage = (
-          await import("@react-native-async-storage/async-storage")
-        ).default;
-        if (signedOutUserId) {
-          await AsyncStorage.removeItem(`local_scan_history_${signedOutUserId}`);
-        }
-        const allKeys = await AsyncStorage.getAllKeys();
-        const qrContentKeys = allKeys.filter((k) => k.startsWith("qr_content_"));
-        if (qrContentKeys.length > 0) await AsyncStorage.multiRemove(qrContentKeys);
-        await AsyncStorage.removeItem("qrguard_downloads_dir_uri");
-      } catch {}
-      await clearAllAsyncStorageCache().catch(() => {});
-    })();
   }
 
   // ── sendPasswordReset ───────────────────────────────────────────────────────
@@ -267,18 +216,7 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
             reloaded.emailVerified,
           ).catch(() => null);
         }
-        const authUser: AuthUser = {
-          id: reloaded.uid,
-          email: reloaded.email ?? "",
-          displayName:
-            syncedProfile?.displayName ??
-            reloaded.displayName ??
-            reloaded.email?.split("@")[0] ??
-            "User",
-          photoURL: syncedProfile ? syncedProfile.photoURL : reloaded.photoURL,
-          emailVerified: reloaded.emailVerified,
-          username: syncedProfile?.username,
-        };
+        const authUser = buildAuthUser(reloaded, syncedProfile);
         if (reloaded.emailVerified && !authUser.username) {
           try {
             const userData = await db.get([COLLECTIONS.USERS, reloaded.uid]);

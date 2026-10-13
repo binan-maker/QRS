@@ -4,7 +4,7 @@
 // pulling in React.
 
 import { db } from "@/lib/db";
-import { generateUniqueUsername } from "@/lib/auth/utils";
+import { generateUniqueUsername } from "@/services/user/username";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import {
   isUserUploadedPhoto,
@@ -16,6 +16,21 @@ export interface SyncedUserProfile {
   displayName: string;
   username?: string;
   photoURL: string | null;
+}
+
+// ── Referral code attachment helper ───────────────────────────────────────────
+// Ensures newly signed-in or synced users have a lifetime referral code and
+// applies any pending referral code recorded on device.
+async function attachUserReferrals(uid: string): Promise<void> {
+  try {
+    const { getOrCreateUserReferralCode, getPendingReferralCode, applyReferralCodeForUser } =
+      await import("@/services/rewards");
+    await getOrCreateUserReferralCode(uid).catch(() => {});
+    const pending = await getPendingReferralCode();
+    if (pending) {
+      await applyReferralCodeForUser(uid, pending).catch(() => {});
+    }
+  } catch {}
 }
 
 // ── Username reservation ──────────────────────────────────────────────────────
@@ -79,15 +94,8 @@ export async function syncUserToDb(
       }
 
       // Ensure user has permanent lifetime referral code and auto-apply pending referral
-      import("@/services/rewards")
-        .then(async ({ getOrCreateUserReferralCode, getPendingReferralCode, applyReferralCodeForUser }) => {
-          await getOrCreateUserReferralCode(uid).catch(() => {});
-          const pending = await getPendingReferralCode();
-          if (pending) {
-            await applyReferralCodeForUser(uid, pending);
-          }
-        })
-        .catch(() => {});
+      attachUserReferrals(uid).catch(() => {});
+
       return {
         displayName: name,
         username,
@@ -158,15 +166,7 @@ export async function syncUserToDb(
       }
 
       // Ensure user has lifetime referral code and auto-apply pending referral if eligible
-      import("@/services/rewards")
-        .then(async ({ getOrCreateUserReferralCode, getPendingReferralCode, applyReferralCodeForUser }) => {
-          await getOrCreateUserReferralCode(uid).catch(() => {});
-          const pending = await getPendingReferralCode();
-          if (pending) {
-            await applyReferralCodeForUser(uid, pending).catch(() => {});
-          }
-        })
-        .catch(() => {});
+      attachUserReferrals(uid).catch(() => {});
 
       return {
         displayName: effectiveDisplayName,

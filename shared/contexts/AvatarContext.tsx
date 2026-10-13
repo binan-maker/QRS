@@ -13,7 +13,7 @@
  *  5. `isHydrated` becomes true once AsyncStorage has finished loading so consumers
  *     know whether an empty `url` means "not loaded yet" or "genuinely no photo".
  *  6. `syncAvatarFromOutside(url)` allows non-hook contexts (e.g. AuthContext) to
- *     push Firestore photo updates into this store without a React hook dependency.
+ *     push user profile photo updates into this store without a React hook dependency.
  *
  * No new packages needed — Context + AsyncStorage + expo-image cachePolicy covers it.
  */

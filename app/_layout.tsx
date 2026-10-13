@@ -113,7 +113,6 @@ function RootLayoutNav() {
       {/* (account) group — user account, preferences and discovery */}
       <Stack.Screen name="(account)/account-management" options={{ headerShown: false }} />
       <Stack.Screen name="(account)/privacy-settings" options={{ headerShown: false }} />
-      <Stack.Screen name="(account)/search" options={{ headerShown: false }} />
       {/* (legal) group — legal, policy and informational screens */}
       <Stack.Screen name="(legal)/privacy-policy" options={{ headerShown: false }} />
       <Stack.Screen name="(legal)/terms" options={{ headerShown: false }} />
