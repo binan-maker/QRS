@@ -11,11 +11,12 @@ import { openOnlinePrivacyPolicy, openOnlineTerms } from "@/shared/utils/legal-l
 import ConsentScrollBody from "./ConsentScrollBody";
 
 export const CONSENT_VERSION = "3.0";
-const CONSENT_KEY = "qrguard_consent_version";
+const CONSENT_KEY = "binro_consent_version";
+const LEGACY_CONSENT_KEY = "qrguard_consent_version";
 
 export async function hasUserConsented(): Promise<boolean> {
   try {
-    const stored = await AsyncStorage.getItem(CONSENT_KEY);
+    const stored = (await AsyncStorage.getItem(CONSENT_KEY)) || (await AsyncStorage.getItem(LEGACY_CONSENT_KEY));
     return stored === CONSENT_VERSION;
   } catch { return false; }
 }

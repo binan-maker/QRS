@@ -20,7 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
  * Call `setupGlobalErrorHandlers()` once at the very top of the root layout.
  */
 
-const STORAGE_KEY = "qrguard_recent_errors";
+const STORAGE_KEY = "binro_recent_errors";
 const MAX_BREADCRUMBS = 10;
 
 type Breadcrumb = {

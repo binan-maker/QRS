@@ -27,12 +27,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Single source of truth for every key read at startup.
 // Add future startup-time prefs here; remove from the individual components.
 export const STARTUP_PREF_KEYS = {
-  THEME_MODE:      "qrguard_theme_mode",
-  AVATAR_URL:      "qrg:avatar:url",
-  AVATAR_VERSION:  "qrg:avatar:version",
+  THEME_MODE:      "binro_theme_mode",
+  AVATAR_URL:      "binro:avatar:url",
+  AVATAR_VERSION:  "binro:avatar:version",
   HAPTICS_ENABLED: "haptic_enabled",
-  CONSENT_VERSION: "qrguard_consent_version",
-  AUTH_SNAPSHOT:  "qrg:auth:snapshot",
+  CONSENT_VERSION: "binro_consent_version",
+  AUTH_SNAPSHOT:  "binro:auth:snapshot",
 } as const;
 
 type PrefKey = (typeof STARTUP_PREF_KEYS)[keyof typeof STARTUP_PREF_KEYS];
