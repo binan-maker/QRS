@@ -24,7 +24,7 @@ export interface SyncedUserProfile {
 async function attachUserReferrals(uid: string): Promise<void> {
   try {
     const { getOrCreateUserReferralCode, getPendingReferralCode, applyReferralCodeForUser } =
-      await import("@/services/rewards");
+      await import("@/services/referrals");
     await getOrCreateUserReferralCode(uid).catch(() => {});
     const pending = await getPendingReferralCode();
     if (pending) {

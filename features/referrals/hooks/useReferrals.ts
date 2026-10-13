@@ -15,7 +15,7 @@ import {
   savePendingReferralCode,
   type RewardWallet,
   type UserReferralsDashboard,
-} from "@/services/rewards";
+} from "@/services/referrals";
 import { HERO_SLIDES } from "../constants";
 import { RefereeStatus, UseReferralsReturn } from "../types";
 

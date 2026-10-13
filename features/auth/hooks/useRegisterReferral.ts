@@ -6,7 +6,7 @@ import {
   getPendingReferralCode,
   savePendingReferralCode,
   clearPendingReferralCode,
-} from "@/services/rewards";
+} from "@/services/referrals";
 
 export interface RegisterReferralState {
   referralCode: string;

@@ -2,7 +2,7 @@
 
 import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { savePendingReferralCode } from "@services/rewards";
+import { savePendingReferralCode } from "@services/referrals";
 
 function AttributionHandler() {
   const searchParams = useSearchParams();

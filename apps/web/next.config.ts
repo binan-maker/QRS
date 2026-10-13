@@ -181,11 +181,6 @@ const nextConfig: NextConfig = {
         destination: "/referrals",
         permanent: true,
       },
-      {
-        source: "/scratch-cards",
-        destination: "/rewards",
-        permanent: true,
-      },
     ];
   },
 };

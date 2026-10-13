@@ -12,7 +12,7 @@ import {
   applyReferralCodeForUser,
   getUserRewardWallet,
   type RewardWallet,
-} from "@services/rewards";
+} from "@services/referrals";
 import styles from "../../home.module.css";
 
 interface InviteLandingClientProps {

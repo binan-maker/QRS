@@ -47,7 +47,6 @@ export async function clearAllAsyncStorageCache(): Promise<void> {
 
 const TTL = {
   QR_DETAIL: 5 * 60 * 1000,
-  OWNER_INFO: 10 * 60 * 1000,
   TRUST_SCORE: 2 * 60 * 1000,
   USER_STATS: 3 * 60 * 1000,
   HISTORY_PAGE: 5 * 60 * 1000,
@@ -64,13 +63,6 @@ export async function setCachedQrDetail<T>(qrId: string, userId: string | null, 
   return setCache<T>(`qr_detail_${qrId}_${userId ?? "anon"}`, value, TTL.QR_DETAIL);
 }
 
-export async function getCachedOwnerInfo<T>(qrId: string): Promise<T | null> {
-  return getCache<T>(`owner_info_${qrId}`);
-}
-export async function setCachedOwnerInfo<T>(qrId: string, value: T): Promise<void> {
-  return setCache<T>(`owner_info_${qrId}`, value, TTL.OWNER_INFO);
-}
-
 export async function getCachedUserStats<T>(userId: string): Promise<T | null> {
   return getCache<T>(`user_stats_${userId}`);
 }
@@ -80,7 +72,6 @@ export async function setCachedUserStats<T>(userId: string, value: T): Promise<v
 
 export function invalidateQrCache(qrId: string): void {
   invalidateCache(`qr_detail_${qrId}`);
-  invalidateCache(`owner_info_${qrId}`);
 }
 export function invalidateUserCache(userId: string): void {
   invalidateCache(`user_stats_${userId}`);

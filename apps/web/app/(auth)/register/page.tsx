@@ -249,7 +249,7 @@ function RegisterContent() {
       const trimmedRef = referralCode.trim().toLowerCase();
       if (trimmedRef && res.user?.id) {
         try {
-          const { applyReferralCodeForUser } = await import("@services/rewards");
+          const { applyReferralCodeForUser } = await import("@services/referrals");
           await applyReferralCodeForUser(res.user.id, trimmedRef);
         } catch {}
       }

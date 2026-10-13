@@ -17,8 +17,3 @@ export {
   type QrValidationResult,
 } from "./qr-validator";
 
-// ── 4. Scam Signal Detection ──────────────────────────────────────────────────
-export {
-  detectScamSignals,
-  type ScamDetectionResult,
-} from "./scam-detector";

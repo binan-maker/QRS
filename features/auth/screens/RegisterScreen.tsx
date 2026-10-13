@@ -23,7 +23,7 @@ import { validateEmail } from "@/validators";
 import {
   applyReferralCodeForUser,
   savePendingReferralCode,
-} from "@/services/rewards";
+} from "@/services/referrals";
 
 export default function RegisterScreen() {
   const { signUp, signInWithGoogle, googleRequest, user } = useAuth();

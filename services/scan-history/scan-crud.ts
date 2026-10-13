@@ -17,7 +17,6 @@ import { tsToMs } from "../integrity/time-utils";
 import { incrementSmartCounter } from "@/lib/db/distributed-counter";
 import { COLLECTIONS } from "@/shared/constants/collections";
 import { logger } from "@/lib/logger";
-import { processEligibleScanReward } from "../rewards/reward-service";
 import { normalizeScanContent } from "./dedup";
 
 const SCAN_SOFT_DELETE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -196,9 +195,6 @@ export async function recordScan(
       invalidateHomeScansCache(userId);
       invalidateHistoryCache(userId);
     } catch {}
-
-    // Evaluate eligible scan reward (Welcome Card + 3/8/15 daily milestones + referral unlock)
-    processEligibleScanReward(userId, qrId, isAnonymous).catch(() => {});
   }
 }
 

@@ -28,7 +28,7 @@ import PhotoModal from "@/features/profile/components/PhotoModal";
 import ImageCropModal from "@/features/profile/components/ImageCropModal";
 import GuestView from "@/features/profile/components/GuestView";
 import ReferralModal from "@/features/profile/components/ReferralModal";
-import { getUserRewardWallet, type RewardWallet } from "@/services/rewards";
+import { getUserRewardWallet, type RewardWallet } from "@/services/referrals";
 import { styles } from "@/features/profile/styles";
 
 // ── Module-level animation presets (created once, not per render) ──────────────
@@ -280,40 +280,7 @@ function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </Pressable>
 
-          {/* 2. Milestones & Rewards */}
-          <Pressable
-            onPress={() => safePush("/(tabs)/rewards")}
-            style={({ pressed }) => [
-              styles.separateCard,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.surfaceBorder,
-                opacity: pressed ? 0.85 : 1,
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Milestones & Rewards"
-          >
-            <View
-              style={[
-                styles.menuIconWrap,
-                { backgroundColor: colors.surfaceLight },
-              ]}
-            >
-              <Ionicons name="gift-outline" size={20} color={colors.primary} />
-            </View>
-            <View style={styles.menuTextCol}>
-              <Text style={[styles.menuLabel, { color: colors.text }]}>
-                Milestones &amp; Rewards
-              </Text>
-              <Text style={[styles.menuSublabel, { color: colors.textSecondary }]}>
-                Daily milestones and deals
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-          </Pressable>
-
-          {/* 3. Referral */}
+          {/* 2. Referral */}
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

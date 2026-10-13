@@ -487,26 +487,6 @@ function ProfileContent() {
 
                 <div className={styles.divider} />
 
-                {/* Milestones & Rewards */}
-                <Link href="/rewards" className={styles.menuItem}>
-                  <div className={styles.menuIconWrap}>
-                    <Ionicons name="gift-outline" size={19} />
-                  </div>
-                  <div className={styles.menuTextCol}>
-                    <span className={styles.menuLabel}>Milestones &amp; Rewards</span>
-                    <span className={styles.menuSublabel}>
-                      Daily milestones and deals
-                    </span>
-                  </div>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color="var(--text-muted)"
-                  />
-                </Link>
-
-                <div className={styles.divider} />
-
                 {/* Refer & Earn */}
                 <Link href="/referrals" className={styles.menuItem}>
                   <div className={styles.menuIconWrap}>

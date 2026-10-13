@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyReferralCode } from "@services/rewards";
+import { verifyReferralCode } from "@services/referrals";
 
 export async function POST(req: NextRequest) {
   try {

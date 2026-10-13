@@ -13,7 +13,7 @@ import {
   buildReferralShareMessage,
   type RewardWallet,
   type UserReferralsDashboard,
-} from "@services/rewards";
+} from "@services/referrals";
 import styles from "./referrals.module.css";
 
 interface HeroSlide {

@@ -5,7 +5,10 @@ export {
   SUPABASE_CONFIG,
   isWebSupabaseConfigured,
   getWebSupabase,
+  createServerSupabaseClient,
+  createAdminSupabaseClient,
+  getBestServerSupabaseClient,
   getSupabaseAdmin,
   supabase,
-} from "@/lib/supabase";
-export { default } from "@/lib/supabase";
+} from "../../../lib/supabase";
+export { default } from "../../../lib/supabase";

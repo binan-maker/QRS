@@ -267,7 +267,7 @@ export default function RootLayout() {
         }
         const finalCode = (qRef || pathCode || "").trim().replace(/^@/, "").toLowerCase();
         if (finalCode) {
-          import("@/services/rewards")
+          import("@/services/referrals")
             .then(({ savePendingReferralCode }) => {
               savePendingReferralCode(finalCode).catch(() => {});
             })

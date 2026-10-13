@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { RewardWallet, UserReferralsDashboard } from "@/services/rewards";
+import { RewardWallet, UserReferralsDashboard } from "@/services/referrals";
 
 export interface HeroSlide {
   id: string;

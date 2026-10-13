@@ -264,7 +264,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
 
         // Auto-apply pending referral code from invite link or attribution query
-        import("@services/rewards")
+        import("@services/referrals")
           .then(async ({ getPendingReferralCode, applyReferralCodeForUser }) => {
             const pending = await getPendingReferralCode();
             if (pending) {

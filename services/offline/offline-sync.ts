@@ -3,7 +3,6 @@ import { castFeatureVote } from "../votes/feature-vote-service";
 import { submitFeedback } from "../user/profile";
 
 export type OfflineActionType =
-  | "FAVORITE_TOGGLE"
   | "SCAN_RECORD"
   | "FEATURE_VOTE"
   | "FEEDBACK_SUBMIT"
@@ -27,7 +26,6 @@ export interface OfflineSyncReport {
 }
 
 const UNIVERSAL_QUEUE_KEY = "offline_pending_actions_v2";
-const LEGACY_FAVORITES_QUEUE_KEY = "offline_pending_favorites";
 const MAX_RETRY_ATTEMPTS = 5;
 
 type QueueListener = (pendingCount: number) => void;
@@ -70,7 +68,6 @@ export async function getPendingOfflineCount(): Promise<number> {
 export async function clearOfflineQueue(): Promise<void> {
   try {
     await AsyncStorage.removeItem(UNIVERSAL_QUEUE_KEY);
-    await AsyncStorage.removeItem(LEGACY_FAVORITES_QUEUE_KEY);
     notifyListeners(0);
   } catch {}
 }
@@ -108,36 +105,10 @@ export async function queueOfflineAction<T = any>(
   }
 }
 
-// ─── Legacy Backward Compatibility Helpers ────────────────────────────────────
-
-interface PendingFavoritePayload {
-  id: string;
-  userId: string;
-  content: string;
-  contentType: string;
-}
-
-export async function queueOfflineFavorite(
-  id: string,
-  userId: string,
-  content: string,
-  contentType: string
-): Promise<void> {
-  await queueOfflineAction<PendingFavoritePayload>(
-    "FAVORITE_TOGGLE",
-    { id, userId, content, contentType },
-    { idempotencyKey: `fav_${userId}_${id}` }
-  );
-}
-
 // ─── Universal Sync Dispatcher ────────────────────────────────────────────────
 
 async function executeAction(action: OfflineAction): Promise<void> {
   switch (action.type) {
-    case "FAVORITE_TOGGLE": {
-      // Favorites feature has been retired
-      break;
-    }
     case "FEATURE_VOTE": {
       const p = action.payload as { email: string; vote: "need" | "not_need" };
       await castFeatureVote(p.email, p.vote);
@@ -167,8 +138,6 @@ export async function syncAllOfflineActions(): Promise<OfflineSyncReport> {
   };
 
   if (queue.length === 0) {
-    // Check legacy queue
-    await syncLegacyFavorites(report);
     return report;
   }
 
@@ -196,24 +165,5 @@ export async function syncAllOfflineActions(): Promise<OfflineSyncReport> {
   report.remaining = remaining.length;
   notifyListeners(remaining.length);
 
-  // Also sync legacy queue if any exists
-  await syncLegacyFavorites(report);
-
   return report;
-}
-
-async function syncLegacyFavorites(report: OfflineSyncReport): Promise<void> {
-  try {
-    const stored = await AsyncStorage.getItem(LEGACY_FAVORITES_QUEUE_KEY);
-    if (!stored) return;
-    const legacyQueue = JSON.parse(stored);
-    if (!Array.isArray(legacyQueue) || legacyQueue.length === 0) return;
-
-    report.synced += legacyQueue.length;
-    await AsyncStorage.removeItem(LEGACY_FAVORITES_QUEUE_KEY);
-  } catch {}
-}
-
-export async function syncOfflineFavorites(): Promise<void> {
-  await syncAllOfflineActions();
 }
