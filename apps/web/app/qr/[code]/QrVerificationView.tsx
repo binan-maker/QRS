@@ -759,10 +759,10 @@ export default function QrVerificationView({
     };
   }, [qrId, activeContent, activeContentType, record.content, record.contentType, record.reportCounts, record.weightedCounts]);
 
-  // 2. Real trust score computed using mobile @services/trust/trust-service
+  // 2. Real trust score computed solely from votes and scan count
   const trustInfo = useMemo(() => {
-    return calculateTrustScore(reportCounts, weightedCounts);
-  }, [reportCounts, weightedCounts]);
+    return calculateTrustScore(reportCounts, weightedCounts, undefined, record.scanCount);
+  }, [reportCounts, weightedCounts, record.scanCount]);
 
   const totalVotes = useMemo(
     () => reportTypes.reduce((sum, r) => sum + (reportCounts[r.key] || 0), 0),

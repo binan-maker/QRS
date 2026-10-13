@@ -21,7 +21,6 @@ export {
   useQrMeta,
 } from "./qr-content";
 export * from "./qr-share";
-export * from "./url-risk";
 export * from "./disposable-domains";
 export * from "./email-validator";
 export * from "./utils/qr-detail-rules";

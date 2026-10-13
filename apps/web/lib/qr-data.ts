@@ -19,8 +19,7 @@ import {
   getMergedQrVotesSummary,
   seedQrReportCountsInMemory,
 } from "@services/moderation/report-service";
-import { detectContentType } from "@shared/utils/qr-content";
-import { normalizeQrDetailContentType } from "@features/qr-detail/content-types";
+import { detectContentType, resolveEffectiveType as normalizeQrDetailContentType } from "@shared/utils/qr-content";
 import { isPaymentQr } from "@services/analysis";
 
 export const ANDROID_APP_URL = "https://play.google.com/store/apps/details?id=com.qrguard.app";
@@ -188,7 +187,8 @@ export async function getPublicQrRecord(
         }
       : undefined;
 
-    const trust = calculateMobileTrustScore(reportCounts, weightedCounts, collusionFlags);
+    const scanCount = asNumber(qrData?.scan_count ?? qrData?.scanCount, 1);
+    const trust = calculateMobileTrustScore(reportCounts, weightedCounts, collusionFlags, scanCount);
 
     const rawComments = Array.isArray(commentsRes.data)
       ? commentsRes.data.filter(

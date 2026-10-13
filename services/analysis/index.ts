@@ -27,12 +27,3 @@ export {
   type ScamDetectionResult,
 } from "./scam-detector";
 
-// ── 6. URL & Link Security Analyzers ──────────────────────────────────────────
-export {
-  scanUrl,
-  type UrlSafetyResult,
-} from "./url-scanner";
-export {
-  analyzeUrlSecurity,
-  type UrlSecurityAnalysis,
-} from "./url-security-analyzer";

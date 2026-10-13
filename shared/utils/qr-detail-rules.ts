@@ -150,9 +150,10 @@ export function calculateTrustScore(
     suspicious: boolean;
     safeWeightMultiplier?: number;
     negativeWeightMultiplier?: number;
-  }
+  },
+  scanCount: number = 0
 ): TrustScore {
-  return calculateTrustScoreEngine(reportCounts, weightedCounts, collusionFlags);
+  return calculateTrustScoreEngine(reportCounts, weightedCounts, collusionFlags, scanCount);
 }
 
 export function calculateFallbackTrustScore(reportCounts: Record<string, number>): {

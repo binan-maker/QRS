@@ -43,8 +43,8 @@ export function useQrDetail(
     if (reports.trustScore && reports.trustScore.score >= 0) {
       return reports.trustScore;
     }
-    return calculateTrustScore(reports.reportCounts);
-  }, [reports.trustScore, reports.reportCounts]);
+    return calculateTrustScore(reports.reportCounts, undefined, undefined, qrData.qrCode?.scanCount ?? 0);
+  }, [reports.trustScore, reports.reportCounts, qrData.qrCode?.scanCount]);
 
   const totalComments = qrData.qrCode?.commentCount ?? comments.commentsList.length;
 

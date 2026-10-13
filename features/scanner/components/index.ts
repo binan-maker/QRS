@@ -3,6 +3,7 @@ export { default as ScannerOverlay }  from "./overlay/ScannerOverlay";
 export { default as FinderFrame }     from "./overlay/FinderFrame";
 export { default as OverlayTopBar }   from "./overlay/OverlayTopBar";
 export { default as OverlayBottomBar }from "./overlay/OverlayBottomBar";
+export { TapFocusRing }               from "./overlay/TapFocusRing";
 export { SCANNER_GLOW, SCANNER_AMBER, VIGNETTE } from "./overlay/constants";
 
 // Feedback

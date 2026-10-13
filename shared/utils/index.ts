@@ -13,7 +13,6 @@ export * from "./responsive";
 export * from "./smart-open";
 export * from "./qr-content";
 export * from "./qr-share";
-export * from "./url-risk";
 export * from "./disposable-domains";
 export * from "./email-validator";
 export * from "./qr-detail-rules";

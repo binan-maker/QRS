@@ -17,6 +17,10 @@ export interface TrustScore {
   totalReports: number;
 }
 
+/**
+ * Calculates QR Trust Score solely from community feedback (safe, scam, spam votes)
+ * and verified scan volume. Completely decoupled from URL heuristics or external domain checks.
+ */
 export function calculateTrustScore(
   reportCounts: Record<string, number>,
   weightedCounts?: Record<string, number>,
@@ -24,72 +28,68 @@ export function calculateTrustScore(
     suspicious: boolean;
     safeWeightMultiplier?: number;
     negativeWeightMultiplier?: number;
-  }
+  },
+  scanCount: number = 0
 ): TrustScore {
   const rawSafe  = reportCounts.safe  || 0;
   const rawScam  = reportCounts.scam  || 0;
   const rawSpam  = reportCounts.spam  || 0;
   const rawFake  = reportCounts.fake  || 0;
   const rawTotal = rawSafe + rawScam + rawSpam + rawFake;
+  const totalScans = Math.max(0, scanCount || reportCounts.scanCount || reportCounts.scan_count || 0);
 
-  if (rawTotal === 0) return { score: -1, label: "Unrated", totalReports: 0 };
+  if (rawTotal === 0) {
+    if (totalScans > 0) {
+      const scanBoost = Math.min(Math.round(Math.log10(totalScans + 1) * 12), 20);
+      const score = 50 + scanBoost;
+      return { score, label: score >= 55 ? "Likely Safe" : "Uncertain", totalReports: 0 };
+    }
+    return { score: -1, label: "Unrated", totalReports: 0 };
+  }
 
   const useWeighted = Boolean(weightedCounts && Object.keys(weightedCounts).length > 0);
-  const resolveWeight = (rawCount: number, weightedVal?: number): number => {
-    if (rawCount <= 0) return 0;
-    if (!useWeighted) return rawCount;
-    return weightedVal && weightedVal > 0 ? weightedVal : rawCount;
+  const resolveWeight = (raw: number, weighted?: number): number => {
+    if (raw <= 0) return 0;
+    return useWeighted && weighted && weighted > 0 ? weighted : raw;
   };
 
-  let wSafe  = resolveWeight(rawSafe, weightedCounts?.safe);
-  let wScam  = resolveWeight(rawScam, weightedCounts?.scam);
-  let wSpam  = resolveWeight(rawSpam, weightedCounts?.spam) + resolveWeight(rawFake, weightedCounts?.fake);
+  let wSafe = resolveWeight(rawSafe, weightedCounts?.safe);
+  let wScam = resolveWeight(rawScam, weightedCounts?.scam) * 1.5;
+  let wSpam = resolveWeight(rawSpam, weightedCounts?.spam) + resolveWeight(rawFake, weightedCounts?.fake);
 
-  // Apply collusion multipliers if suspicious patterns were detected
   if (collusionFlags?.suspicious) {
-    const safeMult = collusionFlags.safeWeightMultiplier ?? 1;
-    const negMult  = collusionFlags.negativeWeightMultiplier ?? 1;
-    wSafe *= safeMult;
-    wScam *= negMult;
-    wSpam *= negMult;
-  } else {
-    // Standard skepticism for new QRs with few reports dominated by negative votes
-    const wNeg = wScam + wSpam;
-    const wPos = wSafe;
-    if (useWeighted && rawTotal < 15 && wNeg > wPos * 2) {
-      const skepticism = 0.65;
-      wScam *= skepticism;
-      wSpam *= skepticism;
-    }
+    wSafe *= (collusionFlags.safeWeightMultiplier ?? 1);
+    wScam *= (collusionFlags.negativeWeightMultiplier ?? 1);
+    wSpam *= (collusionFlags.negativeWeightMultiplier ?? 1);
   }
 
   const wTotal = wSafe + wScam + wSpam;
   if (wTotal === 0) return { score: -1, label: "Unrated", totalReports: rawTotal };
 
   const safeRatio = wSafe / wTotal;
+  const reportConfidence = Math.min(rawTotal / 15, 1);
+  const scanConfidence   = Math.min(totalScans / 50, 0.5);
+  const confidence = Math.min(Math.max(reportConfidence, scanConfidence), 1);
 
-  // Confidence ramps up with more reports, max at 20 (raised from 10 for reliability)
-  const confidence = Math.min(rawTotal / 20, 1);
+  let score = 50 + (safeRatio * 100 - 50) * Math.max(0.25, confidence);
 
-  // If suspicious flag is set and confidence is low, show Uncertain rather than polarized
-  let score: number;
-  if (collusionFlags?.suspicious && rawTotal < 15) {
-    // Clamp score closer to 50 when manipulation is suspected and data is thin
-    score = 50 + (safeRatio * 100 - 50) * confidence * 0.3;
-  } else {
-    score = 50 + (safeRatio * 100 - 50) * confidence;
+  // Scan count bonus when predominantly safe and zero verified scam reports
+  if (rawScam === 0 && safeRatio >= 0.7 && totalScans > 5) {
+    score += Math.min(Math.round(Math.log10(totalScans) * 3), 10);
   }
 
+  const finalScore = Math.max(0, Math.min(100, Math.round(score)));
+
   let label = "Dangerous";
-  if (score >= 75) label = "Trusted";
-  else if (score >= 55) label = "Likely Safe";
-  else if (score >= 40) label = "Uncertain";
-  else if (score >= 25) label = "Suspicious";
+  if (finalScore >= 75) label = "Trusted";
+  else if (finalScore >= 55) label = "Likely Safe";
+  else if (finalScore >= 40) label = "Uncertain";
+  else if (finalScore >= 25) label = "Suspicious";
 
   return {
-    score: Math.round(score),
+    score: finalScore,
     label,
     totalReports: rawTotal,
     ...(collusionFlags?.suspicious ? { manipulationWarning: true } : {}),
-  } as TrustScore & { manipulationWarning?: boolean };
+  };
 }

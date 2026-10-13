@@ -1,129 +1,64 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, StyleSheet, Animated } from "react-native";
 import { FINDER_SIZE } from "@/features/scanner/hooks/useCameraControls";
 
-// Corner geometry
-const CORNER_LEN    = 28;
-const CORNER_W      = 3;
-const CORNER_RADIUS = 12;   // visibly rounded tips
-
-const CORNER_DEFAULT = "rgba(255,255,255,0.88)";
+const CORNER_LEN = 28;
+const CORNER_W = 3;
+const CORNER_RADIUS = 12;
+const CORNER_COLOR = "rgba(255,255,255,0.88)";
 
 interface Props {
   cornerBreath: Animated.Value;
 }
 
-export default function FinderFrame({ cornerBreath }: Props) {
+export default memo(function FinderFrame({ cornerBreath }: Props) {
   return (
-    <View style={styles.frame}>
-
-      {/* ── Top-left corner ── */}
-      <Animated.View style={[styles.corner, styles.ctlH, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
-      <Animated.View style={[styles.corner, styles.ctlV, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
-
-      {/* ── Top-right corner ── */}
-      <Animated.View style={[styles.corner, styles.ctrH, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
-      <Animated.View style={[styles.corner, styles.ctrV, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
-
-      {/* ── Bottom-left corner ── */}
-      <Animated.View style={[styles.corner, styles.cblH, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
-      <Animated.View style={[styles.corner, styles.cblV, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
-
-      {/* ── Bottom-right corner ── */}
-      <Animated.View style={[styles.corner, styles.cbrH, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
-      <Animated.View style={[styles.corner, styles.cbrV, { backgroundColor: CORNER_DEFAULT, opacity: cornerBreath }]} />
-    </View>
+    <Animated.View style={[styles.frame, { opacity: cornerBreath }]}>
+      <View style={[styles.corner, styles.tl]} />
+      <View style={[styles.corner, styles.tr]} />
+      <View style={[styles.corner, styles.bl]} />
+      <View style={[styles.corner, styles.br]} />
+    </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   frame: {
-    width:    FINDER_SIZE,
-    height:   FINDER_SIZE,
-    overflow: "visible",
+    width: FINDER_SIZE,
+    height: FINDER_SIZE,
   },
   corner: {
     position: "absolute",
-  },
-
-  // ── Top-left ──
-  ctlH: {
-    top:              0,
-    left:             0,
-    width:            CORNER_LEN,
-    height:           CORNER_W,
-    borderTopLeftRadius:     CORNER_RADIUS,
-    borderTopRightRadius:    CORNER_RADIUS / 3,
-    borderBottomRightRadius: CORNER_RADIUS / 3,
-  },
-  ctlV: {
-    top:              0,
-    left:             0,
-    width:            CORNER_W,
-    height:           CORNER_LEN,
-    borderTopLeftRadius:    CORNER_RADIUS,
-    borderBottomLeftRadius: CORNER_RADIUS / 3,
-    borderBottomRightRadius: CORNER_RADIUS / 3,
-  },
-
-  // ── Top-right ──
-  ctrH: {
-    top:   0,
-    right: 0,
-    width:  CORNER_LEN,
-    height: CORNER_W,
-    borderTopRightRadius:    CORNER_RADIUS,
-    borderTopLeftRadius:     CORNER_RADIUS / 3,
-    borderBottomLeftRadius:  CORNER_RADIUS / 3,
-  },
-  ctrV: {
-    top:   0,
-    right: 0,
-    width:  CORNER_W,
+    width: CORNER_LEN,
     height: CORNER_LEN,
-    borderTopRightRadius:    CORNER_RADIUS,
-    borderBottomRightRadius: CORNER_RADIUS / 3,
-    borderBottomLeftRadius:  CORNER_RADIUS / 3,
+    borderColor: CORNER_COLOR,
   },
-
-  // ── Bottom-left ──
-  cblH: {
-    bottom: 0,
-    left:   0,
-    width:  CORNER_LEN,
-    height: CORNER_W,
-    borderBottomLeftRadius:  CORNER_RADIUS,
-    borderBottomRightRadius: CORNER_RADIUS / 3,
-    borderTopRightRadius:    CORNER_RADIUS / 3,
+  tl: {
+    top: 0,
+    left: 0,
+    borderTopWidth: CORNER_W,
+    borderLeftWidth: CORNER_W,
+    borderTopLeftRadius: CORNER_RADIUS,
   },
-  cblV: {
+  tr: {
+    top: 0,
+    right: 0,
+    borderTopWidth: CORNER_W,
+    borderRightWidth: CORNER_W,
+    borderTopRightRadius: CORNER_RADIUS,
+  },
+  bl: {
     bottom: 0,
-    left:   0,
-    width:  CORNER_W,
-    height: CORNER_LEN,
+    left: 0,
+    borderBottomWidth: CORNER_W,
+    borderLeftWidth: CORNER_W,
     borderBottomLeftRadius: CORNER_RADIUS,
-    borderTopLeftRadius:    CORNER_RADIUS / 3,
-    borderTopRightRadius:   CORNER_RADIUS / 3,
   },
-
-  // ── Bottom-right ──
-  cbrH: {
+  br: {
     bottom: 0,
-    right:  0,
-    width:  CORNER_LEN,
-    height: CORNER_W,
+    right: 0,
+    borderBottomWidth: CORNER_W,
+    borderRightWidth: CORNER_W,
     borderBottomRightRadius: CORNER_RADIUS,
-    borderBottomLeftRadius:  CORNER_RADIUS / 3,
-    borderTopLeftRadius:     CORNER_RADIUS / 3,
   },
-  cbrV: {
-    bottom: 0,
-    right:  0,
-    width:  CORNER_W,
-    height: CORNER_LEN,
-    borderBottomRightRadius: CORNER_RADIUS,
-    borderTopRightRadius:    CORNER_RADIUS / 3,
-    borderTopLeftRadius:     CORNER_RADIUS / 3,
-  },
-
 });
