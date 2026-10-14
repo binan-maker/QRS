@@ -55,7 +55,24 @@
         "../../shared/*"
       ],
       "@/services/*": [
+        "./services/*",
         "../../services/*"
+      ],
+      "@/services": [
+        "./services/index.ts"
+      ],
+      "@/contexts/*": [
+        "./contexts/*"
+      ],
+      "@/contexts": [
+        "./contexts/index.ts"
+      ],
+      "@/types/*": [
+        "./types/*",
+        "../../types/*"
+      ],
+      "@/types": [
+        "./types/index.ts"
       ],
       "@/features/*": [
         "../../features/*"

@@ -4,7 +4,7 @@
 // Responsive presentation for Web: Desktop & Mobile
 
 import React from "react";
-import { Ionicons } from "../icons";
+import { Ionicons } from "@/lib/mobile-icons";
 import styles from "@/app/scanner/scanner.module.css";
 
 export type CameraErrorType = "unavailable" | "inuse";

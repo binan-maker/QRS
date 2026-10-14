@@ -1,9 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { AuthProvider } from "@/lib/auth-context";
-import { AvatarProvider } from "@/lib/avatar-context";
-import { ThemeProvider } from "@/lib/theme-context";
+import { AuthProvider, AvatarProvider, ThemeProvider } from "@/contexts";
 import { DesktopNavbar } from "@/components/navigation/DesktopNavbar";
-import { ReferralAttributionTracker } from "@/components/ReferralAttributionTracker";
+import { ReferralAttributionTracker } from "@/components/referral/ReferralAttributionTracker";
 import {
   SITE_URL,
   SITE_NAME,

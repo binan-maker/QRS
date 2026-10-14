@@ -4,7 +4,7 @@
 // 1:1 with features/scanner/components/feedback/ConversionBanner.tsx
 
 import React from "react";
-import { Ionicons } from "../icons";
+import { Ionicons } from "@/lib/mobile-icons";
 import styles from "@/app/scanner/scanner.module.css";
 
 export function ConversionBanner({

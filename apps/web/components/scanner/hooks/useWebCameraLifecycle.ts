@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { CameraView, useCameraPermissions } from "../../../app/scanner/components";
-import type { CameraErrorType } from "../../../app/scanner/components";
+import { CameraView, useCameraPermissions } from "../system/CameraView";
+import type { CameraErrorType } from "../system/CameraUnavailableBanner";
 
 export function useWebCameraLifecycle() {
   const [permission, requestPermission] = useCameraPermissions();

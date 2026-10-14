@@ -5,7 +5,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Ionicons } from "../icons";
+import { Ionicons } from "@/lib/mobile-icons";
 import { stopSharedCameraStream } from "../system/CameraView";
 import styles from "@/app/scanner/scanner.module.css";
 

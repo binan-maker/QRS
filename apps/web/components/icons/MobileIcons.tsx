@@ -81,6 +81,7 @@ function renderSvgPath(name: string) {
           <path d="M8 12.5l2.8 2.8L16.5 9" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
         </>
       );
+    case "copy":
     case "copy-outline":
       return (
         <>
@@ -380,8 +381,6 @@ function renderSvgPath(name: string) {
           <path d="M21 2l-2 2m-1.5 1.5L16 7l-2-2 1.5-1.5M7 14a5 5 0 1 1 7.07-7.07l6.43 6.43a2 2 0 0 1 .59 1.41V19a2 2 0 0 1-2 2h-2.17a2 2 0 0 1-1.42-.59L14 18l-2 2-3-3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </>
       );
-    case "chevron-forward":
-      return <path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />;
     case "book-outline":
       return (
         <>
@@ -464,14 +463,6 @@ function renderSvgPath(name: string) {
           <circle cx="18" cy="19" r="3" fill="currentColor" />
           <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" strokeWidth="2" />
           <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="2" />
-        </>
-      );
-    case "copy":
-    case "copy-outline":
-      return (
-        <>
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </>
       );
     case "gift":

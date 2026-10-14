@@ -1,35 +1,25 @@
-"use client";
-
+import type { Metadata } from "next";
 import React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Ionicons } from "@/lib/mobile-icons";
+import { LegalBackButton } from "@/components/navigation/LegalBackButton";
+import { createPageMetadata } from "@/lib/seo";
 import styles from "./trust-scores.module.css";
 
+export const metadata: Metadata = createPageMetadata({
+  title: "About Trust Scores — How BinRo Evaluates QR Code Safety",
+  description:
+    "Discover how BinRo combines automated security analysis with real-time community votes and scam reports to calculate a clear 0–100 safety score for every QR code.",
+  path: "/trust-scores",
+});
+
 export default function TrustScoresPage() {
-  const router = useRouter();
-
-  const handleBack = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push("/settings");
-    }
-  };
-
   return (
     <main className={styles.container}>
       <div className={styles.inner}>
         {/* Single Navigation Header */}
         <header className={styles.navBar}>
-          <button
-            type="button"
-            onClick={handleBack}
-            className={styles.backBtn}
-            aria-label="Back"
-          >
-            <Ionicons name="chevron-back" size={20} />
-          </button>
+          <LegalBackButton fallbackUrl="/settings" />
           <h1 className={styles.navTitle}>About Trust Scores</h1>
           <div className={styles.navSpacer} aria-hidden="true" />
         </header>

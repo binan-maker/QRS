@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { BINRO_SITE_URL } from "./qr-share";
+import { BINRO_SITE_URL } from "../qr/qr-share";
 
 export const SITE_URL = BINRO_SITE_URL;
 export const SITE_NAME = "BinRo";

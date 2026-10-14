@@ -3,8 +3,8 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Ionicons } from "@/lib/mobile-icons";
-import GoogleIcon from "@/lib/google-icon";
+import { Ionicons } from "@/components/icons";
+import GoogleIcon from "@/components/icons/GoogleIcon";
 import { useAuth } from "@/lib/auth-context";
 import { validateEmail } from "@shared/utils/email-validator";
 import styles from "../auth.module.css";

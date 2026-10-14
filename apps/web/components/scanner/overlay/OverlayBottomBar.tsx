@@ -4,7 +4,7 @@
 // Same design as mobile: Status pills + Gallery control
 
 import React from "react";
-import { Ionicons } from "../icons";
+import { Ionicons } from "@/lib/mobile-icons";
 import { SCANNER_GLOW } from "./constants";
 import styles from "@/app/scanner/scanner.module.css";
 

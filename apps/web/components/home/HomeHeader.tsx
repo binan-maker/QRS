@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import Colors from "@shared/constants/colors";
 import { Ionicons } from "@/lib/mobile-icons";
 import { useAuth } from "@/lib/auth-context";
 import { useAvatar, isUserUploadedPhoto } from "@/lib/avatar-context";

@@ -1,6 +1,6 @@
 "use client";
 
-import { decodeQrFromImageUri } from "../../../app/scanner/utils/qr-decode";
+import { decodeQrFromImageUri } from "../utils/qr-decode";
 
 export function pickWebGalleryImage(
   token: string | null | undefined,
