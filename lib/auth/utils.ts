@@ -1,8 +1,16 @@
 import type { AuthUser } from "./types";
 import { generateUniqueUsername } from "@/services/user/username";
+import { validateEmail } from "@shared/utils/email-validator";
 
 // Re-export generateUniqueUsername so any legacy imports remain satisfied without duplication
 export { generateUniqueUsername };
+
+export async function serverValidateEmail(
+  email: string,
+): Promise<{ valid: boolean; error?: string }> {
+  const result = validateEmail(email);
+  return { valid: result.valid, error: result.reason };
+}
 
 export function getAuthErrorMessage(code: string): string {
   switch (code) {

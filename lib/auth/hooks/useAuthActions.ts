@@ -8,8 +8,12 @@ import type { Dispatch, SetStateAction } from "react";
 import { Platform } from "react-native";
 import { authAdapter } from "@/lib/auth";
 import { syncUserToDb } from "@/lib/auth/user-sync";
-import { serverValidateEmail } from "@/lib/auth/email-validation";
-import { mapAuthError, getAuthErrorMessage, buildAuthUser } from "@/lib/auth/utils";
+import {
+  mapAuthError,
+  getAuthErrorMessage,
+  buildAuthUser,
+  serverValidateEmail,
+} from "@/lib/auth/utils";
 import { trackLoginCompleted } from "@/lib/core/analytics";
 import { db } from "@/lib/db";
 import { COLLECTIONS } from "@/shared/constants/collections";

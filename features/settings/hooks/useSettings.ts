@@ -1,14 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { setHapticsEnabled } from "@/shared/utils/haptics";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useFeedbackSettings } from "./useFeedbackSettings";
 import { useDataSettings } from "./useDataSettings";
 import { useAccountSettings } from "./useAccountSettings";
 
 export type Section = "main" | "profile" | "account" | "guide" | "feedback" | "comments" | "history";
-
-const HAPTIC_KEY = "haptic_enabled";
 
 export function useSettings() {
   const { user, signOut } = useAuth();
@@ -34,14 +30,6 @@ export function useSettings() {
     dataResetRef.current();
     accountResetRef.current();
   }, [user?.id]);
-
-  useEffect(() => {
-    // Apply stored haptic preference at startup even though there is no UI
-    // toggle yet — keeps the saved preference active across sessions.
-    AsyncStorage.getItem(HAPTIC_KEY).then((v) => {
-      setHapticsEnabled(v === "true");
-    });
-  }, []);
 
   // Keep stable refs to the data-load functions so the section handler never
   // goes stale even if sub-hook identity changes across renders.

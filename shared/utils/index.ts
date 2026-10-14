@@ -5,16 +5,17 @@
 // haptics, platform detection, and QR payload handling.
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Device, OS & Hardware Helpers
+export * from "./device";
+
+// Input & Identity Validation
+export * from "./validation";
+
+// QR Domain Logic & Security Engine
+export * from "./qr";
+
+// Data Formatters
 export * from "./formatters";
-export * from "./haptics";
-export * from "./platform";
-export * from "./navigation";
-export * from "./responsive";
-export * from "./smart-open";
-export * from "./qr-content";
-export * from "./qr-share";
-export * from "./disposable-domains";
-export * from "./email-validator";
-export * from "./qr-detail-rules";
-export * from "./universal-storage";
-export * from "./universal-crypto";
+
+// Legal & External Links
+export * from "../legal-links";

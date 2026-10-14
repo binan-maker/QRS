@@ -7,7 +7,7 @@
 //   lib/auth/hooks/useGoogleAuth.ts     — Google sign-in (native + web)
 //   lib/auth/hooks/useAuthActions.ts    — signIn / signUp / signOut / etc.
 //   lib/auth/user-sync.ts               — user document sync
-//   lib/auth/email-validation.ts        — server-side email validation
+//   lib/auth/utils.ts                   — error translation & email validation
 //
 // For auth state outside React (API utils, background services) use:
 //   import { useAuthStore } from "@/store/authStore";

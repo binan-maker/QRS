@@ -45,8 +45,6 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [verificationSent, setVerificationSent] = useState(false);
-  const [registeredEmail, setRegisteredEmail] = useState("");
 
   // Extracted modular referral logic
   const referral = useRegisterReferral();
@@ -98,8 +96,6 @@ export default function RegisterScreen() {
       await signUp(email.trim(), displayName.trim(), password);
     } catch (e: any) {
       if (e.code === "auth/verification-sent") {
-        setRegisteredEmail(email.trim());
-        setVerificationSent(true);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         router.replace({
           pathname: "/(auth)/verify-email",
@@ -130,32 +126,6 @@ export default function RegisterScreen() {
       }
       setGoogleLoading(false);
     }
-  }
-
-  if (verificationSent) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <View style={[S.centeredContainer, { paddingBottom: insets.bottom + 40, paddingTop: insets.top + 40, paddingHorizontal: px }]}>
-          <View style={[S.successOrb, { backgroundColor: colors.safeDim, borderColor: colors.safe + "30" }]}>
-            <Ionicons name="mail-open-outline" size={sp(38)} color={colors.safe} />
-          </View>
-          <Text style={{ color: colors.text, fontSize: sp(22), fontFamily: "Inter_700Bold", letterSpacing: -0.5, textAlign: "center" }}>
-            Check your inbox
-          </Text>
-          <Text style={[S.verifyText, { color: colors.textSecondary, fontSize: sp(14), lineHeight: sp(22) }]}>
-            We sent a verification link to{"\n"}
-            <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}>{registeredEmail}</Text>
-            {"\n\n"}Tap the link to activate your account, then sign in.
-          </Text>
-          <Pressable
-            onPress={() => router.replace("/(auth)/login")}
-            style={({ pressed }) => [S.primaryBtn, { backgroundColor: colors.primary, paddingVertical: sp(13), width: "100%", opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
-          >
-            <Text style={[S.primaryBtnText, { fontSize: sp(14) }]}>Go to Sign In</Text>
-          </Pressable>
-        </View>
-      </View>
-    );
   }
 
   const isDupEmail = errorCode === "auth/email-already-in-use";
