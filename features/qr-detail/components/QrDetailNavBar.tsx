@@ -2,8 +2,7 @@ import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { makeStyles } from "@/features/qr-detail/styles";
-import { navOfflineStyles } from "@/features/qr-detail/styles";
+import { makeStyles, navOfflineStyles } from "@/features/qr-detail/styles";
 interface Props {
   offlineMode: boolean;
   onBack: () => void;

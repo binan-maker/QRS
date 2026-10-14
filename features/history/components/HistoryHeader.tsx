@@ -4,16 +4,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import * as Haptics from "@/shared/utils/haptics";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 interface Props {
-  searchVisible:    boolean;
-  searchQuery:      string;
-  onChangeQuery:    (q: string) => void;
-  onOpenSearch:     () => void;
-  onCloseSearch:    () => void;
-  searchInputRef:   RefObject<TextInput>;
-  colors:           any;
-  fontSize:         (n: number) => number;
+  searchVisible:  boolean;
+  searchQuery:    string;
+  onChangeQuery:  (q: string) => void;
+  onOpenSearch:   () => void;
+  onCloseSearch:  () => void;
+  searchInputRef: RefObject<TextInput>;
 }
 
 const HistoryHeader = memo(function HistoryHeader({
@@ -23,9 +22,9 @@ const HistoryHeader = memo(function HistoryHeader({
   onOpenSearch,
   onCloseSearch,
   searchInputRef,
-  colors,
-  fontSize,
 }: Props) {
+  const { colors } = useTheme();
+
   if (searchVisible) {
     return (
       <Animated.View
@@ -48,7 +47,7 @@ const HistoryHeader = memo(function HistoryHeader({
           autoFocus
         />
         <Pressable onPress={onCloseSearch} hitSlop={8}>
-          <Text style={[styles.searchCancel, { color: colors.primary, fontSize: fontSize(14) }]} maxFontSizeMultiplier={1}>
+          <Text style={[styles.searchCancel, { color: colors.primary }]} maxFontSizeMultiplier={1}>
             Cancel
           </Text>
         </Pressable>
@@ -60,7 +59,7 @@ const HistoryHeader = memo(function HistoryHeader({
     <Animated.View entering={FadeInDown.delay(0).duration(260)} style={styles.header}>
       <Animated.Text
         entering={FadeInDown.delay(40).duration(260)}
-        style={[styles.title, { color: colors.text, fontSize: fontSize(22) }]}
+        style={[styles.title, { color: colors.text }]}
       >
         Scan History
       </Animated.Text>
@@ -95,44 +94,48 @@ export default HistoryHeader;
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection:   "row",
-    justifyContent:  "space-between",
-    alignItems:      "center",
+    flexDirection:     "row",
+    justifyContent:    "space-between",
+    alignItems:        "center",
     paddingHorizontal: 20,
-    paddingTop:      8,
-    paddingBottom:   10,
+    paddingTop:        8,
+    paddingBottom:     10,
   },
   title: {
-    fontFamily:   "Inter_700Bold",
+    fontFamily:    "Inter_700Bold",
+    fontSize:      22,
     letterSpacing: -0.5,
-    lineHeight:   28,
+    lineHeight:    28,
   },
   actions: { flexDirection: "row", gap: 8, alignItems: "center" },
   btn: {
-    width:        38,
-    height:       38,
-    borderRadius: 12,
-    alignItems:   "center",
+    width:          38,
+    height:         38,
+    borderRadius:   12,
+    alignItems:     "center",
     justifyContent: "center",
-    borderWidth:  1,
+    borderWidth:    1,
   },
   searchBar: {
-    flexDirection:   "row",
-    alignItems:      "center",
-    gap:             10,
-    marginHorizontal: 16,
-    marginTop:       8,
-    marginBottom:    10,
+    flexDirection:     "row",
+    alignItems:        "center",
+    gap:               10,
+    marginHorizontal:  16,
+    marginTop:         8,
+    marginBottom:      10,
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius:    14,
-    borderWidth:     1,
+    paddingVertical:   10,
+    borderRadius:      14,
+    borderWidth:       1,
   },
   searchInput: {
-    flex:       1,
-    fontSize:   14,
-    fontFamily: "Inter_400Regular",
+    flex:            1,
+    fontSize:        14,
+    fontFamily:      "Inter_400Regular",
     paddingVertical: 0,
   },
-  searchCancel: { fontFamily: "Inter_600SemiBold" },
+  searchCancel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize:   14,
+  },
 });

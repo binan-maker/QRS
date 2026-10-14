@@ -27,8 +27,6 @@ import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
 import PhotoModal from "@/features/profile/components/PhotoModal";
 import ImageCropModal from "@/features/profile/components/ImageCropModal";
 import GuestView from "@/features/profile/components/GuestView";
-import ReferralModal from "@/features/profile/components/ReferralModal";
-import { getUserRewardWallet, type RewardWallet } from "@/services/referrals";
 import { styles } from "@/features/profile/styles";
 
 // ── Module-level animation presets (created once, not per render) ──────────────
@@ -87,28 +85,6 @@ function ProfileScreen() {
   const onCamera        = useCallback(() => handlePickPhoto("camera"),  [handlePickPhoto]);
   const onGallery       = useCallback(() => handlePickPhoto("gallery"), [handlePickPhoto]);
 
-  const [referralModalOpen, setReferralModalOpen] = useState(false);
-  const [rewardWallet, setRewardWallet] = useState<RewardWallet | null>(null);
-
-  const loadWallet = useCallback(async () => {
-    if (user?.id) {
-      try {
-        const w = await getUserRewardWallet(user.id);
-        setRewardWallet(w);
-      } catch {}
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    void loadWallet();
-  }, [loadWallet]);
-
-  useFocusEffect(
-    useCallback(() => {
-      void loadWallet();
-    }, [loadWallet])
-  );
-
   // While Supabase is resolving the auth state on cold start, show a plain
   // background instead of GuestView.  This prevents the mount/unmount cycle
   // of GuestView → full profile that causes every Animated.View entering
@@ -120,8 +96,6 @@ function ProfileScreen() {
   if (!user) {
     return (
       <GuestView
-        colors={colors}
-        topInset={topInset}
         onSignIn={goToLogin}
         onRegister={goToRegister}
       />
@@ -355,16 +329,6 @@ function ProfileScreen() {
         imageUri={pendingImageUri}
         onConfirm={handleCropConfirm}
         onCancel={handleCropCancel}
-      />
-      <ReferralModal
-        visible={referralModalOpen}
-        onClose={() => setReferralModalOpen(false)}
-        userId={user.id}
-        wallet={rewardWallet}
-        onApplied={() => {
-          void loadWallet();
-        }}
-        colors={colors}
       />
     </View>
   );

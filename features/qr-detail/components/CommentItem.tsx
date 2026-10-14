@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { formatCompactNumber, formatRelativeTime } from "@/shared/utils/formatters";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import type { CommentItem as CommentItemType } from "@/features/qr-detail/hooks/comment-types";
+import type { CommentItem as CommentItemType } from "@/features/qr-detail/types";
 import { REPLIES_PER_PAGE, READ_MORE_THRESHOLD, getInitialColor } from "@/shared/utils/qr-detail-rules";
 
 interface Props {

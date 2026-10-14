@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, type Dispatch, type SetStateActio
 import * as Haptics from "@/shared/utils/haptics";
 import { toggleCommentLike, getCommentUserLikes } from "@/lib/data-service";
 import { router } from "expo-router";
-import type { CommentItem } from "./comment-types";
+import type { CommentItem } from "@/features/qr-detail/types";
 
 interface UseCommentLikesParams {
   id: string;

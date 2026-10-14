@@ -1,34 +1,24 @@
-import React, { memo, useMemo, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
+import React, { memo, useMemo } from "react";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import Animated from "react-native-reanimated";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useScaleFns } from "@/shared/hooks/useScaleFns";
+import { usePulseAnimation } from "@/features/home/hooks/usePulseAnimation";
 
 export const EmptyScans = memo(function EmptyScans() {
   const { colors } = useTheme();
   const { s } = useScaleFns();
   const styles = useMemo(() => makeStyles(s), [s]);
-
-  // Subtle pulse on the icon ring
-  const pulse = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.08, duration: 900, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 1,    duration: 900, useNativeDriver: true }),
-      ])
-    );
-    anim.start();
-    return () => anim.stop();
-  }, []);
+  const pulseStyle = usePulseAnimation();
 
   return (
     <View style={[styles.wrap, { backgroundColor: colors.surface, borderColor: colors.surfaceBorder }]}>
 
-      {/* Icon with animated ring */}
+      {/* Icon with animated pulse ring */}
       <View style={styles.iconArea}>
-        <Animated.View style={[styles.ring, { borderColor: colors.primary + "30", transform: [{ scale: pulse }] }]} />
+        <Animated.View style={[styles.ring, { borderColor: colors.primary + "30" }, pulseStyle]} />
         <View style={[styles.iconBox, { backgroundColor: colors.primary + "14" }]}>
           <Ionicons name="qr-code-outline" size={34} color={colors.primary} />
         </View>
@@ -57,59 +47,59 @@ function makeStyles(s: number) {
   const rf = (n: number) => Math.round(n * s);
   return StyleSheet.create({
     wrap: {
-      alignItems: "center",
-      paddingVertical: rf(36),
+      alignItems:        "center",
+      paddingVertical:   rf(36),
       paddingHorizontal: rf(24),
-      gap: rf(10),
-      borderRadius: 20,
-      borderWidth: 1,
+      gap:               rf(10),
+      borderRadius:      20,
+      borderWidth:       1,
     },
     iconArea: {
-      width: rf(82),
-      height: rf(82),
-      alignItems: "center",
+      width:          rf(82),
+      height:         rf(82),
+      alignItems:     "center",
       justifyContent: "center",
-      marginBottom: rf(4),
+      marginBottom:   rf(4),
     },
     ring: {
-      position: "absolute",
-      width: rf(82),
-      height: rf(82),
+      position:     "absolute",
+      width:        rf(82),
+      height:       rf(82),
       borderRadius: rf(41),
-      borderWidth: 1.5,
+      borderWidth:  1.5,
     },
     iconBox: {
-      width: rf(64),
-      height: rf(64),
-      borderRadius: rf(18),
-      alignItems: "center",
+      width:          rf(64),
+      height:         rf(64),
+      borderRadius:   rf(18),
+      alignItems:     "center",
       justifyContent: "center",
     },
     title: {
-      fontSize: rf(17),
+      fontSize:   rf(17),
       fontFamily: "Inter_700Bold",
-      textAlign: "center",
+      textAlign:  "center",
     },
     sub: {
-      fontSize: rf(13),
-      fontFamily: "Inter_400Regular",
-      textAlign: "center",
-      lineHeight: rf(20),
+      fontSize:     rf(13),
+      fontFamily:   "Inter_400Regular",
+      textAlign:    "center",
+      lineHeight:   rf(20),
       marginBottom: rf(4),
     },
     btn: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: rf(7),
-      paddingVertical: rf(12),
+      flexDirection:     "row",
+      alignItems:        "center",
+      gap:               rf(7),
+      paddingVertical:   rf(12),
       paddingHorizontal: rf(28),
-      borderRadius: rf(14),
-      marginTop: rf(4),
+      borderRadius:      rf(14),
+      marginTop:         rf(4),
     },
     btnText: {
-      fontSize: rf(14),
+      fontSize:   rf(14),
       fontFamily: "Inter_700Bold",
-      color: "#fff",
+      color:      "#fff",
     },
   });
 }

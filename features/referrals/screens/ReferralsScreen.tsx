@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import { useReferrals } from "./hooks/useReferrals";
+import { useReferrals } from "../hooks/useReferrals";
 import {
   ReferralToast,
   ReferralHeader,
@@ -12,8 +12,8 @@ import {
   RefereeClaimBanner,
   HowItWorksSteps,
   ClaimRefereeModal,
-} from "./components";
-import { styles } from "./styles";
+} from "../components";
+import { styles } from "../styles";
 
 export function ReferralsScreen() {
   const insets = useSafeAreaInsets();
@@ -38,7 +38,6 @@ export function ReferralsScreen() {
     refereeStatus,
     inviteCode,
     displaySignupLink,
-    user,
     handleScroll,
     handleBack,
     handleCopyCode,
@@ -124,7 +123,6 @@ export function ReferralsScreen() {
 
       <ClaimRefereeModal
         visible={claimModalOpen}
-        user={user}
         refereeStatus={refereeStatus}
         referralInput={referralInput}
         referralStatus={referralStatus}

@@ -2,12 +2,13 @@ import { useEffect, useState, useCallback, useRef, useMemo, useLayoutEffect } fr
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { getComments } from "@/lib/data-service";
 import * as Haptics from "@/shared/utils/haptics";
-import { type CommentItem, COMMENTS_PER_PAGE, REPLIES_PER_PAGE } from "./comment-types";
-import { mergeWithOptimistic, getAllDescendants, getRootCommentId } from "./comment-list-utils";
+import type { CommentItem } from "@/features/qr-detail/types";
+import { COMMENTS_PER_PAGE, REPLIES_PER_PAGE } from "@/features/qr-detail/constants";
+import { mergeWithOptimistic, getAllDescendants, getRootCommentId } from "@/features/qr-detail/utils/comment-list";
 import { useCommentLikes } from "./useCommentLikes";
 import { useCommentActions } from "./useCommentActions";
 
-export type { CommentItem };
+export type { CommentItem } from "@/features/qr-detail/types";
 
 export function useQrComments(id: string, userId: string | null, offlineMode: boolean) {
   const { user } = useAuth();

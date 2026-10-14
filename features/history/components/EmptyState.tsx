@@ -4,26 +4,24 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import HistoryItemSkeleton from "@/features/history/components/HistoryItemSkeleton";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 // Static indices array — avoids Array.from() allocation on every render.
-// Length matches SKELETON_COUNT (8) from constants.
 const SKELETON_INDICES = [0, 1, 2, 3, 4, 5, 6, 7] as const;
 
 interface Props {
-  user:          any;
-  cloudLoading:  boolean;
-  searchQuery:   string;
-  colors:        any;
-  fontSize:      (n: number) => number;
+  user:         any;
+  cloudLoading: boolean;
+  searchQuery:  string;
 }
 
 const EmptyState = memo(function EmptyState({
   user,
   cloudLoading,
   searchQuery,
-  colors,
-  fontSize,
 }: Props) {
+  const { colors } = useTheme();
+
   if (!user) {
     return (
       <View style={styles.wrap}>
@@ -33,10 +31,10 @@ const EmptyState = memo(function EmptyState({
         >
           <Ionicons name="person-outline" size={32} color={colors.primary} />
         </LinearGradient>
-        <Text style={[styles.title, { color: colors.text, fontSize: fontSize(18) }]}>
+        <Text style={[styles.title, { color: colors.text }]}>
           Sign in to view history
         </Text>
-        <Text style={[styles.sub, { color: colors.textSecondary, fontSize: fontSize(13) }]}>
+        <Text style={[styles.sub, { color: colors.textSecondary }]}>
           Your scan history is saved to your account and synced across all your devices.
         </Text>
         <Pressable
@@ -51,7 +49,7 @@ const EmptyState = memo(function EmptyState({
           ]}
         >
           <Ionicons name="log-in-outline" size={17} color="#fff" />
-          <Text style={[styles.signInText, { fontSize: fontSize(14) }]}>Sign In</Text>
+          <Text style={styles.signInText}>Sign In</Text>
         </Pressable>
       </View>
     );
@@ -76,10 +74,10 @@ const EmptyState = memo(function EmptyState({
         >
           <Ionicons name="search-outline" size={32} color={colors.textMuted} />
         </LinearGradient>
-        <Text style={[styles.title, { color: colors.textSecondary, fontSize: fontSize(17) }]}>
+        <Text style={[styles.title, { color: colors.textSecondary }]}>
           No results for "{searchQuery}"
         </Text>
-        <Text style={[styles.sub, { color: colors.textMuted, fontSize: fontSize(13) }]}>
+        <Text style={[styles.sub, { color: colors.textMuted }]}>
           Try searching by domain, name, or QR content
         </Text>
       </View>
@@ -94,10 +92,10 @@ const EmptyState = memo(function EmptyState({
       >
         <Ionicons name="time-outline" size={32} color={colors.textMuted} />
       </LinearGradient>
-      <Text style={[styles.title, { color: colors.textSecondary, fontSize: fontSize(17) }]}>
+      <Text style={[styles.title, { color: colors.textSecondary }]}>
         No scans yet
       </Text>
-      <Text style={[styles.sub, { color: colors.textMuted, fontSize: fontSize(13) }]}>
+      <Text style={[styles.sub, { color: colors.textMuted }]}>
         Scanned QR codes will appear here
       </Text>
     </View>
@@ -123,11 +121,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily:    "Inter_700Bold",
+    fontSize:      17,
     textAlign:     "center",
     letterSpacing: -0.3,
   },
   sub: {
     fontFamily: "Inter_400Regular",
+    fontSize:   13,
     textAlign:  "center",
     lineHeight: 20,
   },
@@ -142,6 +142,7 @@ const styles = StyleSheet.create({
   },
   signInText: {
     fontFamily:    "Inter_700Bold",
+    fontSize:      14,
     color:         "#fff",
     letterSpacing: 0.2,
   },

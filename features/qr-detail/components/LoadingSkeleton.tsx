@@ -3,10 +3,9 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import SkeletonBox from "@/shared/components/ui/SkeletonBox";
 import { useTheme } from "@/shared/contexts/ThemeContext";
 
-function SkeletonCommentCard({ colors }: { colors: any }) {
-  const s = makeStyles(colors);
+function SkeletonCommentCard({ styles }: { styles: ReturnType<typeof makeStyles> }) {
   return (
-    <View style={s.commentCard}>
+    <View style={styles.commentCard}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
         <SkeletonBox width={34} height={34} borderRadius={17} />
         <View style={{ flex: 1, gap: 6 }}>
@@ -64,7 +63,7 @@ export default function LoadingSkeleton({ topInset }: Props) {
         </View>
         <SkeletonBox width={100} height={18} borderRadius={8} style={{ marginBottom: 14 }} />
         <SkeletonBox height={50} borderRadius={14} style={{ marginBottom: 16 }} />
-        {[0, 1, 2].map((i) => <SkeletonCommentCard key={i} colors={colors} />)}
+        {[0, 1, 2].map((i) => <SkeletonCommentCard key={i} styles={styles} />)}
       </ScrollView>
     </Animated.View>
   );

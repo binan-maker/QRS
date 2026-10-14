@@ -4,7 +4,7 @@ export { default as FinderFrame }     from "./overlay/FinderFrame";
 export { default as OverlayTopBar }   from "./overlay/OverlayTopBar";
 export { default as OverlayBottomBar }from "./overlay/OverlayBottomBar";
 export { TapFocusRing }               from "./overlay/TapFocusRing";
-export { SCANNER_GLOW, SCANNER_AMBER, VIGNETTE } from "./overlay/constants";
+export { SCANNER_GLOW, SCANNER_AMBER, VIGNETTE, FINDER_SIZE, CORNER_SIZE, CORNER_WIDTH } from "./overlay/constants";
 
 // Feedback
 export { ScannerToast, toastContainerStyle } from "./feedback/ScannerToast";

@@ -4,10 +4,9 @@ import { useFocusEffect } from "expo-router";
 import * as Haptics from "@/shared/utils/haptics";
 import { useCameraZoom, ZOOM_LEVELS } from "./useCameraZoom";
 
-export { ZOOM_LEVELS };
-export const FINDER_SIZE  = 270;
-export const CORNER_SIZE  = 32;
-export const CORNER_WIDTH = 4;
+import { FINDER_SIZE, CORNER_SIZE, CORNER_WIDTH } from "../components/overlay/constants";
+
+export { ZOOM_LEVELS, FINDER_SIZE, CORNER_SIZE, CORNER_WIDTH };
 
 export function useCameraControls() {
   const [scanned, setScanned] = useState(false);

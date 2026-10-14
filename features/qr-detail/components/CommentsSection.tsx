@@ -6,7 +6,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { makeStyles } from "@/features/qr-detail/styles";
 import { SectionHeader } from "@/shared/components/ui/SectionHeader";
 import CommentItem from "@/features/qr-detail/components/CommentItem";
-import type { CommentItem as CommentItemType } from "@/features/qr-detail/hooks/comment-types";
+import type { CommentItem as CommentItemType } from "@/features/qr-detail/types";
 import { formatCompactNumber, smartName } from "@/shared/utils/formatters";
 
 interface ReplyTo {

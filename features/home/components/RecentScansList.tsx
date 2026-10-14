@@ -21,13 +21,14 @@ interface Props {
 
 // Static array — avoids Array.from() allocation on every render cycle.
 const SKELETON_INDICES = [0, 1, 2] as const;
+
 export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
   const { colors } = useTheme();
   const { s } = useScaleFns();
   const styles = useMemo(() => makeStyles(colors, s), [colors, s]);
 
   const historyItems = useMemo<HistoryItemType[]>(
-    () => recentScans.map((scan) => ({ ...scan, source: "local" as const })),
+    () => recentScans.map((scan) => ({ ...scan, source: scan.source ?? "local" })),
     [recentScans],
   );
 
@@ -37,8 +38,6 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
   );
 
   return (
-    // Keep the home list immediate so the cards are visible as soon as data is
-    // ready; the cached/local data path already provides the fast experience.
     <View>
       {/* ── Section header ────────────────────────────────────────────────── */}
       <View style={styles.sectionHeader}>
@@ -58,9 +57,6 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
         )}
       </View>
 
-      {/* Render the ready state directly. The home list is a small fixed set;
-          keeping an invisible content tree and an animated skeleton mounted at
-          the same time delays visible cards and does extra native work. */}
       <View>
         {isLoading ? (
           <View>
@@ -74,7 +70,6 @@ export function RecentScansList({ recentScans, isLoading, onDelete }: Props) {
               <HistoryItem
                 key={item.id}
                 item={item}
-                risk="safe"
                 onDelete={handleDelete}
                 animate={false}
                 showTime={false}

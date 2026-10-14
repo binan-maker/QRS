@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, useEffect, memo } from "react";
-import { View, StyleSheet, Platform, RefreshControl, useWindowDimensions, LayoutChangeEvent } from "react-native";
+import { View, StyleSheet, Platform, RefreshControl, LayoutChangeEvent } from "react-native";
 import { FlashList as _FlashList } from "@shopify/flash-list";
 const FlashList = _FlashList as any;
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,22 +13,21 @@ import { groupByDate }        from "@/features/history/utils/date-utils";
 import { buildSearchIndex, matchesSearchIndexed } from "@/features/history/utils/search-utils";
 import type { ListRow }       from "@/features/history/types";
 
-import HistoryHeader     from "@/features/history/components/HistoryHeader";
-import { SectionHeader } from "@/shared/components/ui/SectionHeader";
-import EmptyState        from "@/features/history/components/EmptyState";
-import CloudErrorBanner  from "@/features/history/components/CloudErrorBanner";
-import OfflineBanner     from "@/features/history/components/OfflineBanner";
-import SearchResultsRow  from "@/features/history/components/SearchResultsRow";
+import HistoryHeader        from "@/features/history/components/HistoryHeader";
+import { SectionHeader }    from "@/shared/components/ui/SectionHeader";
+import EmptyState           from "@/features/history/components/EmptyState";
+import CloudErrorBanner     from "@/features/history/components/CloudErrorBanner";
+import OfflineBanner        from "@/features/history/components/OfflineBanner";
+import SearchResultsRow     from "@/features/history/components/SearchResultsRow";
 import HistoryItemComponent from "@/features/history/components/HistoryItem";
 import HistoryItemSkeleton  from "@/features/history/components/HistoryItemSkeleton";
-import { useFocusEffect } from "expo-router";
-import { useTabBarScroll } from "@/shared/contexts/TabBarContext";
-import { useHeaderHide }   from "@/shared/hooks/useScrollHide";
-import Reanimated          from "react-native-reanimated";
+import { useFocusEffect }   from "expo-router";
+import { useTabBarScroll }  from "@/shared/contexts/TabBarContext";
+import { useHeaderHide }    from "@/shared/hooks/useScrollHide";
+import Reanimated           from "react-native-reanimated";
 
-// Static arrays used for skeleton rendering — avoids Array.from() allocation
-// on every render cycle.
-const SKELETON_BOOT_INDICES  = [0, 1, 2, 3, 4] as const;
+// Static arrays used for skeleton rendering — avoids Array.from() allocation on every render cycle.
+const SKELETON_BOOT_INDICES   = [0, 1, 2, 3, 4] as const;
 const SKELETON_FOOTER_INDICES = [0, 1] as const;
 
 function HistoryScreen() {
@@ -36,10 +35,6 @@ function HistoryScreen() {
   const topInset = useTopInset();
   const { colors } = useTheme();
   const { isOnline } = useNetworkStatus();
-
-  const { width } = useWindowDimensions();
-  const scale = Math.min(Math.max(width / 390, 0.82), 1.0);
-  const rf = useCallback((size: number) => Math.round(size * scale), [scale]);
 
   const {
     user,
@@ -84,9 +79,7 @@ function HistoryScreen() {
     if (searchVisible) resetHeader();
   }, [searchVisible, resetHeader]);
 
-  // Precompute a searchable-text index per item (id → lowercased tokens).
-  // This ensures parseAnyPaymentQr is called once per displayItems change,
-  // NOT on every keystroke — search becomes a cheap string.includes() check.
+  // Precompute searchable-text index per item (id → lowercased tokens).
   const searchIndex = useMemo(
     () => buildSearchIndex(displayItems),
     [displayItems]
@@ -133,17 +126,14 @@ function HistoryScreen() {
       user={user}
       cloudLoading={cloudLoading}
       searchQuery={searchQuery}
-      colors={colors}
-      fontSize={rf}
     />
-  ), [user, cloudLoading, searchQuery, colors, rf]);
+  ), [user, cloudLoading, searchQuery]);
 
   const keyExtractor = useCallback((row: ListRow) => row.kind === "header" ? row.id : row.item.id, []);
   const getItemType  = useCallback((row: ListRow) => row.kind === "header" ? "header" : "item", []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-
       <Reanimated.View
         style={[
           styles.headerWrap,
@@ -164,20 +154,18 @@ function HistoryScreen() {
             onOpenSearch={openSearch}
             onCloseSearch={closeSearch}
             searchInputRef={searchInputRef}
-            colors={colors}
-            fontSize={rf}
           />
 
           {user && cloudError && !searchVisible && (
-            <CloudErrorBanner onRetry={onRefresh} colors={colors} fontSize={rf} />
+            <CloudErrorBanner onRetry={onRefresh} />
           )}
 
           {!isOnline && user && !searchVisible && (
-            <OfflineBanner colors={colors} />
+            <OfflineBanner />
           )}
 
           {searchVisible && searchQuery.trim() && searchedItems.length > 0 && (
-            <SearchResultsRow count={searchedItems.length} query={searchQuery} colors={colors} fontSize={rf} />
+            <SearchResultsRow count={searchedItems.length} query={searchQuery} />
           )}
         </View>
       </Reanimated.View>
@@ -215,10 +203,6 @@ function HistoryScreen() {
           onEndReachedThreshold={0.4}
           ListFooterComponent={renderFooter}
           ListEmptyComponent={renderEmpty}
-          // Keep rendered window tight — FlashList's recycler already pools
-          // views; a smaller drawDistance reduces retained native views for
-          // very large histories (500–10 000+ items) without affecting scroll
-          // smoothness (FlashList renders ahead of the viewport internally).
           drawDistance={200}
         />
       )}

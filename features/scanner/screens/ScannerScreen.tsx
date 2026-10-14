@@ -10,8 +10,15 @@ import { useLowLightDetection } from "@/features/scanner/hooks/useLowLightDetect
 import { useCameraLifecycle } from "@/features/scanner/hooks/useCameraLifecycle";
 import { useTapToFocus } from "@/features/scanner/hooks/useTapToFocus";
 import {
-  ScannerOverlay, ProcessingOverlay, PermissionScreen, CameraErrorBoundary,
-  ScannerToast, toastContainerStyle, CameraUnavailableBanner, ConversionBanner, TapFocusRing,
+  ScannerOverlay,
+  ProcessingOverlay,
+  PermissionScreen,
+  CameraErrorBoundary,
+  ScannerToast,
+  toastContainerStyle,
+  CameraUnavailableBanner,
+  ConversionBanner,
+  TapFocusRing,
 } from "@/features/scanner/components";
 
 export default function ScannerScreen() {
@@ -22,13 +29,21 @@ export default function ScannerScreen() {
   const life = useCameraLifecycle();
   const sc = useScanner({ isCameraAvailable: life.cameraAvailable });
   const { suggested: lowLightSuggested } = useLowLightDetection({
-    cameraLive: life.cameraLive, scanned: sc.scanned, flashOn: sc.flashOn, facing: sc.facing,
+    cameraLive: life.cameraLive,
+    scanned: sc.scanned,
+    flashOn: sc.flashOn,
+    facing: sc.facing,
   });
   const tap = useTapToFocus(life.cameraLive, sc.scanned);
 
   if (!life.permission) return <View style={styles.blackBg} />;
   if (!life.permission.granted) {
-    return <PermissionScreen canAskAgain={life.permission.canAskAgain} onRequestPermission={life.requestPermission} />;
+    return (
+      <PermissionScreen
+        canAskAgain={life.permission.canAskAgain}
+        onRequestPermission={life.requestPermission}
+      />
+    );
   }
 
   return (
@@ -41,7 +56,11 @@ export default function ScannerScreen() {
               <Ionicons name="chevron-back" size={22} color="#fff" />
             </Pressable>
           </View>
-          <CameraUnavailableBanner onPickImage={sc.handlePickImage} onRetry={life.handleRetry} errorType={life.cameraErrorType} />
+          <CameraUnavailableBanner
+            onPickImage={sc.handlePickImage}
+            onRetry={life.handleRetry}
+            errorType={life.cameraErrorType}
+          />
         </View>
       ) : life.cameraActive ? (
         <CameraErrorBoundary onError={() => life.markUnavailable("unavailable")}>
@@ -53,36 +72,68 @@ export default function ScannerScreen() {
             zoom={sc.zoom}
             autofocus={tap.autofocusMode}
             barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-            onBarcodeScanned={(d) => { sc.onQRBoundsDetected(d?.bounds); sc.handleBarCodeScanned(d); }}
+            onBarcodeScanned={(d) => {
+              sc.onQRBoundsDetected(d?.bounds);
+              sc.handleBarCodeScanned(d);
+            }}
             onCameraReady={life.markReady}
-            onMountError={(e) => life.markUnavailable(e?.message?.toLowerCase().includes("busy") ? "inuse" : "unavailable")}
+            onMountError={(e) =>
+              life.markUnavailable(
+                e?.message?.toLowerCase().includes("busy") ? "inuse" : "unavailable"
+              )
+            }
           />
-          {!life.cameraPreviewReady && <View style={[StyleSheet.absoluteFillObject, styles.blackBg]} pointerEvents="none" />}
+          {!life.cameraPreviewReady && (
+            <View style={[StyleSheet.absoluteFillObject, styles.blackBg]} pointerEvents="none" />
+          )}
         </CameraErrorBoundary>
       ) : null}
 
       {life.cameraLive && !sc.scanned && (
-        <Pressable style={StyleSheet.absoluteFillObject} onPress={(e) => tap.handleTapFocus(e.nativeEvent.locationX, e.nativeEvent.locationY)} />
+        <Pressable
+          style={StyleSheet.absoluteFillObject}
+          onPress={(e) => tap.handleTapFocus(e.nativeEvent.locationX, e.nativeEvent.locationY)}
+        />
       )}
-      {tap.focusPoint && <TapFocusRing x={tap.focusPoint.x} y={tap.focusPoint.y} anim={tap.focusRingAnim} />}
+      {tap.focusPoint && (
+        <TapFocusRing x={tap.focusPoint.x} y={tap.focusPoint.y} anim={tap.focusRingAnim} />
+      )}
 
       {life.cameraLive && (
         <ScannerOverlay
-          topInset={topInset} bottomInset={bottomInset}
-          flashOn={sc.flashOn} onToggleFlash={sc.toggleFlash}
-          zoom={sc.zoom} zoomLabel={sc.zoomLabel} onCycleZoom={sc.cycleZoom}
-          scanned={sc.scanned} scanSuccess={sc.scanSuccess}
-          anonymousMode={sc.anonymousMode} onToggleAnonymous={() => sc.setAnonymousMode(!sc.anonymousMode)}
-          onPickImage={sc.handlePickImage} user={sc.user} facing={sc.facing}
+          topInset={topInset}
+          bottomInset={bottomInset}
+          flashOn={sc.flashOn}
+          onToggleFlash={sc.toggleFlash}
+          zoom={sc.zoom}
+          zoomLabel={sc.zoomLabel}
+          onCycleZoom={sc.cycleZoom}
+          scanned={sc.scanned}
+          scanSuccess={sc.scanSuccess}
+          anonymousMode={sc.anonymousMode}
+          onToggleAnonymous={() => sc.setAnonymousMode(!sc.anonymousMode)}
+          onPickImage={sc.handlePickImage}
+          user={sc.user}
+          facing={sc.facing}
           lowLightSuggested={lowLightSuggested}
         />
       )}
 
       {sc.processing && <ProcessingOverlay />}
-      <ConversionBanner message={sc.conversionBannerMsg} visible={!sc.user && !!sc.conversionBannerMsg} bottomOffset={bottomInset + 16} onSignIn={() => router.push("/(auth)/login")} onDismiss={sc.dismissConversionBanner} />
+      <ConversionBanner
+        message={sc.conversionBannerMsg}
+        visible={!sc.user && !!sc.conversionBannerMsg}
+        bottomOffset={bottomInset + 16}
+        onSignIn={() => router.push("/(auth)/login")}
+        onDismiss={sc.dismissConversionBanner}
+      />
       {(sc.galleryErrorMsg || sc.scannerMsg) && (
         <View style={[toastContainerStyle, { bottom: bottomInset + 16 }]}>
-          <ScannerToast message={sc.galleryErrorMsg || sc.scannerMsg || ""} type={sc.galleryErrorMsg ? "error" : sc.scannerMsgType} onDone={sc.galleryErrorMsg ? sc.dismissGalleryError : sc.dismissScannerMsg} />
+          <ScannerToast
+            message={sc.galleryErrorMsg || sc.scannerMsg || ""}
+            type={sc.galleryErrorMsg ? "error" : sc.scannerMsgType}
+            onDone={sc.galleryErrorMsg ? sc.dismissGalleryError : sc.dismissScannerMsg}
+          />
         </View>
       )}
     </View>
@@ -90,6 +141,18 @@ export default function ScannerScreen() {
 }
 
 const styles = StyleSheet.create({
-  blackBg: { flex: 1, backgroundColor: "#000" },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(0,0,0,0.45)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" },
+  blackBg: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
 });

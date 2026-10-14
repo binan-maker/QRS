@@ -211,8 +211,6 @@ export function useProfile() {
 
   return {
     user,
-    stats: { scanCount: 0, commentCount: 0, totalLikesReceived: 0 },
-    statsLoading: false,
     photoURL,
     canRemovePhoto,
     hasGooglePhoto,
@@ -224,9 +222,6 @@ export function useProfile() {
     handleCropConfirm,
     handleCropCancel,
     currentUsername,
-    usernameLastChangedAt: null,
-    canChangeUsername: true,
-    daysUntilUsernameChange: 0,
     initials,
     refreshing,
     handleRefresh,

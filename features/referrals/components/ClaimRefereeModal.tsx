@@ -7,7 +7,6 @@ import { styles } from "../styles";
 
 interface ClaimRefereeModalProps {
   visible: boolean;
-  user: any;
   refereeStatus: RefereeStatus;
   referralInput: string;
   referralStatus: string | null;
@@ -29,7 +28,7 @@ export const ClaimRefereeModal = memo(function ClaimRefereeModal({
   onApplyCode,
   onClose,
 }: ClaimRefereeModalProps) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <Modal

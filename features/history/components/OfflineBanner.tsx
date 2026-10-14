@@ -1,12 +1,11 @@
 import React, { memo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
-interface Props {
-  colors: any;
-}
+const OfflineBanner = memo(function OfflineBanner() {
+  const { colors } = useTheme();
 
-const OfflineBanner = memo(function OfflineBanner({ colors }: Props) {
   return (
     <View
       style={[
@@ -42,12 +41,12 @@ const styles = StyleSheet.create({
     borderWidth:      1,
   },
   dot: {
-    width:        22,
-    height:       22,
-    borderRadius: 7,
-    alignItems:   "center",
+    width:          22,
+    height:         22,
+    borderRadius:   7,
+    alignItems:     "center",
     justifyContent: "center",
-    flexShrink:   0,
+    flexShrink:     0,
   },
   text: {
     fontFamily: "Inter_500Medium",

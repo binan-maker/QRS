@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
 import ReAnimated, { FadeIn } from "react-native-reanimated";
-import { FINDER_SIZE } from "@/features/scanner/hooks/useCameraControls";
+import { FINDER_SIZE } from "./constants";
 import { useOverlayAnimations } from "@/features/scanner/hooks/useOverlayAnimations";
 import FinderFrame from "./FinderFrame";
 import OverlayTopBar from "./OverlayTopBar";

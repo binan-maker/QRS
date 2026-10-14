@@ -16,7 +16,12 @@ import {
   type RewardWallet,
   type UserReferralsDashboard,
 } from "@/services/referrals";
-import { HERO_SLIDES } from "../constants";
+import {
+  HERO_SLIDES,
+  DEFAULT_GUEST_REFERRAL_CODE,
+  buildReferralUrl,
+  buildDisplayReferralUrl,
+} from "../constants";
 import { RefereeStatus, UseReferralsReturn } from "../types";
 
 export function useReferrals(): UseReferralsReturn {
@@ -47,7 +52,7 @@ export function useReferrals(): UseReferralsReturn {
 
   const loadData = useCallback(async () => {
     if (!user?.id) {
-      let guestCode = "krzryn4";
+      let guestCode = DEFAULT_GUEST_REFERRAL_CODE;
       try {
         const cached =
           (await AsyncStorage.getItem("binro_guest_ref_code")) ||
@@ -55,10 +60,11 @@ export function useReferrals(): UseReferralsReturn {
         if (cached) guestCode = cached;
       } catch {}
 
+      const link = buildReferralUrl(guestCode);
       setRefDashboard({
         referralCode: guestCode,
-        referralLink: `https://www.binro.in/register?ref=${guestCode}`,
-        shortLink: `https://www.binro.in/register?ref=${guestCode}`,
+        referralLink: link,
+        shortLink: link,
         totalInvited: 0,
         totalQualified: 0,
         totalPending: 0,
@@ -78,10 +84,11 @@ export function useReferrals(): UseReferralsReturn {
         setWallet(w);
       }
       if (rd) {
-        if (userCode && (!rd.referralCode || rd.referralCode === "krzryn4")) {
+        if (userCode && (!rd.referralCode || rd.referralCode === DEFAULT_GUEST_REFERRAL_CODE)) {
           rd.referralCode = userCode;
-          rd.referralLink = `https://www.binro.in/register?ref=${userCode}`;
-          rd.shortLink = `https://www.binro.in/register?ref=${userCode}`;
+          const userLink = buildReferralUrl(userCode);
+          rd.referralLink = userLink;
+          rd.shortLink = userLink;
         }
         setRefDashboard(rd);
       }
@@ -113,9 +120,9 @@ export function useReferrals(): UseReferralsReturn {
     return "eligible";
   }, [wallet]);
 
-  const inviteCode = (wallet?.ownReferralCode || refDashboard?.referralCode || "krzryn4").toLowerCase();
-  const signupLink = `https://www.binro.in/register?ref=${inviteCode}`;
-  const displaySignupLink = `binro.in/register?ref=${inviteCode}`;
+  const inviteCode = (wallet?.ownReferralCode || refDashboard?.referralCode || DEFAULT_GUEST_REFERRAL_CODE).toLowerCase();
+  const signupLink = buildReferralUrl(inviteCode);
+  const displaySignupLink = buildDisplayReferralUrl(inviteCode);
 
   const handleCopyCode = useCallback(async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

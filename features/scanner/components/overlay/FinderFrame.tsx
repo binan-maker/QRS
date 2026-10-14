@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { View, StyleSheet, Animated } from "react-native";
-import { FINDER_SIZE } from "@/features/scanner/hooks/useCameraControls";
+import { FINDER_SIZE } from "./constants";
 
 const CORNER_LEN = 28;
 const CORNER_W = 3;

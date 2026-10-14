@@ -1,18 +1,19 @@
 import React, { memo } from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 
 interface Props {
-  count:    number;
-  query:    string;
-  colors:   any;
-  fontSize: (n: number) => number;
+  count: number;
+  query: string;
 }
 
-const SearchResultsRow = memo(function SearchResultsRow({ count, query, colors, fontSize }: Props) {
+const SearchResultsRow = memo(function SearchResultsRow({ count, query }: Props) {
+  const { colors } = useTheme();
+
   return (
     <View style={[styles.row, { borderBottomColor: colors.surfaceBorder }]}>
       <Text
-        style={[styles.text, { color: colors.textMuted, fontSize: fontSize(12) }]}
+        style={[styles.text, { color: colors.textMuted }]}
         maxFontSizeMultiplier={1}
       >
         {count} result{count !== 1 ? "s" : ""} for "{query}"
@@ -29,5 +30,8 @@ const styles = StyleSheet.create({
     paddingBottom:     8,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  text: { fontFamily: "Inter_400Regular" },
+  text: {
+    fontFamily: "Inter_400Regular",
+    fontSize:   12,
+  },
 });

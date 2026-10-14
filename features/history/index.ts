@@ -1,26 +1,25 @@
-// ─── History Feature Public API ────────────────────────────────────────────────
-export { default as HistoryScreen }      from "./HistoryScreen";
-export { default }                       from "./HistoryScreen";
+export { default as HistoryScreen }       from "./screens/HistoryScreen";
+export { default }                        from "./screens/HistoryScreen";
 
 // Hooks
-export { useHistory }                    from "./hooks/useHistory";
-export { useHistoryData }                from "./hooks/useHistoryData";
-export { useSearch }                     from "./hooks/useSearch";
+export { useHistory }                     from "./hooks/useHistory";
+export { useHistoryData }                 from "./hooks/useHistoryData";
+export { useSearch }                      from "./hooks/useSearch";
 
 // Components
-export { default as HistoryItem }        from "./components/HistoryItem";
+export { default as HistoryItem }         from "./components/HistoryItem";
 export { default as HistoryItemSkeleton } from "./components/HistoryItemSkeleton";
-export { default as HistoryHeader }      from "./components/HistoryHeader";
-export { SectionHeader }                 from "@/shared/components/ui/SectionHeader";
-export { default as EmptyState }         from "./components/EmptyState";
-export { default as CloudErrorBanner }   from "./components/CloudErrorBanner";
-export { default as OfflineBanner }      from "./components/OfflineBanner";
-export { default as SearchResultsRow }   from "./components/SearchResultsRow";
+export { default as HistoryHeader }       from "./components/HistoryHeader";
+export { SectionHeader }                  from "@/shared/components/ui/SectionHeader";
+export { default as EmptyState }          from "./components/EmptyState";
+export { default as CloudErrorBanner }    from "./components/CloudErrorBanner";
+export { default as OfflineBanner }       from "./components/OfflineBanner";
+export { default as SearchResultsRow }    from "./components/SearchResultsRow";
 
 // Types
 export type { HistoryItem as HistoryItemType, ListRow } from "./types";
 
 // Utils
 export { groupByDate }                                    from "./utils/date-utils";
-export { buildSearchIndex, matchesSearchIndexed }         from "./utils/search-utils";
-export { SKELETON_COUNT, PAGE_SIZE, STALE_MS }            from "./utils/constants";
+export { buildSearchIndex, matchesSearchIndexed, extractSearchTokens } from "./utils/search-utils";
+export { PAGE_SIZE, STALE_MS }                            from "./utils/constants";

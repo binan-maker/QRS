@@ -2,14 +2,11 @@ import type { HistoryItem } from "@/features/history/types";
 import { parseAnyPaymentQr } from "@/services/analysis";
 
 /**
- * Full (per-query) search — used as a fallback or for single items.
- * For list filtering prefer matchesSearchIndexed + buildSearchIndex
- * to avoid calling parseAnyPaymentQr on every keystroke.
+ * Extract searchable text tokens from a HistoryItem.
+ * Normalizes URL hostnames and parses payment details (recipient name, VPA, ID)
+ * once per item.
  */
-export function matchesSearch(item: HistoryItem, q: string): boolean {
-  const lower = q.toLowerCase().trim();
-  if (!lower) return true;
-
+export function extractSearchTokens(item: HistoryItem): string {
   const parts: string[] = [
     item.content.toLowerCase(),
     item.contentType.toLowerCase(),
@@ -35,7 +32,19 @@ export function matchesSearch(item: HistoryItem, q: string): boolean {
     } catch {}
   }
 
-  const fullText = parts.join(" ");
+  return parts.join(" ");
+}
+
+/**
+ * Full (per-query) search — used as a fallback or for single items.
+ * For list filtering prefer matchesSearchIndexed + buildSearchIndex
+ * to avoid calling extractSearchTokens on every keystroke.
+ */
+export function matchesSearch(item: HistoryItem, q: string): boolean {
+  const lower = q.toLowerCase().trim();
+  if (!lower) return true;
+
+  const fullText = extractSearchTokens(item);
   const words = lower.split(/\s+/).filter(Boolean);
   return words.every((w) => fullText.includes(w));
 }
@@ -43,40 +52,14 @@ export function matchesSearch(item: HistoryItem, q: string): boolean {
 /**
  * Build a precomputed search index: Map<itemId, lowercased searchable text>.
  *
- * Call this once when displayItems changes (via useMemo). The expensive
- * parseAnyPaymentQr call is paid at index-build time, NOT on every keystroke,
- * so repeated searches across the same list are O(n) word checks instead
- * of O(n × parseAnyPaymentQr).
+ * Call this once when displayItems changes (via useMemo). The token extraction
+ * is paid at index-build time, NOT on every keystroke, so repeated searches
+ * across the same list are O(n) word checks instead of O(n × token parsing).
  */
 export function buildSearchIndex(items: HistoryItem[]): Map<string, string> {
   const index = new Map<string, string>();
   for (let i = 0; i < items.length; i++) {
-    const item  = items[i];
-    const parts: string[] = [
-      item.content.toLowerCase(),
-      item.contentType.toLowerCase(),
-    ];
-
-    if (item.contentType === "url") {
-      try {
-        parts.push(new URL(item.content).hostname.replace("www.", "").toLowerCase());
-      } catch {}
-    }
-
-    const isPayment =
-      item.contentType === "payment" ||
-      item.content.toLowerCase().startsWith("upi://");
-
-    if (isPayment) {
-      try {
-        const parsed = parseAnyPaymentQr(item.content);
-        if (parsed?.recipientName) parts.push(parsed.recipientName.toLowerCase());
-        if (parsed?.vpa)           parts.push(parsed.vpa.toLowerCase());
-        if (parsed?.recipientId)   parts.push(parsed.recipientId.toLowerCase());
-      } catch {}
-    }
-
-    index.set(item.id, parts.join(" "));
+    index.set(items[i].id, extractSearchTokens(items[i]));
   }
   return index;
 }

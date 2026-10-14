@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import * as Haptics from "@/shared/utils/haptics";
 import { addComment, softDeleteComment } from "@/lib/data-service";
 import { queryClient } from "@/lib/core/query-client";
-import type { CommentItem } from "./comment-types";
+import type { CommentItem } from "@/features/qr-detail/types";
 
 interface UseCommentActionsParams {
   id: string;

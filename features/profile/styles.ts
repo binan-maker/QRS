@@ -17,6 +17,7 @@ export const styles = StyleSheet.create({
 
   // Top bar
   topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20, marginTop: 4 },
+  topBarActions: { flexDirection: "row", alignItems: "center", gap: 10 },
   pageTitle: { fontSize: 22, fontFamily: "Inter_700Bold" },
   iconBtn: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center", borderWidth: 1 },
 

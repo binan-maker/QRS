@@ -2,16 +2,19 @@ import React, { memo } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { useTheme } from "@/shared/contexts/ThemeContext";
+import { useTopInset } from "@/shared/utils/platform";
 import { styles } from "@/features/profile/styles";
 
 interface Props {
-  colors: any;
-  topInset: number;
   onSignIn: () => void;
   onRegister: () => void;
 }
 
-const GuestView = memo(function GuestView({ colors, topInset, onSignIn, onRegister }: Props) {
+const GuestView = memo(function GuestView({ onSignIn, onRegister }: Props) {
+  const { colors } = useTheme();
+  const topInset = useTopInset();
+
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
       <View style={styles.guestWrap}>
