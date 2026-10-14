@@ -8,6 +8,7 @@ import { useTheme } from "@/shared/contexts/ThemeContext";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { useAuthScale } from "@/features/auth/hooks/useAuthScale";
 import { makeAuthStyles } from "@/features/auth/styles";
+import { navigateToHome } from "@/shared/utils/device/navigation";
 
 export default function VerifyEmailScreen() {
   const { user, signOut, resendVerification, refreshUser } = useAuth();
@@ -26,7 +27,7 @@ export default function VerifyEmailScreen() {
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
-    if (user?.emailVerified) router.replace("/(tabs)");
+    if (user?.emailVerified) navigateToHome();
   }, [user?.emailVerified]);
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export default function VerifyEmailScreen() {
       const verified = await refreshUser();
       if (verified) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        router.replace("/(tabs)");
+        navigateToHome();
         return;
       }
 

@@ -17,6 +17,7 @@ import AuthBrandBlock from "@/features/auth/components/AuthBrandBlock";
 import { useAuthScale } from "@/features/auth/hooks/useAuthScale";
 import { makeAuthStyles } from "@/features/auth/styles";
 import { useFadeSlide } from "@/features/auth/hooks/useFadeSlide";
+import { navigateToHome } from "@/shared/utils/device/navigation";
 
 export default function LoginScreen() {
   const { signIn, signInWithGoogle, googleRequest, user } = useAuth();
@@ -45,16 +46,18 @@ export default function LoginScreen() {
   const footerStyle = useFadeSlide(200, 16);
 
   useEffect(() => {
-    if (user) router.replace("/(tabs)");
-  }, [user]);
+    if (user && !googleLoading) {
+      navigateToHome();
+    }
+  }, [user, googleLoading]);
 
   useEffect(() => {
     if (user && googleLoading) {
       setGoogleLoading(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.dismissAll();
+      navigateToHome();
     }
-  }, [user]);
+  }, [user, googleLoading]);
 
   async function handleLogin() {
     const newFieldErrors = { email: "", password: "" };
@@ -66,7 +69,7 @@ export default function LoginScreen() {
     try {
       await signIn(email.trim(), password);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.dismissAll();
+      navigateToHome();
     } catch (e: any) {
       if (
         e.code === "auth/email-not-verified" ||

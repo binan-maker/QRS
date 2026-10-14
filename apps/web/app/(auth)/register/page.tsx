@@ -15,7 +15,8 @@ function RegisterContent() {
   const { signUp, signInWithGoogle, user } = useAuth();
 
   const initialEmail = searchParams.get("email") || "";
-  const returnUrl = searchParams.get("returnUrl") || "/";
+  const rawReturnUrl = searchParams.get("returnUrl") || "/";
+  const returnUrl = rawReturnUrl === "/profile" ? "/" : rawReturnUrl;
   const initialRef = (searchParams.get("ref") || "").trim().toLowerCase();
 
   const [displayName, setDisplayName] = useState("");

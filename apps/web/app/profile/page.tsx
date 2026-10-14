@@ -276,13 +276,13 @@ function ProfileContent() {
 
             <div className={styles.guestActions}>
               <Link
-                href="/login?returnUrl=/profile"
+                href="/login"
                 className={styles.guestPrimaryBtn}
               >
                 Sign In
               </Link>
               <Link
-                href="/register?returnUrl=/profile"
+                href="/register"
                 className={styles.guestSecondaryBtn}
               >
                 Create Account

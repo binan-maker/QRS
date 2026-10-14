@@ -20,6 +20,7 @@ import { useFadeSlide } from "@/features/auth/hooks/useFadeSlide";
 import { useRegisterReferral } from "@/features/auth/hooks/useRegisterReferral";
 import { makeAuthStyles } from "@/features/auth/styles";
 import { validateEmail } from "@/shared/utils/email-validator";
+import { navigateToHome } from "@/shared/utils/device/navigation";
 import {
   applyReferralCodeForUser,
   savePendingReferralCode,
@@ -54,7 +55,7 @@ export default function RegisterScreen() {
       if (referral.referralCode && user.id) {
         applyReferralCodeForUser(user.id, referral.referralCode).catch(() => {});
       }
-      router.replace("/(tabs)");
+      navigateToHome();
     }
   }, [user, googleLoading, referral.referralCode]);
 
@@ -65,7 +66,7 @@ export default function RegisterScreen() {
       }
       setGoogleLoading(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.dismissAll();
+      navigateToHome();
     }
   }, [user, googleLoading, referral.referralCode]);
 

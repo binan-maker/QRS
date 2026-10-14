@@ -17,7 +17,8 @@ function LoginContent() {
 
   const initialEmail = searchParams.get("email") || "";
   const justVerified = searchParams.get("verified") === "true";
-  const returnUrl = searchParams.get("returnUrl") || "/";
+  const rawReturnUrl = searchParams.get("returnUrl") || "/";
+  const returnUrl = rawReturnUrl === "/profile" ? "/" : rawReturnUrl;
 
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");

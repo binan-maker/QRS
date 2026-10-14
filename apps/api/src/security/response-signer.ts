@@ -1,10 +1,10 @@
 import { webcrypto } from "node:crypto";
 
-const { subtle } = webcrypto as unknown as Crypto;
+const subtle = (webcrypto as any).subtle;
 
-let _signingKey: CryptoKey | null = null;
+let _signingKey: any = null;
 
-async function getSigningKey(): Promise<CryptoKey | null> {
+async function getSigningKey(): Promise<any> {
   if (_signingKey) return _signingKey;
   const keyB64 = process.env.THREATS_SIGNING_KEY;
   if (!keyB64) return null;

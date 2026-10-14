@@ -123,14 +123,14 @@ export function getMaintenanceQueue(): Queue<MaintenanceJobData> | null {
 export async function enqueuePush(data: PushNotificationJobData): Promise<void> {
   const q = getPushQueue();
   if (!q) return;
-  await q.add("send-push", data).catch((e) => console.error("[Queue] enqueuePush failed:", e));
+  await q.add("send-push", data).catch((e: any) => console.error("[Queue] enqueuePush failed:", e));
 }
 
 /** Fire-and-forget: enqueue a scan analytics job. No-op if Redis unavailable. */
 export async function enqueueAnalytics(data: AnalyticsJobData): Promise<void> {
   const q = getAnalyticsQueue();
   if (!q) return;
-  await q.add("process-analytics", data).catch((e) => console.error("[Queue] enqueueAnalytics failed:", e));
+  await q.add("process-analytics", data).catch((e: any) => console.error("[Queue] enqueueAnalytics failed:", e));
 }
 
 /** Schedule maintenance tasks as BullMQ repeatable cron jobs. Call once at startup. */
@@ -150,7 +150,7 @@ export async function scheduleMaintenance(): Promise<void> {
       task,
       { task },
       { repeat: { pattern: "30 2 * * *" }, jobId: `maintenance:${task}` },
-    ).catch((e) => console.error(`[Queue] scheduleMaintenance ${task} failed:`, e));
+    ).catch((e: any) => console.error(`[Queue] scheduleMaintenance ${task} failed:`, e));
   }
 
   console.log("[Queue] Maintenance cron jobs scheduled");

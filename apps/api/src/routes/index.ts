@@ -38,3 +38,8 @@ export function registerV1Routes(app: Express): void {
   app.use("/api/v1/qr", qrRouter);
   app.use("/api/v1/qr/:qrId/comments", commentsRouter);
 }
+
+export async function registerRoutes(app: Express) {
+  registerV1Routes(app);
+  return app;
+}

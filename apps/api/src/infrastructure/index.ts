@@ -1,12 +1,7 @@
 /**
- * Infrastructure Layer Root Barrel
+ * Infrastructure Layer
  *
- * Implements persistence repositories, caching providers, auth verifiers,
- * push notification senders, and job queues.
+ * Provides job queue singletons and worker type definitions.
  */
 
-export * from "./persistence";
-export * from "./auth";
-export * from "./cache";
-export * from "./push";
 export * from "./queue";

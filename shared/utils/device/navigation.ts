@@ -25,6 +25,13 @@ export function safeBack() {
   if (router.canGoBack()) {
     router.back();
   } else {
-    router.replace("/(tabs)" as any);
+    router.replace("/(tabs)/" as any);
   }
+}
+
+export function navigateToHome() {
+  if (router.canDismiss()) {
+    router.dismissAll();
+  }
+  router.replace("/(tabs)/" as any);
 }

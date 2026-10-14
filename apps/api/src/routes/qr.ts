@@ -160,7 +160,7 @@ qrRouter.post(
 
     try {
       const result = await reportQrCode(
-        qrId,
+        String(qrId),
         user.uid,
         reportType,
         Boolean(user.emailVerified),
