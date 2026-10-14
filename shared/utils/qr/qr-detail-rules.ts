@@ -532,7 +532,8 @@ export function getRootCommentId<T extends { id: string; parentId?: string | nul
   commentsList: T[],
   commentId: string
 ): string {
-  const byId = new Map(commentsList.map((c) => [c.id, c]));
+  if (!commentsList || !Array.isArray(commentsList)) return commentId;
+  const byId = new Map(commentsList.filter(Boolean).map((c) => [c.id, c]));
   let curr = byId.get(commentId);
   let guard = 0;
   while (curr?.parentId && byId.has(curr.parentId) && guard < 20) {
@@ -545,9 +546,10 @@ export function getRootCommentId<T extends { id: string; parentId?: string | nul
 export function getAllDescendants<
   T extends { id: string; parentId?: string | null; createdAt?: string | null }
 >(commentsList: T[], rootId: string): T[] {
+  if (!commentsList || !Array.isArray(commentsList)) return [];
   const childrenMap = new Map<string, T[]>();
   for (const c of commentsList) {
-    if (!c.parentId) continue;
+    if (!c || !c.parentId) continue;
     const list = childrenMap.get(c.parentId) ?? [];
     list.push(c);
     childrenMap.set(c.parentId, list);
@@ -556,9 +558,11 @@ export function getAllDescendants<
   const queue = [...(childrenMap.get(rootId) ?? [])];
   while (queue.length > 0) {
     const item = queue.shift()!;
-    result.push(item);
-    const kids = childrenMap.get(item.id);
-    if (kids) queue.push(...kids);
+    if (item) {
+      result.push(item);
+      const kids = childrenMap.get(item.id);
+      if (kids) queue.push(...kids);
+    }
   }
   result.sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""));
   return result;

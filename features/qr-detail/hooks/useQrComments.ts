@@ -24,9 +24,18 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
   const pendingCommentsRef = useRef<CommentItem[]>([]);
   const deletingIdsRef = useRef<Set<string>>(new Set());
   const commentsListRef = useRef<CommentItem[]>([]);
+  commentsListRef.current = commentsList;
   useLayoutEffect(() => { commentsListRef.current = commentsList; });
 
-  const topLevelComments = useMemo(() => commentsList.filter((c) => !c.parentId), [commentsList]);
+  const topLevelComments = useMemo(() => {
+    const seen = new Set<string>();
+    return commentsList.filter((c) => {
+      if (!c || !c.id || c.parentId) return false;
+      if (seen.has(c.id)) return false;
+      seen.add(c.id);
+      return true;
+    });
+  }, [commentsList]);
   const { userLikes, handleCommentLike } = useCommentLikes({ id, userId, commentsList, setCommentsList });
   const actions = useCommentActions({
     id, userId, emailVerified: user?.emailVerified ?? false, user,
@@ -84,8 +93,8 @@ export function useQrComments(id: string, userId: string | null, offlineMode: bo
     commentsList, topLevelComments, userLikes, hasMoreComments, commentsLoading, commentsRefreshing,
     refreshComments: () => fetchComments(true),
     expandedReplies, visibleRepliesCount, revealedComments, setRevealedComments,
-    getAllDescendants: useCallback((rootId: string) => getAllDescendants(commentsListRef.current, rootId), []),
-    getRootCommentId: useCallback((commentId: string) => getRootCommentId(commentsListRef.current, commentId), []),
+    getAllDescendants: useCallback((rootId: string) => getAllDescendants(commentsListRef.current || [], rootId), []),
+    getRootCommentId: useCallback((commentId: string) => getRootCommentId(commentsListRef.current || [], commentId), []),
     toggleReplies, showMoreReplies, loadMoreComments, handleCommentLike,
     handleDeleteComment: useCallback((cid: string) => actions.handleDeleteComment(cid, commentsListRef.current), [actions.handleDeleteComment]),
   };

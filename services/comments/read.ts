@@ -21,7 +21,7 @@ function docToComment(d: { id: string; data: any }, qrId: string): CommentItem {
     id: d.id,
     qrCodeId: d.data.qrCodeId || qrId,
     userId: d.data.userId,
-    text: d.data.text,
+    text: d.data.text ?? d.data.comment ?? "",
     parentId: d.data.parentId || null,
     isDeleted: Boolean(d.data.isDeleted),
     reportCount: Number(d.data.reportCount ?? 0),
@@ -105,7 +105,10 @@ export async function getComments(
   const hasMore = docs.length > pageLimit;
   const allDocs = hasMore ? docs.slice(0, pageLimit) : docs;
   const filtered = allDocs.filter(
-    (d) => !d.data.isDeleted && !String(d.data.text || "").startsWith("__qr_vote__:")
+    (d) =>
+      Boolean(d.data.text || d.data.comment) &&
+      !d.data.isDeleted &&
+      !String(d.data.text || d.data.comment || "").startsWith("__qr_vote__:")
   );
 
   // Hydrate dislikes: check in-memory cache first, then DB fields, with storage as fallback

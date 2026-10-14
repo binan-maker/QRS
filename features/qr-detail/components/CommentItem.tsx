@@ -85,31 +85,34 @@ const ELBOW_H_WIDTH = 16;
 
 const CommentItem = memo(function CommentItem({
   comment, isReply = false, currentUserLike, isMenuOpen, isDeleting,
-  isCommentOwner, descendants, expandedReplies, visibleRepliesCount,
+  isCommentOwner, descendants = [], expandedReplies = {}, visibleRepliesCount = {},
   onLike, onReply, onMenuOpen, onMenuClose,
   onToggleReplies, onShowMoreReplies,
-  userLikes, commentMenuId, deletingCommentId, userId,
+  userLikes = {}, commentMenuId, deletingCommentId, userId,
 }: Props) {
   const { colors, isDark } = useTheme();
   const [textExpanded, setTextExpanded] = useState(false);
 
-  const replyCount = descendants.length;
-  const isExpanded = expandedReplies[comment.id] ?? false;
-  const showCount = visibleRepliesCount[comment.id] || REPLIES_PER_PAGE;
-  const visibleReplies = descendants.slice(0, showCount);
+  const safeDescendants = Array.isArray(descendants) ? descendants : [];
+  const replyCount = safeDescendants.length;
+  const commentId = comment?.id ?? "";
+  const isExpanded = Boolean(expandedReplies?.[commentId]);
+  const showCount = visibleRepliesCount?.[commentId] || REPLIES_PER_PAGE;
+  const visibleReplies = safeDescendants.slice(0, showCount);
   const hasMore = replyCount > showCount;
 
-  const displayName = comment.userUsername
+  const displayName = comment?.userUsername
     ? `@${comment.userUsername}`
-    : comment.userId ? `@user_${comment.userId.slice(-5)}` : "@user";
-  const avatarInitial = comment.userUsername ? comment.userUsername.charAt(0).toUpperCase() : "U";
+    : comment?.userId ? `@user_${comment.userId.slice(-5)}` : "@user";
+  const avatarInitial = comment?.userUsername ? comment.userUsername.charAt(0).toUpperCase() : "U";
   const avatarGradient = getInitialColor(displayName);
   const avatarSize = isReply ? 28 : 34;
   const surfaceBg = isDark ? colors.surfaceLight : colors.background;
   const threadColor = isDark ? "rgba(148,163,184,0.25)" : "rgba(148,163,184,0.35)";
 
-  const isLong = comment.text.length > READ_MORE_THRESHOLD;
-  const displayText = isLong && !textExpanded ? comment.text.slice(0, READ_MORE_THRESHOLD) : comment.text;
+  const rawText = comment?.text ?? "";
+  const isLong = rawText.length > READ_MORE_THRESHOLD;
+  const displayText = isLong && !textExpanded ? rawText.slice(0, READ_MORE_THRESHOLD) : rawText;
 
   const renderBody = () => (
     <View style={styles.commentBody}>

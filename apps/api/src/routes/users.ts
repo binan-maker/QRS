@@ -239,13 +239,13 @@ usersRouter.get(
         return res.status(404).json({ error: "User not found", code: "USER_NOT_FOUND", status: 404 });
       }
 
+      // Ensure users' scan history and scan activity data are strictly private and never exposed publicly
       return res.json({
         data: {
           id: user.id,
           displayName: user.display_name ?? null,
           photoUrl: user.photo_url ?? null,
           username: user.username ?? null,
-          scanCount: user.scan_count ?? 0,
           commentCount: user.comment_count ?? 0,
           totalLikesReceived: user.total_likes_received ?? 0,
           createdAt: user.created_at,

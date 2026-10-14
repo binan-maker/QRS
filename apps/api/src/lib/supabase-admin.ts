@@ -71,7 +71,6 @@ function resolvePath(path: string[]): AdminPath {
       return { table: "qr_comments", id: subId, filters: { [qrFk]: rootId! } };
     }
     if (sub === "reports") return { table: "qr_reports", id: subId, filters: { [qrFk]: rootId! } };
-    if (sub === "events") return { table: "qr_scans", id: subId, filters: { [qrFk]: rootId! } };
   }
 
   if (root === "users") {

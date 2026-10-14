@@ -161,30 +161,34 @@ export default function CommentsSection({
             </View>
           )
         ) : (
-          topLevelComments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              isReply={false}
-              currentUserLike={(userLikes[comment.id] ?? null) as any}
-              isMenuOpen={commentMenuId === comment.id}
-              isDeleting={deletingCommentId === comment.id}
-              isCommentOwner={user?.id === comment.userId}
-              descendants={getAllDescendants(comment.id)}
-              expandedReplies={expandedReplies}
-              visibleRepliesCount={visibleRepliesCount}
-              userLikes={userLikes as any}
-              commentMenuId={commentMenuId}
-              deletingCommentId={deletingCommentId}
-              userId={user?.id}
-              onLike={onLike}
-              onReply={onReply}
-              onMenuOpen={(cid, isOwner) => { setCommentMenuId(cid); setCommentMenuOwner(isOwner); }}
-              onMenuClose={() => setCommentMenuId(null)}
-              onToggleReplies={toggleReplies}
-              onShowMoreReplies={showMoreReplies}
-            />
-          ))
+          topLevelComments.map((comment, index) => {
+            if (!comment || !comment.id) return null;
+            const itemDescendants = typeof getAllDescendants === "function" ? (getAllDescendants(comment.id) || []) : [];
+            return (
+              <CommentItem
+                key={`${comment.id}-${index}`}
+                comment={comment}
+                isReply={false}
+                currentUserLike={(userLikes?.[comment.id] ?? null) as any}
+                isMenuOpen={commentMenuId === comment.id}
+                isDeleting={deletingCommentId === comment.id}
+                isCommentOwner={user?.id === comment.userId}
+                descendants={itemDescendants}
+                expandedReplies={expandedReplies || {}}
+                visibleRepliesCount={visibleRepliesCount || {}}
+                userLikes={(userLikes || {}) as any}
+                commentMenuId={commentMenuId}
+                deletingCommentId={deletingCommentId}
+                userId={user?.id}
+                onLike={onLike}
+                onReply={onReply}
+                onMenuOpen={(cid, isOwner) => { setCommentMenuId(cid); setCommentMenuOwner(isOwner); }}
+                onMenuClose={() => setCommentMenuId(null)}
+                onToggleReplies={toggleReplies}
+                onShowMoreReplies={showMoreReplies}
+              />
+            );
+          })
         )}
 
         {hasMoreComments && (
