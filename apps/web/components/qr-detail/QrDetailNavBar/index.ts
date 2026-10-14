@@ -1,0 +1,1 @@
+export { QrDetailNavBar } from "./QrDetailNavBar";

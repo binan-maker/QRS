@@ -1,0 +1,1 @@
+export { QrContentCard } from "./QrContentCard";

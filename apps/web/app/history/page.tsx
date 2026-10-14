@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Ionicons } from "@/lib/mobile-icons";
 import { useAuth } from "@/lib/auth-context";
 import { isWebSupabaseConfigured } from "@/lib/supabase";
 import {
@@ -11,7 +9,12 @@ import {
   deleteUserScan,
   type ScanItem,
 } from "@/lib/scan-history";
-import { HistoryItemCard } from "@/components/history";
+import {
+  HistoryItemCard,
+  HistoryHeader,
+  HistoryEmptyState,
+  HistorySkeleton,
+} from "@/components/history";
 import { BottomTabBar } from "@/components/navigation/BottomTabBar";
 import { groupByDate } from "@features/history/utils/date-utils";
 import { buildSearchIndex, matchesSearchIndexed } from "@features/history/utils/search-utils";
@@ -22,15 +25,6 @@ export default function HistoryPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
-  const handleBack = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push("/");
-    }
-  };
-
-  // Safe SSR hydration state
   const [scans, setScans] = useState<ScanItem[]>([]);
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -42,7 +36,7 @@ export default function HistoryPage() {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Debounce search query
+  // Debounce search query input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery);
@@ -50,14 +44,22 @@ export default function HistoryPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Focus search input when searchVisible turns true
+  // Focus input when search bar opens
   useEffect(() => {
     if (searchVisible) {
       setTimeout(() => searchInputRef.current?.focus(), 30);
     }
   }, [searchVisible]);
 
-  // Load scans from local cache then fetch fresh data
+  const handleBack = useCallback(() => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
+    }
+  }, [router]);
+
+  // Load scans from local cache and sync with cloud
   const loadData = useCallback(
     async (force = false) => {
       try {
@@ -78,25 +80,14 @@ export default function HistoryPage() {
   // Hydration-safe client initialization
   useEffect(() => {
     setMounted(true);
-    // Instant populate from localStorage on client mount
     try {
-      const keys = [
-        user?.id ? `local_scan_history_${user.id}` : null,
-        "binro_recent_scans",
-        "local_scan_history",
-        "binro_scan_history",
-        "binro_scans",
-      ].filter(Boolean) as string[];
-
-      for (const k of keys) {
-        const raw = localStorage.getItem(k);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setScans(parsed);
-            setLoading(false);
-            break;
-          }
+      const storageKey = user?.id ? `local_scan_history_${user.id}` : "binro_recent_scans";
+      const raw = localStorage.getItem(storageKey) || localStorage.getItem("local_scan_history");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setScans(parsed);
+          setLoading(false);
         }
       }
     } catch {}
@@ -104,7 +95,7 @@ export default function HistoryPage() {
     loadData(false);
   }, [user?.id, loadData]);
 
-  // Throttled window focus & storage listener
+  // Throttled window focus & cross-tab storage listener
   useEffect(() => {
     let lastFocus = Date.now();
 
@@ -131,7 +122,7 @@ export default function HistoryPage() {
     };
   }, [loadData, authLoading]);
 
-  // Search indexing
+  // Search indexing and filtering
   const searchIndex = useMemo(() => buildSearchIndex(scans as any), [scans]);
 
   const searchedItems = useMemo(() => {
@@ -142,13 +133,13 @@ export default function HistoryPage() {
     );
   }, [scans, searchIndex, debouncedQuery]);
 
-  // Group by date matching mobile date-utils
+  // Group by date matching mobile history
   const listRows: ListRow[] = useMemo(
     () => groupByDate(searchedItems as any),
     [searchedItems]
   );
 
-  // Optimistic deletion with state rollback on error
+  // Optimistic deletion with rollback
   const handleDelete = useCallback(
     async (item: ScanItem) => {
       const previousScans = scans;
@@ -165,206 +156,61 @@ export default function HistoryPage() {
     [user?.id, scans]
   );
 
+  let itemCardIndex = 0;
+
   return (
     <main className={styles.container}>
       <div className={styles.inner}>
-        {/* ── Top Bar / HistoryHeader ── */}
-        <header className={styles.headerWrap}>
-          {searchVisible ? (
-            <div className={styles.searchBar}>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchVisible(false);
-                  setSearchQuery("");
-                }}
-                className={styles.searchBackBtn}
-                aria-label="Back"
-                title="Back"
-              >
-                <Ionicons name="chevron-back" size={20} color="var(--text)" />
-              </button>
-              <Ionicons name="search-outline" size={17} color="var(--text-muted)" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search history…"
-                className={styles.searchInput}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchVisible(false);
-                  setSearchQuery("");
-                }}
-                className={styles.searchCancel}
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <div className={styles.headerRow}>
-              <div className={styles.headerLeft}>
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className={styles.backBtn}
-                  aria-label="Back"
-                  title="Back"
-                >
-                  <Ionicons name="chevron-back" size={20} color="var(--text)" />
-                </button>
-                <h1 className={styles.title}>Scan History</h1>
-              </div>
-              <div className={styles.headerActions}>
-                <button
-                  type="button"
-                  onClick={() => setSearchVisible(true)}
-                  className={styles.actionBtn}
-                  aria-label="Open search"
-                  title="Search"
-                >
-                  <Ionicons name="search-outline" size={18} color="var(--text-secondary)" />
-                </button>
-                <Link
-                  href="/settings?from=history"
-                  className={styles.actionBtn}
-                  aria-label="Settings"
-                  title="Settings"
-                >
-                  <Ionicons name="settings-outline" size={18} color="var(--text-secondary)" />
-                </Link>
-              </div>
-            </div>
-          )}
+        <HistoryHeader
+          searchVisible={searchVisible}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onOpenSearch={() => setSearchVisible(true)}
+          onCloseSearch={() => {
+            setSearchVisible(false);
+            setSearchQuery("");
+          }}
+          onBack={handleBack}
+          searchInputRef={searchInputRef}
+          showCloudError={Boolean(user && cloudError)}
+          onRetryCloud={() => loadData(true)}
+          resultsCount={searchedItems.length}
+        />
 
-          {/* Cloud Error Banner */}
-          {user && cloudError && !searchVisible && (
-            <div
-              onClick={() => loadData(true)}
-              className={styles.cloudErrorBanner}
-              role="alert"
-              title="Tap to retry"
-            >
-              <Ionicons name="cloud-offline-outline" size={15} color="var(--warning)" />
-              <p className={styles.cloudErrorText}>
-                Couldn't sync cloud history — tap to retry
-              </p>
-            </div>
-          )}
-
-          {/* Search Results Count Row */}
-          {searchVisible && searchQuery.trim() && searchedItems.length > 0 && (
-            <div className={styles.searchResultsRow}>
-              <p className={styles.searchResultsText}>
-                {searchedItems.length} result{searchedItems.length !== 1 ? "s" : ""} for "{searchQuery}"
-              </p>
-            </div>
-          )}
-        </header>
-
-        {/* ── Main Content Area ── */}
+        {/* Content Area */}
         {!mounted || loading ? (
-          <div className={styles.listContainer}>
-            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <div key={i} className={styles.skeletonCard}>
-                <div className={styles.skeletonIconBox} />
-                <div className={styles.skeletonBody}>
-                  <div
-                    className={styles.skeletonBone}
-                    style={{ height: "14px", width: "68%", marginBottom: "8px" }}
-                  />
-                  <div
-                    className={styles.skeletonBone}
-                    style={{ height: "11px", width: "42%", marginBottom: "8px" }}
-                  />
-                  <div
-                    className={styles.skeletonBone}
-                    style={{ height: "18px", width: "56px", borderRadius: "100px" }}
-                  />
-                </div>
-                <div className={styles.skeletonRight}>
-                  <div
-                    className={styles.skeletonBone}
-                    style={{ height: "10px", width: "38px" }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+          <HistorySkeleton count={8} />
         ) : !user ? (
-          /* Empty state when not signed in */
-          <div className={styles.emptyWrap}>
-            <div className={styles.emptyIconWrap}>
-              <Ionicons name="person-outline" size={32} color="var(--primary)" />
-            </div>
-            <h2 className={styles.emptyTitle}>Sign in to view history</h2>
-            <p className={styles.emptySub}>
-              Your scan history is saved to your account and synced across all your devices.
-            </p>
-            <Link href="/login?returnUrl=/history" className={styles.signInBtn}>
-              <Ionicons name="log-in-outline" size={17} color="#ffffff" />
-              <span>Sign In</span>
-            </Link>
-          </div>
+          <HistoryEmptyState isGuest />
         ) : searchedItems.length === 0 ? (
-          /* Empty state for search or zero items */
-          <div className={styles.emptyWrap}>
-            <div className={styles.emptyIconWrapMuted}>
-              <Ionicons
-                name={searchQuery.trim() ? "search-outline" : "time-outline"}
-                size={32}
-                color="var(--text-muted)"
-              />
-            </div>
-            <h2 className={styles.emptyTitle}>
-              {searchQuery.trim()
-                ? `No results for "${searchQuery}"`
-                : "No scans yet"}
-            </h2>
-            <p className={styles.emptySub}>
-              {searchQuery.trim()
-                ? "Try searching by domain, name, or QR content"
-                : "Scanned QR codes will appear here"}
-            </p>
-          </div>
+          <HistoryEmptyState searchQuery={searchQuery} />
         ) : (
-          /* Grouped Date List */
           <div className={styles.listContainer}>
-            {(() => {
-              let itemIndex = 0;
-              return listRows.map((row) => {
-                if (row.kind === "header") {
-                  return (
-                    <div key={row.id} className={styles.sectionHeader}>
-                      <span className={styles.sectionLabel}>{row.label}</span>
-                      <span className={styles.sectionLine} />
-                      <div className={styles.sectionBadge}>
-                        <span className={styles.sectionBadgeText}>{row.count}</span>
-                      </div>
-                    </div>
-                  );
-                }
-
-                const currentIndex = itemIndex++;
+            {listRows.map((row) => {
+              if (row.kind === "header") {
                 return (
-                  <HistoryItemCard
-                    key={row.item.id}
-                    item={row.item as any}
-                    index={currentIndex}
-                    animate={false}
-                    onDelete={handleDelete}
-                    showTime
-                  />
+                  <div key={row.id} className={styles.sectionHeader}>
+                    <span className={styles.sectionLabel}>{row.label}</span>
+                    <span className={styles.sectionLine} />
+                    <div className={styles.sectionBadge}>
+                      <span className={styles.sectionBadgeText}>{row.count}</span>
+                    </div>
+                  </div>
                 );
-              });
-            })()}
+              }
+
+              const idx = itemCardIndex++;
+              return (
+                <HistoryItemCard
+                  key={row.item.id}
+                  item={row.item as any}
+                  index={idx}
+                  animate={false}
+                  onDelete={handleDelete}
+                  showTime
+                />
+              );
+            })}
           </div>
         )}
       </div>
