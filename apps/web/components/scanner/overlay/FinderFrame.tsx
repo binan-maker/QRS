@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import styles from "../../scanner.module.css";
+import styles from "@/app/scanner/scanner.module.css";
 
 const CORNER_LEN = 28;
 const CORNER_W = 3;

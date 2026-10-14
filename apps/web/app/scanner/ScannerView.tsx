@@ -2,13 +2,20 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { useScanner } from "./hooks/useScanner";
-import { useLowLightDetection } from "./hooks/useLowLightDetection";
-import { useWebCameraLifecycle } from "./hooks/useWebCameraLifecycle";
 import {
-  ScannerOverlay, ProcessingOverlay, PermissionScreen, CameraErrorBoundary,
-  ScannerToast, toastContainerStyle, CameraUnavailableBanner, ConversionBanner, CameraView,
-} from "./components";
+  ScannerOverlay,
+  ProcessingOverlay,
+  PermissionScreen,
+  CameraErrorBoundary,
+  ScannerToast,
+  toastContainerStyle,
+  CameraUnavailableBanner,
+  ConversionBanner,
+  CameraView,
+  useScanner,
+  useLowLightDetection,
+  useWebCameraLifecycle,
+} from "@/components/scanner";
 import styles from "./scanner.module.css";
 
 export default function ScannerView() {

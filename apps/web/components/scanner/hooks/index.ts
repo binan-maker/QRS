@@ -10,4 +10,7 @@ export { useScanProcessor }     from "./useScanProcessor";
 export { useOverlayAnimations } from "./useOverlayAnimations";
 export { useScanner }           from "./useScanner";
 export { useLowLightDetection } from "./useLowLightDetection";
+export { useWebCameraLifecycle } from "./useWebCameraLifecycle";
+export { useWebCameraZoom }      from "./useWebCameraZoom";
+export { pickWebGalleryImage }   from "./useWebGalleryPicker";
 export type { ScanProcessorParams } from "./useScanProcessor";

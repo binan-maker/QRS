@@ -4,8 +4,8 @@
 // 1:1 with features/scanner/components/feedback/ConversionBanner.tsx
 
 import React from "react";
-import { Ionicons } from "../../icons";
-import styles from "../../scanner.module.css";
+import { Ionicons } from "../icons";
+import styles from "@/app/scanner/scanner.module.css";
 
 export function ConversionBanner({
   message,

@@ -1,35 +1,25 @@
-"use client";
-
+import type { Metadata } from "next";
 import React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Ionicons } from "@/lib/mobile-icons";
+import { LegalBackButton } from "@/components/navigation/LegalBackButton";
+import { createPageMetadata } from "@/lib/seo";
 import styles from "../legal.module.css";
 
+export const metadata: Metadata = createPageMetadata({
+  title: "Terms of Service — BinRo QR Safety Platform",
+  description:
+    "Review the Terms of Service for using BinRo's QR code scanner, link safety checker, and community trust reporting features across Web, Android, and iOS.",
+  path: "/terms",
+});
+
 export default function TermsOfServicePage() {
-  const router = useRouter();
-
-  const handleBack = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push("/settings");
-    }
-  };
-
   return (
     <main className={styles.container}>
       <div className={styles.inner}>
         {/* Navigation Bar */}
         <header className={styles.navBar}>
-          <button
-            type="button"
-            onClick={handleBack}
-            className={styles.backBtn}
-            aria-label="Go back"
-          >
-            <Ionicons name="chevron-back" size={20} />
-          </button>
+          <LegalBackButton fallbackUrl="/settings" />
           <span className={styles.navTitle}>BinRo Legal</span>
           <div className={styles.navSpacer} />
         </header>

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Ionicons } from "@/lib/mobile-icons";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme, type ThemeMode } from "@/lib/theme-context";
@@ -13,42 +13,25 @@ import { BottomTabBar } from "@/components/navigation/BottomTabBar";
 import SettingsLoading from "./loading";
 import styles from "./settings.module.css";
 
-function SettingsContent() {
+export default function SettingsPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, loading: authLoading, signOut } = useAuth();
   const { mode: themeMode, setMode: setThemeMode } = useTheme();
   const { cachedUrl, avatarUrl } = useAvatar();
-
-  // Avatar resolution
-  const [localCustom, setLocalCustom] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && user?.id) {
-      try {
-        const stored =
-          localStorage.getItem(`user_custom_avatar_${user.id}`) ||
-          localStorage.getItem(`user_avatar_${user.id}`);
-        setLocalCustom(stored);
-      } catch {}
-    }
-  }, [user?.id]);
 
   const photoURL = useMemo(() => {
     return (
       (cachedUrl && isUserUploadedPhoto(cachedUrl) ? cachedUrl : null) ||
       (avatarUrl && isUserUploadedPhoto(avatarUrl) ? avatarUrl : null) ||
-      (localCustom && isUserUploadedPhoto(localCustom) ? localCustom : null) ||
       user?.user_metadata?.custom_avatar_url ||
       cachedUrl ||
       avatarUrl ||
-      localCustom ||
       user?.user_metadata?.avatar_url ||
       user?.user_metadata?.picture ||
       user?.user_metadata?.photo_url ||
       null
     );
-  }, [cachedUrl, avatarUrl, localCustom, user]);
+  }, [cachedUrl, avatarUrl, user]);
 
   const displayName = useMemo(() => {
     return (
@@ -432,22 +415,82 @@ function SettingsContent() {
           </div>
         </section>
 
-        {/* ── SECTION 4: HELP & SAFETY HUB ── */}
+        {/* ── SECTION 4: HELP & SAFETY ── */}
         <section className={styles.section} aria-label="Help and safety">
           <div className={styles.sectionHeader}>
             <span className={styles.sectionLabel}>Help &amp; Safety</span>
           </div>
 
           <div className={styles.cardGroup}>
-            {/* Help & Safety Hub */}
-            <Link href="/settings/help-safety" className={styles.menuItem}>
+            {/* 1. Safety Guide */}
+            <Link href="/guide" className={styles.menuItem}>
+              <div className={styles.menuIconWrap}>
+                <Ionicons name="book-outline" size={19} />
+              </div>
+              <div className={styles.menuTextCol}>
+                <span className={styles.menuLabel}>Safety Guide</span>
+                <span className={styles.menuSublabel}>
+                  Inspect codes and detect scams
+                </span>
+              </div>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color="var(--text-muted)"
+              />
+            </Link>
+
+            <div className={styles.divider} />
+
+            {/* 2. Trust Scores */}
+            <Link href="/trust-scores" className={styles.menuItem}>
               <div className={styles.menuIconWrap}>
                 <Ionicons name="shield-checkmark-outline" size={19} />
               </div>
               <div className={styles.menuTextCol}>
-                <span className={styles.menuLabel}>Help &amp; Safety</span>
+                <span className={styles.menuLabel}>Trust Scores</span>
                 <span className={styles.menuSublabel}>
-                  Guides, trust scores, and support
+                  How safety ratings are calculated
+                </span>
+              </div>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color="var(--text-muted)"
+              />
+            </Link>
+
+            <div className={styles.divider} />
+
+            {/* 3. Send Feedback */}
+            <Link href="/feedback" className={styles.menuItem}>
+              <div className={styles.menuIconWrap}>
+                <Ionicons name="chatbubble-outline" size={19} />
+              </div>
+              <div className={styles.menuTextCol}>
+                <span className={styles.menuLabel}>Send Feedback</span>
+                <span className={styles.menuSublabel}>
+                  Report issues or suggest features
+                </span>
+              </div>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color="var(--text-muted)"
+              />
+            </Link>
+
+            <div className={styles.divider} />
+
+            {/* 4. About BinRo */}
+            <Link href="/founder" className={styles.menuItem}>
+              <div className={styles.menuIconWrap}>
+                <Ionicons name="information-circle-outline" size={20} />
+              </div>
+              <div className={styles.menuTextCol}>
+                <span className={styles.menuLabel}>About BinRo</span>
+                <span className={styles.menuSublabel}>
+                  Founder story and mission
                 </span>
               </div>
               <Ionicons
@@ -555,13 +598,5 @@ function SettingsContent() {
 
       <BottomTabBar activeTab="profile" />
     </main>
-  );
-}
-
-export default function SettingsPage() {
-  return (
-    <Suspense fallback={<SettingsLoading />}>
-      <SettingsContent />
-    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useCallback } from "react";
-import styles from "../../scanner.module.css";
+import styles from "@/app/scanner/scanner.module.css";
 import { acquireCameraStream, stopSharedCameraStream, applyTrackTorch, applyTrackZoom } from "./CameraStream";
 import { detectQrFromCanvas, isValidDecodedQr } from "./qrDetector";
 

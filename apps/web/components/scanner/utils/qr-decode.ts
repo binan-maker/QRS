@@ -1,4 +1,4 @@
-import { loadJsQr, isValidDecodedQr } from "../components/system/CameraView";
+import { loadJsQr, isValidDecodedQr } from "../system/CameraView";
 
 /**
  * Web QR code decoding from an image URI using jsQR + Canvas API with

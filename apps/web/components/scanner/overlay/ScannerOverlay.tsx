@@ -4,11 +4,11 @@
 // Same design as mobile in all views, stretched across the entire screen
 
 import React from "react";
-import { useOverlayAnimations } from "../../hooks/useOverlayAnimations";
+import { useOverlayAnimations } from "../hooks/useOverlayAnimations";
 import FinderFrame from "./FinderFrame";
 import OverlayTopBar from "./OverlayTopBar";
 import OverlayBottomBar from "./OverlayBottomBar";
-import styles from "../../scanner.module.css";
+import styles from "@/app/scanner/scanner.module.css";
 
 interface Props {
   topInset:           number;

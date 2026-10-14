@@ -9,7 +9,7 @@ import {
   setAnonymousQrContent, recordScan, getOrCreateQrCode,
 } from "../utils/security-analysis";
 import { pickWebGalleryImage } from "./useWebGalleryPicker";
-import { stopSharedCameraStream } from "../components/system/CameraView";
+import { stopSharedCameraStream } from "../system/CameraView";
 
 export interface ScanProcessorParams {
   user: any; token?: string | null; anonymousMode: boolean; scanned: boolean;

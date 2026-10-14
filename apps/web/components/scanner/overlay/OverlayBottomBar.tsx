@@ -4,9 +4,9 @@
 // Same design as mobile: Status pills + Gallery control
 
 import React from "react";
-import { Ionicons } from "../../icons";
+import { Ionicons } from "../icons";
 import { SCANNER_GLOW } from "./constants";
-import styles from "../../scanner.module.css";
+import styles from "@/app/scanner/scanner.module.css";
 
 interface Props {
   bottomInset:        number;

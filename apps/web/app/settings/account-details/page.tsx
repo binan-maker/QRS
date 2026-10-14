@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, Suspense } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Ionicons } from "@/lib/mobile-icons";
@@ -27,42 +27,26 @@ function sanitizeTextInput(val: string, maxLen = 40): string {
   return val.replace(/[<>'"`;]/g, "").slice(0, maxLen);
 }
 
-function AccountDetailsContent() {
+export default function AccountDetailsPage() {
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
   const { cachedUrl, avatarUrl, uploadAvatar, removeAvatar, uploading } = useAvatar();
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Avatar resolution
-  const [localCustom, setLocalCustom] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && user?.id) {
-      try {
-        const stored =
-          localStorage.getItem(`user_custom_avatar_${user.id}`) ||
-          localStorage.getItem(`user_avatar_${user.id}`);
-        setLocalCustom(stored);
-      } catch {}
-    }
-  }, [user?.id]);
-
   const photoURL = React.useMemo(() => {
     return (
       (cachedUrl && isUserUploadedPhoto(cachedUrl) ? cachedUrl : null) ||
       (avatarUrl && isUserUploadedPhoto(avatarUrl) ? avatarUrl : null) ||
-      (localCustom && isUserUploadedPhoto(localCustom) ? localCustom : null) ||
       user?.user_metadata?.custom_avatar_url ||
       cachedUrl ||
       avatarUrl ||
-      localCustom ||
       user?.user_metadata?.avatar_url ||
       user?.user_metadata?.picture ||
       user?.user_metadata?.photo_url ||
       null
     );
-  }, [cachedUrl, avatarUrl, localCustom, user]);
+  }, [cachedUrl, avatarUrl, user]);
 
   const handlePickPhoto = () => {
     fileInputRef.current?.click();
@@ -282,7 +266,7 @@ function AccountDetailsContent() {
   };
 
   const handleSaveName = async () => {
-    const trimmed = sanitizeTextInput(nameInput.trim(), 40);
+    const trimmed = sanitizeTextInput(nameInput.trim());
     if (!trimmed) {
       showToast("Display name cannot be empty.", "error");
       return;
@@ -860,13 +844,5 @@ function AccountDetailsContent() {
 
       <BottomTabBar activeTab="profile" />
     </main>
-  );
-}
-
-export default function AccountDetailsPage() {
-  return (
-    <Suspense fallback={<AccountDetailsLoading />}>
-      <AccountDetailsContent />
-    </Suspense>
   );
 }

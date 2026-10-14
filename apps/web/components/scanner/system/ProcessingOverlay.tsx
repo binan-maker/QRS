@@ -4,8 +4,8 @@
 // 1:1 with features/scanner/components/system/ProcessingOverlay.tsx
 
 import React from "react";
-import { MaterialCommunityIcons } from "../../icons";
-import styles from "../../scanner.module.css";
+import { MaterialCommunityIcons } from "../icons";
+import styles from "@/app/scanner/scanner.module.css";
 
 const GLOW = "#00D4FF";
 

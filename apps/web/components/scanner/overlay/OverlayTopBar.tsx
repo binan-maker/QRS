@@ -5,9 +5,9 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Ionicons } from "../../icons";
+import { Ionicons } from "../icons";
 import { stopSharedCameraStream } from "../system/CameraView";
-import styles from "../../scanner.module.css";
+import styles from "@/app/scanner/scanner.module.css";
 
 interface Props {
   topInset:          number;

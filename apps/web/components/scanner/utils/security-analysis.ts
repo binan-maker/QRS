@@ -6,8 +6,8 @@ import {
   setAnonymousQrContent as setMobileAnon, getAnonymousQrContent,
   clearAnonymousQrContent, clearAllAnonymousSessions,
 } from "@services/cache/anonymous-session";
-import { getQrIdFromContentSync } from "../../../lib/qr-share";
-import { getWebSupabase, isWebSupabaseConfigured } from "../../../lib/supabase";
+import { getQrIdFromContentSync } from "@/lib/qr-share";
+import { getWebSupabase, isWebSupabaseConfigured } from "@/lib/supabase";
 
 export {
   validateQrContent, isValidQrContent, type QrValidationResult,
