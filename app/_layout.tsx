@@ -101,8 +101,9 @@ function MobileOnboardingGuard() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === "(auth)";
-    const onUsernameScreen = inAuthGroup && segments[1] === "username";
+    const segList = segments as string[];
+    const inAuthGroup = segList[0] === "(auth)";
+    const onUsernameScreen = inAuthGroup && segList[1] === "username";
 
     // 1. Authenticated user needs username onboarding
     if (user && (!user.username || user.username.trim() === "")) {
