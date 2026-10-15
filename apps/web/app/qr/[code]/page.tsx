@@ -70,6 +70,8 @@ export async function generateMetadata({
   const title = `${contentType}: ${targetDisplay} | BinRo`;
   const description = `Inspect ${targetDisplay} (${scoreLabel}). Real-time community trust ratings, scan statistics, and safety reports on BinRo.`;
 
+  const imageUrl = `/qr/${encodeURIComponent(code)}/opengraph-image`;
+
   return {
     title,
     description,
@@ -78,11 +80,20 @@ export async function generateMetadata({
       description,
       type: "website",
       siteName: "BinRo",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${targetDisplay} — ${scoreLabel}`,
+        },
+      ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
+      images: [imageUrl],
     },
   };
 }

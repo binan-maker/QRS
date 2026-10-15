@@ -63,12 +63,14 @@ export function createPageMetadata({
   path,
   noIndex = false,
   absoluteTitle = false,
+  images,
 }: {
   title: string | { absolute: string };
   description: string;
   path: string;
   noIndex?: boolean;
   absoluteTitle?: boolean;
+  images?: Array<string | { url: string; width?: number; height?: number; alt?: string }>;
 }): Metadata {
   const canonicalUrl = path === "/" ? SITE_URL : `${SITE_URL}${path}`;
   const isAbsolute =
@@ -90,13 +92,15 @@ export function createPageMetadata({
       description,
       url: canonicalUrl,
       locale: "en_US",
+      ...(images && images.length > 0 ? { images } : {}),
     },
     twitter: {
-      card: "summary_large_image",
+      card: images && images.length > 0 ? "summary_large_image" : "summary",
       title: fullTitle,
       description,
       site: FOUNDER_X_HANDLE,
       creator: FOUNDER_X_HANDLE,
+      ...(images && images.length > 0 ? { images } : {}),
     },
     ...(noIndex
       ? {

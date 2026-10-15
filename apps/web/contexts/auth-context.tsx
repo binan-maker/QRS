@@ -5,6 +5,7 @@ import type { User, Session } from "@supabase/supabase-js";
 import { getWebSupabase, isWebSupabaseConfigured } from "@/services/supabase";
 import { isUserUploadedPhoto } from "./avatar-context";
 import { validateEmail } from "@shared/utils/email-validator";
+import { RESERVED_USERNAMES } from "@shared/utils/username-rules";
 
 export interface UserProfile {
   id: string;
@@ -20,7 +21,7 @@ export interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ user: User; session: Session }>;
-  signUp: (email: string, password: string, displayName: string) => Promise<{ user: User; session: Session | null }>;
+  signUp: (email: string, password: string, displayName: string, customUsername?: string) => Promise<{ user: User; session: Session | null }>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<{ provider: string; url: string | null } | null>;
   sendPasswordReset: (email: string) => Promise<void>;
@@ -114,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .replace(/^@+/, "")
       .replace(/\s+/g, "")
       .replace(/[^a-z0-9_]/g, "");
-    if (!safeBase || !/^[a-z]/.test(safeBase)) {
+    if (!safeBase || !/^[a-z]/.test(safeBase) || RESERVED_USERNAMES.has(safeBase)) {
       safeBase = `u_${safeBase || "user"}`;
     }
     if (safeBase.length < 3) {
@@ -408,7 +409,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { user: data.user, session: data.session };
   }, [syncUserProfile]);
 
-  const signUp = useCallback(async (email: string, password: string, displayName: string) => {
+  const signUp = useCallback(async (email: string, password: string, displayName: string, customUsername?: string) => {
     const trimmedEmail = email.trim();
     const emailCheck = validateEmail(trimmedEmail);
     if (!emailCheck.valid) {
@@ -449,6 +450,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw err;
     }
 
+    const cleanUsername = customUsername
+      ? customUsername.trim().toLowerCase().replace(/^@+/, "")
+      : undefined;
+
     const { data, error } = await supabase.auth.signUp({
       email: trimmedEmail,
       password,
@@ -457,6 +462,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           full_name: displayName.trim(),
           display_name: displayName.trim(),
           name: displayName.trim(),
+          ...(cleanUsername ? { username: cleanUsername, user_name: cleanUsername } : {}),
         },
         emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/login?verified=true` : undefined,
       },

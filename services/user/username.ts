@@ -1,5 +1,5 @@
 import { db } from "../../lib/db/client";
-import { supabase } from "@/lib/core/supabase";
+import { supabase } from "../../lib/core/supabase";
 import { getCachedUserProfile, setCachedUserProfile } from "./cache";
 import type { UsernameData } from "../types";
 import { COLLECTIONS } from "../../shared/constants/collections";
@@ -21,21 +21,26 @@ export async function checkUsernameAvailable(username: string): Promise<boolean>
 }
 
 export async function generateUniqueUsername(displayName: string): Promise<string> {
-  const base =
-    displayName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12) || "user";
+  let base = displayName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12);
+  if (!base || !/^[a-z]/.test(base)) {
+    base = `u_${base || "user"}`.slice(0, 12);
+  }
   for (let attempt = 0; attempt < 15; attempt++) {
     let candidate: string;
     if (attempt === 0 && base.length >= 3) {
       candidate = base;
     } else if (attempt < 5) {
-      candidate = base.slice(0, 10) + Math.floor(100 + Math.random() * 900);
+      candidate = (base.slice(0, 10) + Math.floor(100 + Math.random() * 900)).slice(0, 20);
     } else {
-      candidate = base.slice(0, 8) + Math.floor(10000 + Math.random() * 90000);
+      candidate = (base.slice(0, 8) + Math.floor(10000 + Math.random() * 90000)).slice(0, 20);
     }
-    const available = await checkUsernameAvailable(candidate);
-    if (available) return candidate;
+    const validation = validateUsername(candidate);
+    if (validation.valid) {
+      const available = await checkUsernameAvailable(candidate);
+      if (available) return candidate;
+    }
   }
-  return "user" + Date.now().toString().slice(-6) + Math.floor(10 + Math.random() * 90);
+  return "u_" + Date.now().toString().slice(-6) + Math.floor(10 + Math.random() * 90);
 }
 
 export async function getUsernameData(userId: string): Promise<UsernameData> {

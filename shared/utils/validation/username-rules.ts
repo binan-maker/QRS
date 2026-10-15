@@ -95,6 +95,58 @@ export function sanitizeUsername(input?: string | null): string {
     .slice(0, MAX_USERNAME_LENGTH);
 }
 
+export const RESERVED_USERNAMES = new Set([
+  "admin",
+  "administrator",
+  "root",
+  "system",
+  "sysadmin",
+  "binro",
+  "binan",
+  "ahmedsameerbinan",
+  "support",
+  "help",
+  "official",
+  "security",
+  "staff",
+  "mod",
+  "moderator",
+  "team",
+  "login",
+  "logout",
+  "signin",
+  "signup",
+  "register",
+  "auth",
+  "api",
+  "qr",
+  "qrs",
+  "scan",
+  "scanner",
+  "history",
+  "profile",
+  "settings",
+  "account",
+  "download",
+  "refer",
+  "referral",
+  "referrals",
+  "guide",
+  "founder",
+  "terms",
+  "privacy",
+  "legal",
+  "feedback",
+  "invite",
+  "trust",
+  "trustscores",
+  "trust_scores",
+  "null",
+  "undefined",
+  "bot",
+  "verified",
+]);
+
 /**
  * Validates a candidate username against all Instagram-style rules.
  * Returns { valid: boolean, error: string | null }.
@@ -131,6 +183,11 @@ export function validateUsername(username: string): { valid: boolean; error: str
   // Strict regex check
   if (!USERNAME_REGEX.test(username)) {
     return { valid: false, error: "Invalid username format." };
+  }
+
+  // Check reserved system handles and routes
+  if (RESERVED_USERNAMES.has(username.toLowerCase())) {
+    return { valid: false, error: "This username is reserved and cannot be claimed." };
   }
 
   return { valid: true, error: null };

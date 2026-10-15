@@ -181,6 +181,16 @@ const nextConfig: NextConfig = {
         destination: "/referrals",
         permanent: true,
       },
+      {
+        source: "/@:username",
+        destination: "/profile/:username",
+        permanent: false,
+      },
+      {
+        source: "/u/:username",
+        destination: "/profile/:username",
+        permanent: false,
+      },
     ];
   },
 };

@@ -117,7 +117,12 @@ export async function checkUsernameAvailability(
         .contains("past_usernames", [sanitized]);
 
       if (pastRows && pastRows.length > 0) {
-        return { available: false, checked: true, error: "This username is taken" };
+        const ownedByOther = currentUserId
+          ? pastRows.some((r: any) => r.id !== currentUserId)
+          : true;
+        if (ownedByOther) {
+          return { available: false, checked: true, error: "This username is taken" };
+        }
       }
     } catch (err) {
       console.warn("[username-service] Supabase query error:", err);
