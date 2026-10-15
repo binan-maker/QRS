@@ -1,0 +1,359 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BINRO WEB: ONBOARDING USERNAME CHECKPOINT
+   High-polish, minimalist, branded identity gate.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  background-color: var(--background);
+}
+
+.inner {
+  width: 100%;
+  max-width: 440px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Brand Block (consistent with Auth screens) ─────────────────────────── */
+.brandBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 28px;
+  gap: 6px;
+  text-align: center;
+}
+
+.brandName {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(26px, calc(20px + 0.8vw + 0.4vmin), 32px);
+  font-weight: 700;
+  letter-spacing: -1.2px;
+  color: var(--text);
+  margin: 0;
+  user-select: none;
+}
+
+.brandHighlight {
+  color: var(--primary, #0052cc);
+}
+
+.brandDivider {
+  width: 32px;
+  height: 2.5px;
+  border-radius: 2px;
+  background-color: var(--primary, #0052cc);
+  margin: 4px 0 10px;
+}
+
+.pageTitle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: clamp(18px, calc(15px + 0.5vw + 0.3vmin), 22px);
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  color: var(--text);
+  margin: 0;
+}
+
+.pageSubtitle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 2px 0 0;
+}
+
+/* ── Card Container ─────────────────────────────────────────────────────── */
+.card {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 20px;
+  padding: 28px 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Handle Input Container ─────────────────────────────────────────────── */
+.inputContainer {
+  height: 52px;
+  border-radius: 14px;
+  border: 1.5px solid var(--surface-border);
+  background-color: var(--input-background, #eef4ff);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 10px;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  position: relative;
+}
+
+.inputContainer:focus-within {
+  border-color: var(--primary, #0052cc);
+  box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.12);
+  background-color: var(--surface);
+}
+
+.inputValid {
+  border-color: var(--safe, #059669);
+  background-color: var(--surface);
+}
+
+.inputValid:focus-within {
+  border-color: var(--safe, #059669);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+}
+
+.inputError {
+  border-color: var(--danger, #dc2626);
+  background-color: var(--surface);
+}
+
+.inputError:focus-within {
+  border-color: var(--danger, #dc2626);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.atPrefix {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--primary, #0052cc);
+  user-select: none;
+  line-height: 1;
+}
+
+.input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+  letter-spacing: -0.2px;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.statusSlot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.miniSpinner {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 82, 204, 0.2);
+  border-top-color: var(--primary, #0052cc);
+  animation: spin 0.65s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Feedback & Live Preview ────────────────────────────────────────────── */
+.feedbackRow {
+  display: flex;
+  align-items: center;
+  min-height: 20px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  font-size: 12.5px;
+  letter-spacing: -0.1px;
+}
+
+.hintText {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.dangerText {
+  color: var(--danger, #dc2626);
+  font-weight: 600;
+}
+
+.previewText {
+  color: var(--safe, #059669);
+  font-weight: 600;
+  font-family: var(--font-inter), "Inter", sans-serif;
+}
+
+/* ── Suggestions Section ────────────────────────────────────────────────── */
+.suggestionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+  margin-bottom: 20px;
+}
+
+.suggestionsLabel {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.chipsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface-light, #ebf1ff);
+  color: var(--text-secondary);
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 130ms ease;
+  user-select: none;
+}
+
+.chip:hover {
+  border-color: var(--primary, #0052cc);
+  color: var(--primary, #0052cc);
+  background-color: var(--primary-dim, rgba(0, 82, 204, 0.08));
+  transform: translateY(-1px);
+}
+
+.chip:active {
+  transform: translateY(0);
+}
+
+.chipSelected {
+  border-color: var(--primary, #0052cc);
+  background-color: var(--primary, #0052cc);
+  color: #ffffff;
+}
+
+.chipSelected:hover {
+  background-color: var(--primary, #0052cc);
+  color: #ffffff;
+}
+
+/* ── Primary Submission Button ──────────────────────────────────────────── */
+.primaryButton {
+  height: 50px;
+  width: 100%;
+  border-radius: 14px;
+  border: none;
+  background-color: var(--primary, #0052cc);
+  color: #ffffff;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 140ms ease, transform 120ms ease, box-shadow 140ms ease;
+  box-shadow: 0 4px 14px rgba(0, 82, 204, 0.22);
+}
+
+.primaryButton:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 82, 204, 0.28);
+}
+
+.primaryButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.primaryButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+.footerRow {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.signOutButton {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 120ms ease;
+}
+
+.signOutButton:hover {
+  color: var(--text);
+}
+
+/* ── Mobile Viewport Optimizations ──────────────────────────────────────── */
+@media (max-width: 480px) {
+  .page {
+    padding: 24px 16px;
+    justify-content: flex-start;
+  }
+
+  .inner {
+    margin-top: 24px;
+  }
+
+  .brandBlock {
+    margin-bottom: 20px;
+  }
+
+  .card {
+    padding: 24px 18px;
+    border-radius: 18px;
+    gap: 16px;
+  }
+
+  .inputContainer {
+    height: 48px;
+  }
+
+  .primaryButton {
+    height: 48px;
+  }
+}

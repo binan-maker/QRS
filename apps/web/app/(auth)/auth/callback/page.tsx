@@ -13,7 +13,7 @@ export default function AuthCallbackPage() {
 
     const supabase = getWebSupabase();
 
-    const notifyAndClose = () => {
+    const notifyAndClose = async () => {
       if (typeof window !== "undefined" && window.opener) {
         try {
           window.opener.postMessage({ type: "SUPABASE_OAUTH_SUCCESS" }, "*");
@@ -24,7 +24,21 @@ export default function AuthCallbackPage() {
           } catch {}
         }, 150);
       } else {
-        router.replace("/");
+        try {
+          const { data } = await supabase.auth.getUser();
+          if (data?.user) {
+            const { data: dbUser } = await supabase
+              .from("users")
+              .select("username")
+              .eq("id", data.user.id)
+              .maybeSingle();
+            if (dbUser?.username) {
+              router.replace("/");
+              return;
+            }
+          }
+        } catch {}
+        router.replace("/onboarding/username");
       }
     };
 

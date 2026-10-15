@@ -5,6 +5,7 @@ import type { UsernameData } from "../types";
 import { COLLECTIONS } from "../../shared/constants/collections";
 import {
   validateUsername,
+  sanitizeUsername,
   getRemainingUsernameCooldownDays,
 } from "../../shared/utils/username-rules";
 
@@ -139,4 +140,52 @@ export async function updateUsername(userId: string, newUsername: string): Promi
       })
     );
   } catch {}
+}
+
+/**
+ * Atomically claims the user's initial handle during onboarding.
+ * Validates format, reserved list, checks availability, inserts into usernames
+ * table, updates users table, and refreshes the local cache.
+ */
+export async function claimInitialUsername(userId: string, newUsername: string): Promise<string> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const activeUid = sessionData?.session?.user?.id;
+  if (!activeUid || activeUid !== userId) {
+    throw new Error("Unauthorized: Please sign in again.");
+  }
+
+  const clean = sanitizeUsername(newUsername);
+  const validation = validateUsername(clean);
+  if (!validation.valid) {
+    throw new Error(validation.error || "Please enter a valid handle (3–20 characters).");
+  }
+
+  const available = await checkUsernameAvailable(clean);
+  if (!available) {
+    throw new Error("This handle is already taken. Please choose another.");
+  }
+
+  try {
+    await db.set([COLLECTIONS.USERNAMES, clean], {
+      userId,
+      claimedAt: db.timestamp(),
+    });
+  } catch {
+    throw new Error("This handle was just claimed by someone else. Please choose another.");
+  }
+
+  await db.update([COLLECTIONS.USERS, userId], {
+    username: clean,
+    usernameLastChangedAt: db.timestamp(),
+  });
+
+  const existingData = getCachedUserProfile(userId);
+  if (existingData) {
+    setCachedUserProfile(userId, {
+      ...existingData,
+      username: clean,
+    });
+  }
+
+  return clean;
 }

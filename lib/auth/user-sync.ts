@@ -87,8 +87,6 @@ export async function syncUserToDb(
         isDeleted: false,
         createdAt: db.timestamp(),
       });
-      const username = await reserveUsername(uid, name);
-      await db.update([COLLECTIONS.USERS, uid], { username }).catch(() => {});
       if (initialPhoto) {
         syncAvatarFromOutside(initialPhoto);
       }
@@ -98,7 +96,7 @@ export async function syncUserToDb(
 
       return {
         displayName: name,
-        username,
+        username: undefined,
         photoURL: initialPhoto,
       };
     } else if (
@@ -151,11 +149,7 @@ export async function syncUserToDb(
         updates.emailVerified = emailVerified;
       }
 
-      let effectiveUsername = userData.username as string | undefined;
-      if (!effectiveUsername) {
-        effectiveUsername = await reserveUsername(uid, effectiveDisplayName);
-        updates.username = effectiveUsername;
-      }
+      const effectiveUsername = (userData.username as string) || undefined;
 
       if (Object.keys(updates).length > 0) {
         await db.update([COLLECTIONS.USERS, uid], updates);

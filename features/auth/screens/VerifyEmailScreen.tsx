@@ -27,8 +27,14 @@ export default function VerifyEmailScreen() {
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
-    if (user?.emailVerified) navigateToHome();
-  }, [user?.emailVerified]);
+    if (user?.emailVerified) {
+      if (!user.username) {
+        router.replace("/(auth)/username");
+      } else {
+        navigateToHome();
+      }
+    }
+  }, [user?.emailVerified, user?.username]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -58,7 +64,11 @@ export default function VerifyEmailScreen() {
       const verified = await refreshUser();
       if (verified) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        navigateToHome();
+        if (!user?.username) {
+          router.replace("/(auth)/username");
+        } else {
+          navigateToHome();
+        }
         return;
       }
 

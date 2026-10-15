@@ -9,7 +9,7 @@ import styles from "../auth.module.css";
 function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, signOut, resendVerification, refreshUser } = useAuth();
+  const { user, profile, signOut, resendVerification, refreshUser } = useAuth();
 
   const emailParam = searchParams.get("email") || "";
   const fromLogin = searchParams.get("fromLogin") === "true";
@@ -23,9 +23,14 @@ function VerifyEmailContent() {
 
   useEffect(() => {
     if (user?.email_confirmed_at) {
-      router.replace("/");
+      const hasUsername = Boolean(profile?.username && profile.username.trim() !== "");
+      if (!hasUsername) {
+        router.replace("/onboarding/username");
+      } else {
+        router.replace("/");
+      }
     }
-  }, [user, router]);
+  }, [user, profile, router]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -57,7 +62,12 @@ function VerifyEmailContent() {
     try {
       const freshUser = await refreshUser();
       if (freshUser?.email_confirmed_at) {
-        router.replace("/");
+        const hasUsername = Boolean(profile?.username && profile.username.trim() !== "");
+        if (!hasUsername) {
+          router.replace("/onboarding/username");
+        } else {
+          router.replace("/");
+        }
         return;
       }
 

@@ -55,7 +55,11 @@ export default function RegisterScreen() {
       if (referral.referralCode && user.id) {
         applyReferralCodeForUser(user.id, referral.referralCode).catch(() => {});
       }
-      navigateToHome();
+      if (!user.username) {
+        router.replace("/(auth)/username");
+      } else {
+        navigateToHome();
+      }
     }
   }, [user, googleLoading, referral.referralCode]);
 
@@ -66,7 +70,11 @@ export default function RegisterScreen() {
       }
       setGoogleLoading(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigateToHome();
+      if (!user.username) {
+        router.replace("/(auth)/username");
+      } else {
+        navigateToHome();
+      }
     }
   }, [user, googleLoading, referral.referralCode]);
 

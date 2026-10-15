@@ -356,6 +356,20 @@ export async function submitQrReport(
 }> {
   const session = await currentSession();
   const userId = session.user.id;
+  const supabase = getWebSupabase();
+
+  // Enforce mandatory onboarding check at service boundary
+  const { data: dbUser } = await supabase
+    .from("users")
+    .select("username")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const activeUsername = dbUser?.username || session.user.user_metadata?.username;
+  if (!activeUsername || String(activeUsername).trim() === "") {
+    throw new Error("Please choose your BinRo handle in onboarding before voting or reporting.");
+  }
+
   const { emailVerified } = await ensureWebQrAndUserExist(qrId, session.user, qrMeta);
 
   const { action } = await reportQrCode(
@@ -613,6 +627,18 @@ export async function addQrComment(
   }
   if (trimmed.length > 1000) {
     throw new Error("Comment cannot exceed 1000 characters.");
+  }
+
+  // Enforce mandatory onboarding: block comment submission if username is missing
+  const { data: dbUser } = await supabase
+    .from("users")
+    .select("username")
+    .eq("id", session.user.id)
+    .maybeSingle();
+
+  const activeUsername = dbUser?.username || userProfile?.username || session.user.user_metadata?.username;
+  if (!activeUsername || String(activeUsername).trim() === "") {
+    throw new Error("Please complete username onboarding before contributing community comments.");
   }
 
   const { userUsername, userPhotoURL } = await ensureWebQrAndUserExist(

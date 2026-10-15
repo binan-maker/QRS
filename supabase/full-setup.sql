@@ -48,6 +48,7 @@ ALTER TABLE public.users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 CREATE INDEX IF NOT EXISTS idx_users_username_lower ON public.users (LOWER(username));
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_lower_unique ON public.users (LOWER(username)) WHERE username IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_users_email_lower ON public.users (LOWER(email));
 
 -- 3. USERNAMES RESERVATION TABLE (public.usernames)
@@ -61,6 +62,7 @@ ALTER TABLE public.usernames ADD COLUMN IF NOT EXISTS user_id UUID;
 ALTER TABLE public.usernames ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ DEFAULT NOW();
 
 CREATE INDEX IF NOT EXISTS idx_usernames_user_id ON public.usernames (user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_usernames_lower ON public.usernames (LOWER(username));
 
 -- 4. QR CODES REGISTRY (public.qr_codes)
 CREATE TABLE IF NOT EXISTS public.qr_codes (

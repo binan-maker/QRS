@@ -9,7 +9,7 @@ import {
   STARTUP_PREF_KEYS,
 } from "@/lib/core/startup-prefs";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as Linking from "expo-linking";
 import * as SystemUI from "expo-system-ui";
@@ -93,14 +93,56 @@ function SplashGate({ fontsReady, consentReady }: { fontsReady: boolean; consent
   return null;
 }
 
+function MobileOnboardingGuard() {
+  const { user, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === "(auth)";
+    const onUsernameScreen = inAuthGroup && segments[1] === "username";
+
+    // 1. Authenticated user needs username onboarding
+    if (user && (!user.username || user.username.trim() === "")) {
+      // If email is unverified, allow verify-email screen
+      if (!user.emailVerified) return;
+
+      // Force redirect to username onboarding if not already on the screen
+      if (!onUsernameScreen) {
+        router.replace("/(auth)/username");
+      }
+      return;
+    }
+
+    // 2. Authenticated user already has a valid handle: if still on username screen, exit to tabs
+    if (user && user.username && user.username.trim() !== "") {
+      if (onUsernameScreen) {
+        router.replace("/(tabs)");
+      }
+      return;
+    }
+
+    // 3. Unauthenticated guest trying to access onboarding screen directly
+    if (!user && onUsernameScreen) {
+      router.replace("/(auth)/login");
+    }
+  }, [user, isLoading, segments, router]);
+
+  return null;
+}
+
 function RootLayoutNav() {
   const { colors } = useTheme();
   return (
-    <Stack screenOptions={{
-      headerShown: false,
-      animation: "slide_from_right",
-      contentStyle: { backgroundColor: colors.background },
-    }}>
+    <>
+      <MobileOnboardingGuard />
+      <Stack screenOptions={{
+        headerShown: false,
+        animation: "slide_from_right",
+        contentStyle: { backgroundColor: colors.background },
+      }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: "none" }} />
       <Stack.Screen name="(auth)" options={{
         animation: "fade",
@@ -123,6 +165,7 @@ function RootLayoutNav() {
       <Stack.Screen name="referrals" options={{ headerShown: false, title: "Referral" }} />
       <Stack.Screen name="refer" options={{ headerShown: false, title: "Referral" }} />
     </Stack>
+    </>
   );
 }
 

@@ -13,7 +13,7 @@ import styles from "../auth.module.css";
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signIn, signInWithGoogle, user } = useAuth();
+  const { signIn, signInWithGoogle, user, profile } = useAuth();
 
   const initialEmail = searchParams.get("email") || "";
   const justVerified = searchParams.get("verified") === "true";
@@ -29,12 +29,17 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // If already logged in, navigate to returnUrl or home
+  // If already logged in, navigate to returnUrl or onboarding
   useEffect(() => {
     if (user) {
-      router.replace(returnUrl);
+      const hasUsername = Boolean(profile?.username && profile.username.trim() !== "");
+      if (profile && !hasUsername) {
+        router.replace("/onboarding/username");
+      } else if (hasUsername) {
+        router.replace(returnUrl);
+      }
     }
-  }, [user, returnUrl, router]);
+  }, [user, profile, returnUrl, router]);
 
   // If email verification established an active session in background, route directly
   useEffect(() => {
@@ -42,11 +47,16 @@ function LoginContent() {
       const supabase = getWebSupabase();
       supabase.auth.getSession().then(({ data }) => {
         if (data.session) {
-          router.replace(returnUrl);
+          const hasUsername = Boolean(profile?.username && profile.username.trim() !== "");
+          if (profile && !hasUsername) {
+            router.replace("/onboarding/username");
+          } else {
+            router.replace(returnUrl);
+          }
         }
       });
     }
-  }, [justVerified, returnUrl, router]);
+  }, [justVerified, returnUrl, router, profile]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,8 +92,13 @@ function LoginContent() {
 
     const trimmedEmail = email.trim();
     try {
-      await signIn(trimmedEmail, password);
-      router.replace(returnUrl);
+      const res = await signIn(trimmedEmail, password);
+      const hasUsername = Boolean(res?.profile?.username && res.profile.username.trim() !== "");
+      if (res?.profile && !hasUsername) {
+        router.replace("/onboarding/username");
+      } else {
+        router.replace(returnUrl);
+      }
     } catch (err: any) {
       const msg = err?.message || "";
       const code = err?.code || "";
@@ -155,7 +170,12 @@ function LoginContent() {
       if (typeof window === "undefined") return;
       if (event.data?.type === "SUPABASE_OAUTH_SUCCESS") {
         setGoogleLoading(false);
-        router.replace(returnUrl);
+        const hasUsername = Boolean(profile?.username && profile.username.trim() !== "");
+        if (profile && !hasUsername) {
+          router.replace("/onboarding/username");
+        } else {
+          router.replace(returnUrl);
+        }
       } else if (event.data?.type === "SUPABASE_OAUTH_ERROR") {
         setGoogleLoading(false);
         setError(event.data?.error || "Google sign-in was cancelled or failed.");
@@ -163,7 +183,7 @@ function LoginContent() {
     };
     window.addEventListener("message", handleAuthMessage);
     return () => window.removeEventListener("message", handleAuthMessage);
-  }, [router, returnUrl]);
+  }, [router, returnUrl, profile]);
 
   const handleGoogleSignIn = async () => {
     setError("");

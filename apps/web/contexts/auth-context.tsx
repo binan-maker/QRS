@@ -13,6 +13,7 @@ export interface UserProfile {
   displayName: string;
   username: string;
   photoUrl?: string | null;
+  needsOnboarding?: boolean;
 }
 
 export interface AuthContextType {
@@ -20,7 +21,7 @@ export interface AuthContextType {
   profile: UserProfile | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ user: User; session: Session }>;
+  signIn: (email: string, password: string) => Promise<{ user: User; session: Session; profile?: UserProfile | null }>;
   signUp: (email: string, password: string, displayName: string, customUsername?: string) => Promise<{ user: User; session: Session | null }>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<{ provider: string; url: string | null } | null>;
@@ -29,6 +30,7 @@ export interface AuthContextType {
   resendVerification: (email: string) => Promise<void>;
   refreshUser: () => Promise<User | null>;
   refreshProfile: () => Promise<UserProfile | null>;
+  claimUsername: (handle: string) => Promise<{ success: boolean; username: string; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -108,32 +110,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       u.email?.split("@")[0] ||
       "User";
 
-    // Format clean base username complying with rules (starts with letter, 3-16 chars)
-    const rawSeed = (u.user_metadata?.username || u.email?.split("@")[0] || displayName || "user");
-    let safeBase = rawSeed
-      .toLowerCase()
-      .replace(/^@+/, "")
-      .replace(/\s+/g, "")
-      .replace(/[^a-z0-9_]/g, "");
-    if (!safeBase || !/^[a-z]/.test(safeBase) || RESERVED_USERNAMES.has(safeBase)) {
-      safeBase = `u_${safeBase || "user"}`;
-    }
-    if (safeBase.length < 3) {
-      safeBase = `${safeBase}_user`.slice(0, 16);
-    } else if (safeBase.length > 16) {
-      safeBase = safeBase.slice(0, 16);
+    // Determine whether user already has a handle from metadata or database
+    const rawUsername = (u.user_metadata?.username as string) || "";
+    let initialUsername = "";
+    if (rawUsername) {
+      initialUsername = rawUsername
+        .toLowerCase()
+        .replace(/^@+/, "")
+        .replace(/\s+/g, "")
+        .replace(/[^a-z0-9_]/g, "")
+        .slice(0, 20);
     }
 
     let resolvedProfile: UserProfile = {
       id: u.id,
       email: u.email,
       displayName,
-      username: safeBase,
+      username: initialUsername,
       photoUrl: metaPhoto,
+      needsOnboarding: !initialUsername,
     };
 
+    // Immediately seed profile state so guards know onboarding status without waiting for network query
+    setProfile((prev) => (prev?.username ? prev : resolvedProfile));
+
     if (!isWebSupabaseConfigured()) {
-      setProfile(resolvedProfile);
       return resolvedProfile;
     }
 
@@ -174,38 +175,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .replace(/\s+/g, "")
           .replace(/[^a-zA-Z0-9_]/g, "")
           .toLowerCase();
-      }
-
-      if (!effectiveUsername) {
-        // Resolve collision-free username against users and usernames tables
-        let candidate = safeBase;
-        const { data: takenUser } = await supabase
-          .from("users")
-          .select("id")
-          .ilike("username", candidate)
-          .neq("id", u.id)
-          .maybeSingle();
-
-        const { data: takenUname } = await supabase
-          .from("usernames")
-          .select("user_id")
-          .ilike("username", candidate)
-          .neq("user_id", u.id)
-          .maybeSingle();
-
-        if (takenUser || takenUname) {
-          for (let i = 0; i < 5; i++) {
-            const num = Math.floor(100 + Math.random() * 899);
-            const suffixed = `${safeBase.slice(0, 15)}_${num}`.slice(0, 20);
-            const { data: cl1 } = await supabase.from("users").select("id").ilike("username", suffixed).maybeSingle();
-            const { data: cl2 } = await supabase.from("usernames").select("user_id").ilike("username", suffixed).maybeSingle();
-            if (!cl1 && !cl2) {
-              candidate = suffixed;
-              break;
-            }
-          }
-        }
-        effectiveUsername = candidate;
+      } else if (u.user_metadata?.username) {
+        effectiveUsername = String(u.user_metadata.username)
+          .replace(/^@+/, "")
+          .replace(/\s+/g, "")
+          .replace(/[^a-zA-Z0-9_]/g, "")
+          .toLowerCase();
+      } else {
+        // Brand new user: username is empty until chosen in onboarding checkpoint
+        effectiveUsername = "";
       }
 
       const effectiveDisplayName = existing?.display_name || displayName;
@@ -214,8 +192,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         id: u.id,
         email: u.email,
         displayName: effectiveDisplayName,
-        username: effectiveUsername,
+        username: effectiveUsername || "",
         photoUrl: effectivePhoto,
+        needsOnboarding: !effectiveUsername,
       };
 
       setProfile(resolvedProfile);
@@ -231,38 +210,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: u.id,
           email: u.email,
           display_name: effectiveDisplayName,
-          username: effectiveUsername,
+          username: effectiveUsername || null,
           photo_url: effectivePhoto,
           avatar_url: effectivePhoto,
           created_at: now,
           updated_at: now,
         });
 
-        // If insert clashed on unique username, retry with randomized suffix
         if (insertErr && (insertErr.code === "23505" || insertErr.message?.includes("unique"))) {
-          const randSuffix = Math.floor(1000 + Math.random() * 9000);
-          effectiveUsername = `u_${safeBase.slice(0, 12)}_${randSuffix}`.slice(0, 20);
-          resolvedProfile.username = effectiveUsername;
-          setProfile(resolvedProfile);
-
-          await supabase.from("users").upsert({
-            id: u.id,
-            email: u.email,
-            display_name: effectiveDisplayName,
-            username: effectiveUsername,
-            photo_url: effectivePhoto,
-            avatar_url: effectivePhoto,
-            created_at: now,
-            updated_at: now,
-          });
+          console.warn("[auth-context] user insert note:", insertErr.message);
         }
 
-        // Also register in usernames reservation table
-        await supabase.from("usernames").upsert({
-          username: effectiveUsername,
-          user_id: u.id,
-          claimed_at: now,
-        });
+        // Only register in usernames reservation table if user already has a valid handle
+        if (effectiveUsername) {
+          await supabase.from("usernames").upsert({
+            username: effectiveUsername,
+            user_id: u.id,
+            claimed_at: now,
+          });
+        }
 
         // Auto-apply pending referral code from invite link or attribution query
         import("@services/referrals")
@@ -275,7 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .catch(() => {});
       } else {
         const updates: Record<string, any> = {};
-        if (!existing.username || existing.username !== effectiveUsername) {
+        if (effectiveUsername && (!existing.username || existing.username !== effectiveUsername)) {
           updates.username = effectiveUsername;
         }
         if (effectivePhoto && existing.photo_url !== effectivePhoto) {
@@ -287,7 +253,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await supabase.from("users").update(updates).eq("id", u.id);
         }
 
-        // Keep usernames table synced
+        // Keep usernames table synced if username is present
         if (effectiveUsername) {
           await supabase.from("usernames").upsert({
             username: effectiveUsername,
@@ -296,11 +262,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Keep auth user metadata in sync
-      if (!u.user_metadata?.username || u.user_metadata.username !== effectiveUsername) {
+      // Keep auth user metadata in sync if effectiveUsername is present
+      if (effectiveUsername && (!u.user_metadata?.username || u.user_metadata.username !== effectiveUsername)) {
         try {
           await supabase.auth.updateUser({
-            data: { username: effectiveUsername, user_name: effectiveUsername },
+            data: { username: effectiveUsername, user_name: effectiveUsername, onboarding_completed: true },
           });
         } catch {}
       }
@@ -406,7 +372,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setUser(data.user);
     setSession(data.session);
-    return { user: data.user, session: data.session };
+    return { user: data.user, session: data.session, profile: synced };
   }, [syncUserProfile]);
 
   const signUp = useCallback(async (email: string, password: string, displayName: string, customUsername?: string) => {
@@ -578,6 +544,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return await syncUserProfile(user);
   }, [user, syncUserProfile]);
 
+  const claimUsername = useCallback(
+    async (handle: string): Promise<{ success: boolean; username: string; error?: string }> => {
+      const clean = handle
+        .toLowerCase()
+        .replace(/^@+/, "")
+        .replace(/\s+/g, "")
+        .replace(/[^a-z0-9_]/g, "")
+        .slice(0, 20);
+
+      if (!clean) {
+        return { success: false, username: "", error: "Handle cannot be empty." };
+      }
+
+      const supabase = getWebSupabase();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        return { success: false, username: "", error: "Session expired. Please sign in again." };
+      }
+
+      try {
+        const res = await fetch("/api/user/claim-username", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ username: clean }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+          return {
+            success: false,
+            username: "",
+            error: data.error || "Failed to claim handle.",
+          };
+        }
+
+        const confirmed = data.username || clean;
+
+        // Update profile state immediately
+        setProfile((prev) => {
+          if (!prev && user) {
+            return {
+              id: user.id,
+              email: user.email,
+              displayName: user.user_metadata?.display_name || user.email?.split("@")[0] || "User",
+              username: confirmed,
+              needsOnboarding: false,
+            };
+          }
+          return prev
+            ? { ...prev, username: confirmed, needsOnboarding: false }
+            : null;
+        });
+
+        // Update local profile cache
+        if (user?.id && typeof window !== "undefined") {
+          try {
+            const cachedKey = `binro_profile_${user.id}`;
+            const existingCache = localStorage.getItem(cachedKey);
+            const parsed = existingCache ? JSON.parse(existingCache) : {};
+            localStorage.setItem(
+              cachedKey,
+              JSON.stringify({ ...parsed, username: confirmed, needsOnboarding: false })
+            );
+          } catch {}
+        }
+
+        // Refresh user in background so session metadata stays in sync
+        void refreshUser();
+
+        return { success: true, username: confirmed };
+      } catch (err: any) {
+        return {
+          success: false,
+          username: "",
+          error: err?.message || "Network error. Please try again.",
+        };
+      }
+    },
+    [user, refreshUser]
+  );
+
   const value = useMemo(
     () => ({
       user,
@@ -593,6 +644,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       resendVerification,
       refreshUser,
       refreshProfile,
+      claimUsername,
     }),
     [
       user,
@@ -608,6 +660,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       resendVerification,
       refreshUser,
       refreshProfile,
+      claimUsername,
     ]
   );
 

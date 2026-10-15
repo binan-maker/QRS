@@ -7,13 +7,12 @@ import { Ionicons } from "@/components/icons";
 import GoogleIcon from "@/components/icons/GoogleIcon";
 import { useAuth } from "@/lib/auth-context";
 import { validateEmail } from "@shared/utils/email-validator";
-import { sanitizeUsername, validateUsername } from "@shared/utils/username-rules";
 import styles from "../auth.module.css";
 
 function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signUp, signInWithGoogle, user } = useAuth();
+  const { signUp, signInWithGoogle, user, profile } = useAuth();
 
   const initialEmail = searchParams.get("email") || "";
   const rawReturnUrl = searchParams.get("returnUrl") || "/";
@@ -21,14 +20,6 @@ function RegisterContent() {
   const initialRef = (searchParams.get("ref") || "").trim().toLowerCase();
 
   const [displayName, setDisplayName] = useState("");
-  const [usernameInput, setUsernameInput] = useState("");
-  const [usernameManuallyEdited, setUsernameManuallyEdited] = useState(false);
-  const [usernameChecking, setUsernameChecking] = useState(false);
-  const [usernameStatus, setUsernameStatus] = useState<{
-    available: boolean;
-    error?: string | null;
-    checked?: boolean;
-  }>({ available: true, checked: false });
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -43,52 +34,10 @@ function RegisterContent() {
   const [editError, setEditError] = useState("");
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({ name: "", email: "", password: "", username: "" });
+  const [fieldErrors, setFieldErrors] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
-
-  // Real-time debounced handle availability check (Instagram & YouTube style)
-  useEffect(() => {
-    const trimmed = sanitizeUsername(usernameInput);
-    if (!trimmed) {
-      setUsernameStatus({ available: true, checked: false });
-      setUsernameChecking(false);
-      return;
-    }
-
-    const val = validateUsername(trimmed);
-    if (!val.valid) {
-      setUsernameStatus({ available: false, error: val.error, checked: true });
-      setUsernameChecking(false);
-      return;
-    }
-
-    setUsernameChecking(true);
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetch("/api/user/check-username", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: trimmed }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUsernameStatus({
-            available: Boolean(data.available),
-            error: data.error || null,
-            checked: true,
-          });
-        }
-      } catch {
-        setUsernameStatus({ available: true, checked: false });
-      } finally {
-        setUsernameChecking(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [usernameInput]);
 
   useEffect(() => {
     if (initialRef) {
@@ -223,13 +172,18 @@ function RegisterContent() {
 
   useEffect(() => {
     if (user && !verificationSent) {
-      router.replace(returnUrl);
+      const hasUsername = Boolean(profile?.username && profile.username.trim() !== "");
+      if (!hasUsername) {
+        router.replace("/onboarding/username");
+      } else {
+        router.replace(returnUrl);
+      }
     }
-  }, [user, verificationSent, returnUrl, router]);
+  }, [user, profile, verificationSent, returnUrl, router]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newFieldErrors = { name: "", email: "", password: "", username: "" };
+    const newFieldErrors = { name: "", email: "", password: "" };
     let hasFieldError = false;
 
     if (!displayName.trim()) {
@@ -244,18 +198,6 @@ function RegisterContent() {
       const emailCheck = validateEmail(email.trim());
       if (!emailCheck.valid) {
         newFieldErrors.email = emailCheck.reason || "Please use a real email address.";
-        hasFieldError = true;
-      }
-    }
-
-    const cleanUsername = usernameInput.trim() ? sanitizeUsername(usernameInput.trim()) : "";
-    if (cleanUsername) {
-      const val = validateUsername(cleanUsername);
-      if (!val.valid) {
-        newFieldErrors.username = val.error || "Invalid username format.";
-        hasFieldError = true;
-      } else if (usernameStatus.checked && !usernameStatus.available) {
-        newFieldErrors.username = usernameStatus.error || "This username is taken.";
         hasFieldError = true;
       }
     }
@@ -280,7 +222,7 @@ function RegisterContent() {
 
     setError("");
     setErrorCode("");
-    setFieldErrors({ name: "", email: "", password: "", username: "" });
+    setFieldErrors({ name: "", email: "", password: "" });
     const trimmedEmail = email.trim();
 
     // 1. Instant check if email already exists
@@ -309,7 +251,7 @@ function RegisterContent() {
     }
 
     try {
-      const res = await signUp(trimmedEmail, password, displayName.trim(), cleanUsername || undefined);
+      const res = await signUp(trimmedEmail, password, displayName.trim());
       const trimmedRef = referralCode.trim().toLowerCase();
       if (trimmedRef && res.user?.id) {
         try {
@@ -318,7 +260,7 @@ function RegisterContent() {
         } catch {}
       }
       if (res.session) {
-        router.replace(returnUrl);
+        router.replace("/onboarding/username");
         return;
       }
       setVerificationSent(true);
@@ -355,7 +297,12 @@ function RegisterContent() {
       if (typeof window === "undefined") return;
       if (event.data?.type === "SUPABASE_OAUTH_SUCCESS") {
         setGoogleLoading(false);
-        router.replace(returnUrl);
+        const hasUsername = Boolean(profile?.username && profile.username.trim() !== "");
+        if (!hasUsername) {
+          router.replace("/onboarding/username");
+        } else {
+          router.replace(returnUrl);
+        }
       } else if (event.data?.type === "SUPABASE_OAUTH_ERROR") {
         setGoogleLoading(false);
         setError(event.data?.error || "Google sign-in was cancelled or failed.");
@@ -363,7 +310,7 @@ function RegisterContent() {
     };
     window.addEventListener("message", handleAuthMessage);
     return () => window.removeEventListener("message", handleAuthMessage);
-  }, [router, returnUrl]);
+  }, [router, returnUrl, profile]);
 
   const handleGoogleSignIn = async () => {
     setError("");
@@ -534,12 +481,6 @@ function RegisterContent() {
                     const val = e.target.value;
                     setDisplayName(val);
                     if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: "" }));
-                    if (!usernameManuallyEdited && val.trim()) {
-                      const suggested = sanitizeUsername(val.toLowerCase().replace(/\s+/g, "_"));
-                      if (suggested) {
-                        setUsernameInput(suggested);
-                      }
-                    }
                   }}
                   autoCapitalize="words"
                   autoComplete="name"
@@ -549,83 +490,6 @@ function RegisterContent() {
               </div>
               {fieldErrors.name && (
                 <span className={styles.fieldError}>{fieldErrors.name}</span>
-              )}
-            </div>
-
-            {/* Handle (@username) - Instagram & YouTube style */}
-            <div className={styles.inputFieldWrapper}>
-              <div
-                className={`${styles.inputContainer} ${
-                  (usernameStatus.checked && !usernameStatus.available) || fieldErrors.username
-                    ? styles.inputContainerError
-                    : ""
-                }`}
-              >
-                <span
-                  className={styles.inputIcon}
-                  style={{
-                    fontWeight: 700,
-                    fontSize: 16,
-                    color: usernameStatus.checked && usernameStatus.available
-                      ? "var(--primary)"
-                      : "var(--text-muted)",
-                  }}
-                >
-                  @
-                </span>
-                <input
-                  type="text"
-                  placeholder="Handle (e.g. alex_99)"
-                  value={usernameInput}
-                  onChange={(e) => {
-                    setUsernameManuallyEdited(true);
-                    setUsernameInput(sanitizeUsername(e.target.value));
-                    if (fieldErrors.username) setFieldErrors((p) => ({ ...p, username: "" }));
-                  }}
-                  autoCapitalize="none"
-                  autoComplete="username"
-                  className={styles.input}
-                  disabled={loading}
-                />
-                {usernameChecking && (
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: "var(--text-muted)",
-                      marginRight: 6,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Checking...
-                  </span>
-                )}
-                {!usernameChecking && usernameStatus.checked && usernameInput && (
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      marginRight: 4,
-                      color: usernameStatus.available ? "var(--primary)" : "var(--danger)",
-                    }}
-                    title={usernameStatus.available ? "Handle is available" : (usernameStatus.error || "Taken")}
-                  >
-                    <Ionicons
-                      name={usernameStatus.available ? "checkmark-circle" : "close-circle"}
-                      size={17}
-                    />
-                  </span>
-                )}
-              </div>
-              {(fieldErrors.username || (usernameStatus.checked && !usernameStatus.available && usernameStatus.error)) && (
-                <span className={styles.fieldError}>
-                  <Ionicons name="alert-circle" size={13} color="var(--danger)" />
-                  <span>{fieldErrors.username || usernameStatus.error}</span>
-                </span>
-              )}
-              {usernameStatus.checked && usernameStatus.available && usernameInput && (
-                <span style={{ fontSize: 11, color: "var(--primary)", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
-                  <span>binro.in/@{usernameInput} will be your link</span>
-                </span>
               )}
             </div>
 

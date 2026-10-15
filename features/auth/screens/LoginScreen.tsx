@@ -47,7 +47,11 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (user && !googleLoading) {
-      navigateToHome();
+      if (!user.username) {
+        router.replace("/(auth)/username");
+      } else {
+        navigateToHome();
+      }
     }
   }, [user, googleLoading]);
 
@@ -55,7 +59,11 @@ export default function LoginScreen() {
     if (user && googleLoading) {
       setGoogleLoading(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigateToHome();
+      if (!user.username) {
+        router.replace("/(auth)/username");
+      } else {
+        navigateToHome();
+      }
     }
   }, [user, googleLoading]);
 
@@ -69,7 +77,6 @@ export default function LoginScreen() {
     try {
       await signIn(email.trim(), password);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      navigateToHome();
     } catch (e: any) {
       if (
         e.code === "auth/email-not-verified" ||

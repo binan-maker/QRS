@@ -49,6 +49,7 @@ interface AuthContextValue {
   resendVerification: (targetEmail?: string) => Promise<void>;
   refreshUser: () => Promise<boolean>;
   updateLocalDisplayName: (name: string) => void;
+  updateLocalUsername: (username: string) => void;
   googleRequest: ReturnType<typeof GoogleTypes.useAuthRequest>[0];
 }
 
@@ -109,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resendVerification,
     refreshUser,
     updateLocalDisplayName,
+    updateLocalUsername,
   } = useAuthActions({ user, setUser, setToken });
 
   // ── Context value ──────────────────────────────────────────────────────────
@@ -126,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       resendVerification,
       refreshUser,
       updateLocalDisplayName,
+      updateLocalUsername,
       googleRequest,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps

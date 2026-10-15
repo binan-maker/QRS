@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { AuthProvider, AvatarProvider, ThemeProvider } from "@/contexts";
 import { DesktopNavbar } from "@/components/navigation/DesktopNavbar";
+import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
 import { ReferralAttributionTracker } from "@/components/referral/ReferralAttributionTracker";
 import {
   SITE_URL,
@@ -115,9 +116,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <AuthProvider>
           <AvatarProvider>
             <ThemeProvider>
-              <DesktopNavbar />
-              <ReferralAttributionTracker />
-              {children}
+              <OnboardingGuard>
+                <DesktopNavbar />
+                <ReferralAttributionTracker />
+                {children}
+              </OnboardingGuard>
             </ThemeProvider>
           </AvatarProvider>
         </AuthProvider>

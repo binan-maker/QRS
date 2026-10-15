@@ -188,6 +188,15 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
     setUser((prev) => (prev ? { ...prev, displayName: name } : prev));
   }
 
+  function updateLocalUsername(username: string) {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, username };
+      cacheAuthUser(updated);
+      return updated;
+    });
+  }
+
   // ── refreshUser ─────────────────────────────────────────────────────────────
 
   async function refreshUser(): Promise<boolean> {
@@ -245,5 +254,6 @@ export function useAuthActions({ user, setUser, setToken }: Params) {
     resendVerification,
     refreshUser,
     updateLocalDisplayName,
+    updateLocalUsername,
   };
 }
