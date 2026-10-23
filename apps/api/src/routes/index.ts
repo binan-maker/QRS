@@ -20,6 +20,7 @@ import { usersRouter } from "./users";
 import { feedbackRouter } from "./feedback";
 import { qrRouter } from "./qr";
 import { commentsRouter } from "./comments";
+import { rewardsRouter } from "./rewards";
 
 /**
  * Registers all Version 1 API endpoints onto the Express app instance.
@@ -37,6 +38,9 @@ export function registerV1Routes(app: Express): void {
   // ── 4. QR Codes & Comments ──────────────────────────────────────────────────
   app.use("/api/v1/qr", qrRouter);
   app.use("/api/v1/qr/:qrId/comments", commentsRouter);
+
+  // ── 5. Scratch Cards & Rewards ──────────────────────────────────────────────
+  app.use("/api/v1/rewards", rewardsRouter);
 }
 
 export async function registerRoutes(app: Express) {

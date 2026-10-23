@@ -78,9 +78,24 @@ const ProfileIcon = memo(function ProfileIcon({
   );
 });
 
+const RewardsIcon = memo(function RewardsIcon({
+  color,
+  focused,
+}: {
+  color: string;
+  focused: boolean;
+}) {
+  return (
+    <View style={focused ? [styles.activeIconWrap, { backgroundColor: color + "20" }] : styles.iconWrap}>
+      <Ionicons name={focused ? "gift" : "gift-outline"} size={22} color={color} />
+    </View>
+  );
+});
+
 // ── Stable icon render functions ───────────────────────────────────────────────
 const renderHomeIcon = ({ color, focused }: { color: string; focused: boolean }) => <HomeIcon color={color} focused={focused} />;
 const renderScannerIcon = ({ color, focused }: { color: string; focused: boolean }) => <ScannerIcon color={color} focused={focused} />;
+const renderRewardsIcon = ({ color, focused }: { color: string; focused: boolean }) => <RewardsIcon color={color} focused={focused} />;
 const renderProfIcon = ({ color, focused }: { color: string; focused: boolean }) => <ProfileIcon color={color} focused={focused} />;
 
 function ClassicTabLayout() {
@@ -171,6 +186,11 @@ function ClassicTabLayout() {
         <Tabs.Screen
           name="history"
           options={{ href: null, tabBarStyle: hiddenTabBar }}
+        />
+
+        <Tabs.Screen
+          name="rewards"
+          options={{ title: "Rewards", tabBarIcon: renderRewardsIcon }}
         />
 
         <Tabs.Screen

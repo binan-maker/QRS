@@ -26,6 +26,7 @@ import QrDetailNavBar from "@/features/qr-detail/components/QrDetailNavBar";
 import CommentsSection from "@/features/qr-detail/components/CommentsSection";
 import CommentMenuSheet from "@/features/qr-detail/components/sheets/CommentMenuSheet";
 import OverflowSheet from "@/features/qr-detail/components/sheets/OverflowSheet";
+import { ScanRewardBanner } from "@/features/rewards";
 
 function safeBack() {
   if (router.canGoBack()) router.back();
@@ -170,6 +171,8 @@ export default function QrDetailScreen(props?: QrDetailScreenProps) {
             )}
 
             <QrContentCard content={content} contentType={contentType} onOpenContent={q.handleOpenContent} hideOpenAction={false} />
+
+            <ScanRewardBanner qrId={id} />
 
             {q.initialDataReady && (q.reportsReady || q.offlineMode) && (
               <TrustScoreCard trustInfo={trust} reportCounts={q.reportCounts} totalScans={q.totalScans} />

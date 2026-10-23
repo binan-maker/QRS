@@ -254,7 +254,43 @@ function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </Pressable>
 
-          {/* 2. Referral */}
+          {/* 2. Rewards & Coupons */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              safePush("/rewards");
+            }}
+            style={({ pressed }) => [
+              styles.separateCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.surfaceBorder,
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Rewards"
+          >
+            <View
+              style={[
+                styles.menuIconWrap,
+                { backgroundColor: colors.surfaceLight },
+              ]}
+            >
+              <Ionicons name="gift-outline" size={20} color={colors.primary} />
+            </View>
+            <View style={styles.menuTextCol}>
+              <Text style={[styles.menuLabel, { color: colors.text }]}>
+                Rewards & Coupons
+              </Text>
+              <Text style={[styles.menuSublabel, { color: colors.textSecondary }]}>
+                Scratch cards and discount vouchers
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </Pressable>
+
+          {/* 3. Referral */}
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

@@ -10,6 +10,10 @@ export const SUPABASE_TABLES = {
   QR_REPORTS: "qr_reports",
   FEEDBACK: "feedback",
   REFERRALS: "referrals",
+  REWARD_OFFERS: "reward_offers",
+  USER_SCRATCH_CARDS: "user_scratch_cards",
+  REWARD_EVENTS: "reward_events",
+  REWARD_SETTINGS: "reward_settings",
 } as const;
 
 export const SUPABASE_BUCKETS = {

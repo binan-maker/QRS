@@ -165,6 +165,8 @@ function RootLayoutNav() {
       {/* Referral screens */}
       <Stack.Screen name="referrals" options={{ headerShown: false, title: "Referral" }} />
       <Stack.Screen name="refer" options={{ headerShown: false, title: "Referral" }} />
+      {/* Rewards & Scratch Cards */}
+      <Stack.Screen name="rewards" options={{ headerShown: false, title: "Rewards" }} />
     </Stack>
     </>
   );
