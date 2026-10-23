@@ -10,6 +10,51 @@
 -- 1. EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- PRE-MIGRATION SAFETY CHECK: DROP ANY VIEWS SHADOWING PHYSICAL TABLES
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- In PostgreSQL, CREATE TABLE IF NOT EXISTS skips creation if a VIEW exists with
+-- the same name, and subsequently CREATE INDEX fails with:
+--   ERROR 42809: cannot create index on relation "..." (not supported for views)
+-- This block safely removes any shadowing VIEWs or MATERIALIZED VIEWs so that real
+-- physical tables, columns, indexes, and RLS policies can be established cleanly.
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN (
+    SELECT c.relname, c.relkind
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public'
+      AND c.relname IN (
+        'users',
+        'usernames',
+        'qr_codes',
+        'qr_scans',
+        'qr_comments',
+        'comment_likes',
+        'comment_reports',
+        'qr_reports',
+        'reward_offers',
+        'user_scratch_cards',
+        'reward_events',
+        'reward_settings',
+        'feedback',
+        'notifications',
+        'audit_logs'
+      )
+      AND c.relkind IN ('v', 'm') -- 'v' = view, 'm' = materialized view
+  ) LOOP
+    IF r.relkind = 'v' THEN
+      EXECUTE format('DROP VIEW IF EXISTS public.%I CASCADE', r.relname);
+    ELSIF r.relkind = 'm' THEN
+      EXECUTE format('DROP MATERIALIZED VIEW IF EXISTS public.%I CASCADE', r.relname);
+    END IF;
+  END LOOP;
+END $$;
+
+
 -- 2. USERS TABLE (public.users) + SAFE COLUMN MIGRATIONS FOR EXISTING DATABASES
 CREATE TABLE IF NOT EXISTS public.users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -54,15 +99,37 @@ CREATE INDEX IF NOT EXISTS idx_users_email_lower ON public.users (LOWER(email));
 -- 3. USERNAMES RESERVATION TABLE (public.usernames)
 CREATE TABLE IF NOT EXISTS public.usernames (
   username TEXT PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
   claimed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-ALTER TABLE public.usernames ADD COLUMN IF NOT EXISTS user_id UUID;
+ALTER TABLE public.usernames ADD COLUMN IF NOT EXISTS user_id TEXT;
 ALTER TABLE public.usernames ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ DEFAULT NOW();
 
 CREATE INDEX IF NOT EXISTS idx_usernames_user_id ON public.usernames (user_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_usernames_lower ON public.usernames (LOWER(username));
+
+-- Conditionally add foreign key only if data types match
+DO $$
+DECLARE
+  v_users_id_type TEXT;
+  v_uname_user_id_type TEXT;
+BEGIN
+  SELECT data_type INTO v_users_id_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'id';
+  SELECT data_type INTO v_uname_user_id_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'usernames' AND column_name = 'user_id';
+  IF v_users_id_type IS NOT NULL AND v_uname_user_id_type IS NOT NULL AND v_users_id_type = v_uname_user_id_type THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.table_constraints
+      WHERE constraint_name = 'usernames_user_id_fkey' AND table_schema = 'public' AND table_name = 'usernames'
+    ) THEN
+      BEGIN
+        ALTER TABLE public.usernames ADD CONSTRAINT usernames_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END;
+    END IF;
+  END IF;
+END $$;
+
 
 -- 4. QR CODES REGISTRY (public.qr_codes)
 CREATE TABLE IF NOT EXISTS public.qr_codes (
@@ -321,6 +388,9 @@ BEGIN
   DELETE FROM public.qr_scans WHERE user_id::text = uid::text;
   DELETE FROM public.qr_comments WHERE user_id::text = uid::text;
   DELETE FROM public.usernames WHERE user_id::text = uid::text;
+  DELETE FROM public.user_scratch_cards WHERE user_id::text = uid::text;
+  DELETE FROM public.reward_events WHERE user_id::text = uid::text;
+  DELETE FROM public.feedback WHERE user_id::text = uid::text;
   DELETE FROM public.users WHERE id::text = uid::text;
 
   -- 2. Best-effort cleanup of avatar storage metadata if any remained
@@ -345,11 +415,24 @@ GRANT EXECUTE ON FUNCTION public.increment_field(TEXT, TEXT, TEXT, NUMERIC) TO a
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- 10.1 REWARD OFFERS CATALOG
+-- If reward_offers was previously defined as a view, drop it so a physical table can be created and indexed
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'reward_offers' AND c.relkind IN ('v', 'm')
+  ) THEN
+    DROP VIEW IF EXISTS public.reward_offers CASCADE;
+    DROP MATERIALIZED VIEW IF EXISTS public.reward_offers CASCADE;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.reward_offers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  merchant_name TEXT NOT NULL,
-  description TEXT NOT NULL,
+  title TEXT NOT NULL DEFAULT '',
+  merchant_name TEXT NOT NULL DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
   coupon_code TEXT,
   tracked_url TEXT,
   image_url TEXT,
@@ -365,12 +448,52 @@ CREATE TABLE IF NOT EXISTS public.reward_offers (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_reward_offers_active ON public.reward_offers (is_active, expires_at);
+-- Ensure all columns exist on reward_offers if created from older schemas
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS title TEXT DEFAULT '';
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS merchant_name TEXT DEFAULT '';
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS coupon_code TEXT;
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS tracked_url TEXT;
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS terms TEXT DEFAULT '';
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS starts_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS source_network TEXT DEFAULT 'manual';
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS source_offer_id TEXT;
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS inventory_limit INTEGER;
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS inventory_used INTEGER DEFAULT 0;
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.reward_offers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Create index only on physical table relation
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'reward_offers' AND c.relkind = 'r'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_reward_offers_active ON public.reward_offers (is_active, expires_at);
+  END IF;
+END $$;
 
 -- 10.2 USER SCRATCH CARDS (Issued server-side)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'user_scratch_cards' AND c.relkind IN ('v', 'm')
+  ) THEN
+    DROP VIEW IF EXISTS public.user_scratch_cards CASCADE;
+    DROP MATERIALIZED VIEW IF EXISTS public.user_scratch_cards CASCADE;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.user_scratch_cards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
   reward_offer_id UUID NOT NULL REFERENCES public.reward_offers(id),
   source_scan_id TEXT,
   qr_code_id TEXT,
@@ -383,22 +506,115 @@ CREATE TABLE IF NOT EXISTS public.user_scratch_cards (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_user_scratch_cards_user_status ON public.user_scratch_cards (user_id, status, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_user_scratch_cards_qr ON public.user_scratch_cards (user_id, qr_code_id, created_at DESC);
+ALTER TABLE public.user_scratch_cards ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE public.user_scratch_cards ADD COLUMN IF NOT EXISTS reward_offer_id UUID;
+ALTER TABLE public.user_scratch_cards ADD COLUMN IF NOT EXISTS source_scan_id TEXT;
+ALTER TABLE public.user_scratch_cards ADD COLUMN IF NOT EXISTS qr_code_id TEXT;
+ALTER TABLE public.user_scratch_cards ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'available';
+ALTER TABLE public.user_scratch_cards ADD COLUMN IF NOT EXISTS assigned_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.user_scratch_cards ADD COLUMN IF NOT EXISTS revealed_at TIMESTAMPTZ;
+ALTER TABLE public.user_scratch_cards ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
+ALTER TABLE public.user_scratch_cards ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+ALTER TABLE public.user_scratch_cards ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.user_scratch_cards ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Safe foreign key to public.users: only established if data types are identical (both text or both uuid)
+DO $$
+DECLARE
+  v_users_id_type TEXT;
+  v_cards_user_id_type TEXT;
+BEGIN
+  SELECT data_type INTO v_users_id_type
+    FROM information_schema.columns
+   WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'id';
+
+  SELECT data_type INTO v_cards_user_id_type
+    FROM information_schema.columns
+   WHERE table_schema = 'public' AND table_name = 'user_scratch_cards' AND column_name = 'user_id';
+
+  IF v_users_id_type IS NOT NULL AND v_cards_user_id_type IS NOT NULL AND v_users_id_type = v_cards_user_id_type THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.table_constraints
+       WHERE constraint_name = 'user_scratch_cards_user_id_fkey'
+         AND table_schema = 'public'
+         AND table_name = 'user_scratch_cards'
+    ) THEN
+      BEGIN
+        ALTER TABLE public.user_scratch_cards
+          ADD CONSTRAINT user_scratch_cards_user_id_fkey
+          FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+      EXCEPTION WHEN OTHERS THEN
+        NULL;
+      END;
+    END IF;
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'user_scratch_cards' AND c.relkind = 'r'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_user_scratch_cards_user_status ON public.user_scratch_cards (user_id, status, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_user_scratch_cards_qr ON public.user_scratch_cards (user_id, qr_code_id, created_at DESC);
+  END IF;
+END $$;
 
 -- 10.3 REWARD AUDIT & USAGE EVENTS
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'reward_events' AND c.relkind IN ('v', 'm')
+  ) THEN
+    DROP VIEW IF EXISTS public.reward_events CASCADE;
+    DROP MATERIALIZED VIEW IF EXISTS public.reward_events CASCADE;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.reward_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
+  user_id TEXT NOT NULL,
   scratch_card_id UUID REFERENCES public.user_scratch_cards(id) ON DELETE SET NULL,
   event_type TEXT NOT NULL, -- 'issued' | 'revealed' | 'copy_code' | 'open_offer' | 'expired'
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_reward_events_user ON public.reward_events (user_id, created_at DESC);
+ALTER TABLE public.reward_events ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE public.reward_events ADD COLUMN IF NOT EXISTS scratch_card_id UUID;
+ALTER TABLE public.reward_events ADD COLUMN IF NOT EXISTS event_type TEXT;
+ALTER TABLE public.reward_events ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.reward_events ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'reward_events' AND c.relkind = 'r'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_reward_events_user ON public.reward_events (user_id, created_at DESC);
+  END IF;
+END $$;
+
 
 -- 10.4 REWARD CONFIGURABLE SETTINGS
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'reward_settings' AND c.relkind IN ('v', 'm')
+  ) THEN
+    DROP VIEW IF EXISTS public.reward_settings CASCADE;
+    DROP MATERIALIZED VIEW IF EXISTS public.reward_settings CASCADE;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.reward_settings (
   key TEXT PRIMARY KEY,
   value JSONB NOT NULL,
@@ -414,13 +630,48 @@ VALUES
   ('card_validity_days', '7'::jsonb)
 ON CONFLICT (key) DO NOTHING;
 
+-- Seed default starter active coupon offer so users have rewards available
+INSERT INTO public.reward_offers (
+  title,
+  merchant_name,
+  description,
+  coupon_code,
+  tracked_url,
+  image_url,
+  terms,
+  is_active,
+  source_network
+)
+SELECT
+  'Flat 15% OFF on Online Safety & Tools',
+  'NordSec',
+  'Get an exclusive 15% discount on 1-year and 2-year subscriptions for secure web and mobile browsing.',
+  'BINROSAFE15',
+  'https://binro.in',
+  'https://picsum.photos/seed/nordsec/200/200',
+  'Valid once per user on annual subscriptions. Non-transferable.',
+  TRUE,
+  'manual'
+WHERE NOT EXISTS (SELECT 1 FROM public.reward_offers LIMIT 1);
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- REWARDS RLS POLICIES
 -- ═══════════════════════════════════════════════════════════════════════════════
-ALTER TABLE public.reward_offers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_scratch_cards ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.reward_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.reward_settings ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = 'reward_offers' AND c.relkind = 'r') THEN
+    ALTER TABLE public.reward_offers ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = 'user_scratch_cards' AND c.relkind = 'r') THEN
+    ALTER TABLE public.user_scratch_cards ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = 'reward_events' AND c.relkind = 'r') THEN
+    ALTER TABLE public.reward_events ENABLE ROW LEVEL SECURITY;
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = 'reward_settings' AND c.relkind = 'r') THEN
+    ALTER TABLE public.reward_settings ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 
 -- reward_offers: anyone authenticated or public can read active offers
 DROP POLICY IF EXISTS "Active reward offers are public" ON public.reward_offers;
@@ -455,8 +706,11 @@ CREATE POLICY "Reward settings read" ON public.reward_settings
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- 1. Atomic Issue Scratch Card RPC
+DROP FUNCTION IF EXISTS public.issue_scratch_card(UUID, TEXT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.issue_scratch_card(TEXT, TEXT, TEXT, TEXT);
+
 CREATE OR REPLACE FUNCTION public.issue_scratch_card(
-  p_user_id UUID,
+  p_user_id TEXT,
   p_qr_code_id TEXT,
   p_scan_id TEXT DEFAULT NULL,
   p_idempotency_key TEXT DEFAULT NULL
@@ -517,7 +771,7 @@ BEGIN
   IF p_qr_code_id IS NOT NULL AND p_qr_code_id <> '' THEN
     SELECT COUNT(*) INTO v_recent_qr_count
       FROM public.user_scratch_cards
-     WHERE user_id = p_user_id
+     WHERE user_id::text = p_user_id::text
        AND qr_code_id = p_qr_code_id
        AND assigned_at > (NOW() - (v_qr_cooldown_hours || ' hours')::INTERVAL);
 
@@ -529,7 +783,7 @@ BEGIN
   -- 3. Per-user daily reward limit
   SELECT COUNT(*) INTO v_user_today_count
     FROM public.user_scratch_cards
-   WHERE user_id = p_user_id
+   WHERE user_id::text = p_user_id::text
      AND assigned_at >= v_today_start;
 
   IF v_user_today_count >= v_daily_user_limit THEN
@@ -676,5 +930,41 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.issue_scratch_card(UUID, TEXT, TEXT, TEXT) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.issue_scratch_card(TEXT, TEXT, TEXT, TEXT) TO authenticated, service_role, anon;
 GRANT EXECUTE ON FUNCTION public.reveal_scratch_card(UUID) TO authenticated, service_role;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 11. FEEDBACK TABLE (public.feedback)
+-- ═══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS public.feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT,
+  email TEXT,
+  category TEXT NOT NULL DEFAULT 'general',
+  message TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.feedback ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE public.feedback ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.feedback ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'general';
+ALTER TABLE public.feedback ADD COLUMN IF NOT EXISTS message TEXT DEFAULT '';
+ALTER TABLE public.feedback ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'feedback' AND c.relkind = 'r'
+  ) THEN
+    ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
+  END IF;
+END $$;
+
+DROP POLICY IF EXISTS "Feedback insert public" ON public.feedback;
+CREATE POLICY "Feedback insert public" ON public.feedback FOR INSERT WITH CHECK (TRUE);
+
+DROP POLICY IF EXISTS "Feedback select owner" ON public.feedback;
+CREATE POLICY "Feedback select owner" ON public.feedback FOR SELECT USING (auth.uid()::text = user_id::text);
+
