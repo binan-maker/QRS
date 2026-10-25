@@ -1,5 +1,5 @@
 {
-  "name": "BinRo — Safe QR Code Scanner & Link Checker",
+  "name": "BinRo",
   "short_name": "BinRo",
   "description": "Scan any QR code safely with BinRo. Preview hidden links before opening, check real-time community trust scores, and protect yourself from QR code scams and phishing.",
   "start_url": "/",

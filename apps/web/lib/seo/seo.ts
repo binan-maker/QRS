@@ -3,8 +3,7 @@ import { BINRO_SITE_URL } from "../qr/qr-share";
 
 export const SITE_URL = BINRO_SITE_URL;
 export const SITE_NAME = "BinRo";
-export const DEFAULT_TITLE =
-  "BinRo — Safe QR Code Scanner, Link Checker & Community Trust Scores";
+export const DEFAULT_TITLE = "BinRo";
 export const DEFAULT_DESCRIPTION =
   "Scan any QR code safely with BinRo — the Truecaller for QR codes. Preview hidden links before opening, check real-time community trust scores, and protect yourself from QR code scams and phishing.";
 
