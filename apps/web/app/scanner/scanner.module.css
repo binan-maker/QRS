@@ -1291,8 +1291,8 @@
   .scannerLayout,
   .scannerRootBlack,
   .permissionRoot {
-    height: calc(100vh - 68px);
-    min-height: calc(100vh - 68px);
+    height: 100dvh;
+    min-height: 100dvh;
   }
 
   .overlayTopBar {

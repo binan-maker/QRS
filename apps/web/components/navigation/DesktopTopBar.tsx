@@ -13,6 +13,10 @@ export function DesktopTopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const isHome = pathname === "/";
+  const isHistory = pathname === "/history" || pathname.startsWith("/history/");
+  const isProfile = pathname === "/profile" || pathname.startsWith("/profile/");
+  const isAllowedPage = isHome || isHistory || isProfile;
+
   const { user, profile, signOut } = useAuth();
   const { cachedUrl, avatarUrl } = useAvatar();
 
@@ -67,6 +71,11 @@ export function DesktopTopBar() {
       null
     );
   }, [profile, cachedUrl, avatarUrl, user]);
+
+  // On desktop, the top bar and user profile icon only appear on Home, History, and Profile pages
+  if (!isAllowedPage) {
+    return null;
+  }
 
   const hasControls = Boolean(user || isHome);
   if (!hasControls) {
