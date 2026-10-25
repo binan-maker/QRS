@@ -298,26 +298,28 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (min-width: 1024px) {
   .container {
-    min-height: calc(100dvh - 60px);
+    min-height: auto;
+    background: transparent;
   }
 
   .inner {
-    max-width: 920px;
-    padding: 28px 32px 60px;
+    max-width: 900px;
+    margin: 0;
+    padding: 14px 28px 28px;
     min-height: auto;
   }
 
   .navBar {
-    margin-bottom: 32px;
+    margin-bottom: 16px;
   }
 
   .navTitle {
-    font-size: 22px;
+    font-size: 20px;
     letter-spacing: -0.3px;
   }
 
   .article {
-    gap: 32px;
+    gap: 20px;
   }
 
   .lead {

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { AuthProvider, AvatarProvider, ThemeProvider } from "@/contexts";
+import { AuthProvider, AvatarProvider, ThemeProvider, SidebarProvider } from "@/contexts";
 import { DesktopNavbar } from "@/components/navigation/DesktopNavbar";
 import { DesktopShell } from "@/components/navigation/DesktopShell";
 import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
@@ -117,11 +117,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <AuthProvider>
           <AvatarProvider>
             <ThemeProvider>
-              <OnboardingGuard>
-                <DesktopNavbar />
-                <ReferralAttributionTracker />
-                <DesktopShell>{children}</DesktopShell>
-              </OnboardingGuard>
+              <SidebarProvider>
+                <OnboardingGuard>
+                  <DesktopNavbar />
+                  <ReferralAttributionTracker />
+                  <DesktopShell>{children}</DesktopShell>
+                </OnboardingGuard>
+              </SidebarProvider>
             </ThemeProvider>
           </AvatarProvider>
         </AuthProvider>

@@ -402,13 +402,15 @@ html.dark .skeletonBone {
 
 @media (min-width: 1024px) {
   .page {
-    padding: 44px 32px;
+    padding: 16px 28px 28px;
+    min-height: auto;
+    background: transparent;
   }
 
   .inner {
-    max-width: 510px;
-    padding: 30px 34px 34px;
-    border-radius: 30px;
+    max-width: 520px;
+    padding: 24px 28px 28px;
+    border-radius: 24px;
   }
 
   .brandName {

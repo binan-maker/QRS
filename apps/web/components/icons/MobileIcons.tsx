@@ -502,6 +502,17 @@ function renderSvgPath(name: string) {
           <polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </>
       );
+    case "menu":
+    case "menu-outline":
+    case "menu-sharp":
+    case "hamburger":
+      return (
+        <g stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3.5" y1="6" x2="20.5" y2="6" />
+          <line x1="3.5" y1="12" x2="20.5" y2="12" />
+          <line x1="3.5" y1="18" x2="20.5" y2="18" />
+        </g>
+      );
     default:
       return <circle cx="12" cy="12" r="6" fill="currentColor" fillOpacity="0.4" />;
   }

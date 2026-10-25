@@ -629,7 +629,7 @@
     justify-content: flex-start;
     min-height: auto;
     margin-top: 0;
-    padding: 32px 48px 64px;
+    padding: 14px 28px 28px;
     background: transparent;
     width: 100%;
     box-sizing: border-box;
@@ -649,7 +649,7 @@
   }
 
   .header {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     width: 100%;
   }
 
@@ -658,23 +658,23 @@
   }
 
   .welcomeKicker {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-secondary);
-    margin-bottom: 3px;
+    margin-bottom: 2px;
   }
 
   .greeting {
-    font-size: 30px;
-    line-height: 36px;
-    letter-spacing: -0.5px;
+    font-size: 26px;
+    line-height: 32px;
+    letter-spacing: -0.4px;
   }
 
   /* Single-column card stack on desktop matching Image 1 & Image 4 */
   .homeGrid {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
     width: 100%;
   }
 
@@ -689,39 +689,39 @@
     flex-direction: column;
     justify-content: space-between;
     margin-bottom: 0;
-    padding: 26px 28px 22px;
-    min-height: 180px;
+    padding: 20px 24px 18px;
+    min-height: 140px;
     box-sizing: border-box;
-    border-radius: 26px;
-  }
-
-  .heroIcon {
-    width: 76px;
-    height: 76px;
     border-radius: 22px;
   }
 
+  .heroIcon {
+    width: 68px;
+    height: 68px;
+    border-radius: 20px;
+  }
+
   .heroHeading {
-    font-size: 24px;
-    line-height: 28px;
-    letter-spacing: -0.4px;
+    font-size: 22px;
+    line-height: 26px;
+    letter-spacing: -0.3px;
   }
 
   .heroTitle {
-    font-size: 14.5px;
+    font-size: 14px;
     line-height: 20px;
   }
 
   .heroArrow {
-    width: 44px;
-    height: 44px;
-    border-radius: 22px;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
   }
 
   .heroTagline {
-    font-size: 12.5px;
-    line-height: 18px;
-    margin-top: 16px;
+    font-size: 12px;
+    line-height: 16px;
+    margin-top: 12px;
   }
 
   .recentScansCol {
@@ -732,16 +732,16 @@
   }
 
   .sectionHeader {
-    margin-bottom: 14px;
+    margin-bottom: 10px;
   }
 
   .sectionTitle {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .emptyCard {
-    padding: 36px 24px;
-    min-height: 220px;
+    padding: 24px 20px;
+    min-height: 160px;
     box-sizing: border-box;
     justify-content: center;
   }

@@ -11,24 +11,22 @@
 .topBar {
   display: none;
   width: 100%;
-  height: 68px;
+  height: 52px;
   position: sticky;
   top: 0;
   z-index: 800;
   box-sizing: border-box;
-  padding: 0 32px;
+  padding: 0 28px;
   align-items: center;
   justify-content: space-between;
-  background-color: rgba(245, 248, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--surface-border);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  background-color: transparent;
+  border-bottom: none;
+  transition: background-color 0.2s ease;
 }
 
 :global([data-theme="dark"]) .topBar,
 :global(.dark) .topBar {
-  background-color: rgba(10, 10, 10, 0.85);
+  background-color: transparent;
 }
 
 @media (min-width: 1024px) {
@@ -37,39 +35,13 @@
   }
 }
 
-/* ── Left Section: Hamburger + Search ── */
+/* ── Left Section ── */
 .leftSection {
   display: flex;
   align-items: center;
   gap: 16px;
   flex: 1;
   min-width: 0;
-}
-
-.hamburgerBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: 1px solid var(--surface-border);
-  background-color: var(--surface);
-  color: var(--text);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-
-.hamburgerBtn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-  background-color: var(--primary-dim);
-  transform: translateY(-1px);
-}
-
-.hamburgerBtn:active {
-  transform: scale(0.96);
 }
 
 /* ── History Search Bar (Home Page Only) ── */

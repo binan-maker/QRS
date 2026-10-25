@@ -1879,3 +1879,24 @@ html.dark .skeleton::after {
   background: var(--danger-dim);
   color: var(--danger);
 }
+
+/* ── Desktop Responsive Layout (>= 1024px) ── */
+@media (min-width: 1024px) {
+  .page {
+    padding-bottom: 32px;
+    min-height: auto;
+  }
+
+  .inner {
+    max-width: 840px;
+    margin: 0;
+    padding: 14px 28px 28px;
+  }
+
+  .navBar {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 10px 0;
+  }
+}

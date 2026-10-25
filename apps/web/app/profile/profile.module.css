@@ -520,103 +520,74 @@
 }
 
 /* ── Guest View (Unauthenticated State) ─────────────────────────────────── */
-.guestCard {
-  width: 100%;
-  background-color: var(--surface);
-  border: 1px solid var(--surface-border);
-  border-radius: 18px;
-  padding: 36px 24px;
+.emptyWrap {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 10px;
+  padding: 60px 24px;
   text-align: center;
-  gap: 14px;
+  width: 100%;
   box-sizing: border-box;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.guestIconWrap {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background-color: var(--primary-dim);
-  color: var(--primary);
+.emptyIconWrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 2px;
+  margin-bottom: 8px;
+  background: radial-gradient(circle, var(--primary-dim) 0%, var(--card-glow) 100%);
+  border: 1px solid var(--primary-dim);
 }
 
-.guestTitle {
+.emptyTitle {
   margin: 0;
   font-family: var(--font-inter), "Inter", sans-serif;
-  font-size: 19px;
+  font-size: clamp(15px, calc(12.5px + 0.4vw + 0.28vmin), 18px);
   font-weight: 700;
+  text-align: center;
+  letter-spacing: -0.3px;
   color: var(--text);
-  letter-spacing: -0.015em;
 }
 
-.guestDesc {
+.emptySub {
   margin: 0;
   font-family: var(--font-inter), "Inter", sans-serif;
-  font-size: 13px;
+  font-size: clamp(11.5px, calc(10px + 0.22vw + 0.16vmin), 13px);
+  font-weight: 400;
+  text-align: center;
+  line-height: 1.45;
   color: var(--text-secondary);
-  line-height: 1.5;
-  max-width: 360px;
-}
-
-.guestActions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
   max-width: 320px;
-  margin-top: 8px;
 }
 
-.guestPrimaryBtn {
-  width: 100%;
-  padding: 12px 18px;
-  min-height: 44px;
-  border-radius: 12px;
+.signInBtn {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 13px 28px;
+  border-radius: 14px;
   background-color: var(--primary);
   color: #ffffff;
   font-family: var(--font-inter), "Inter", sans-serif;
-  font-size: 13.5px;
-  font-weight: 600;
+  font-size: clamp(12.2px, calc(10.8px + 0.25vw + 0.16vmin), 14px);
+  font-weight: 700;
+  letter-spacing: 0.2px;
   text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.15s ease;
-  box-sizing: border-box;
+  transition: transform 0.1s ease, opacity 0.15s ease;
 }
 
-.guestPrimaryBtn:hover {
-  opacity: 0.92;
+.signInBtn:hover {
+  opacity: 0.9;
 }
 
-.guestSecondaryBtn {
-  width: 100%;
-  padding: 12px 18px;
-  min-height: 44px;
-  border-radius: 12px;
-  border: 1px solid var(--surface-border);
-  background-color: var(--surface-light);
-  color: var(--text);
-  font-family: var(--font-inter), "Inter", sans-serif;
-  font-size: 13.5px;
-  font-weight: 600;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.15s ease;
-  box-sizing: border-box;
-}
-
-.guestSecondaryBtn:hover {
-  background-color: var(--surface-border);
+.signInBtn:active {
+  transform: scale(0.97);
 }
 
 /* ── Photo Picker Modal ─────────────────────────────────────────────────── */
@@ -785,13 +756,19 @@
   }
 
   .inner {
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 24px 32px calc(96px + env(safe-area-inset-bottom, 0px));
+    max-width: 100%;
+    margin: 0;
+    padding: 14px 28px 28px;
+    gap: 16px;
+  }
+
+  .emptyWrap {
+    padding: 32px 20px;
+    gap: 8px;
   }
 
   .topBar {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .headerActions {
@@ -799,24 +776,24 @@
   }
 
   .pageTitle {
-    font-size: 26px;
+    font-size: 24px;
     letter-spacing: -0.4px;
   }
 
   .desktopLayout {
     display: grid;
-    grid-template-columns: 340px 1fr;
-    gap: 28px;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
     align-items: start;
   }
 
   .sidebarCol {
     position: sticky;
-    top: 84px;
+    top: 64px;
   }
 
   .heroCard {
-    padding: 32px 24px;
+    padding: 24px 20px;
   }
 
   .heroActionBtn {
@@ -825,15 +802,15 @@
   }
 
   .avatarRing {
-    width: 96px;
-    height: 96px;
+    width: 90px;
+    height: 90px;
   }
 
   .displayName {
-    font-size: 22px;
+    font-size: 21px;
   }
 
   .mainCol {
-    gap: 22px;
+    gap: 16px;
   }
 }

@@ -60,11 +60,25 @@ export function DesktopSidebar() {
   const { isCollapsed, toggleSidebar } = useSidebar();
 
   return (
-    <aside
-      className={`${styles.sidebar} ${isCollapsed ? styles.sidebarCollapsed : ""}`}
-      aria-label="Desktop navigation sidebar"
-      aria-hidden={isCollapsed}
-    >
+    <>
+      {/* ── Floating Hamburger Toggle Button (Single sidebar toggle when collapsed on desktop) ── */}
+      {isCollapsed && (
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className={styles.floatingToggleBtn}
+          aria-label="Open sidebar"
+          title="Open sidebar"
+        >
+          <Ionicons name="menu-outline" size={20} />
+        </button>
+      )}
+
+      <aside
+        className={`${styles.sidebar} ${isCollapsed ? styles.sidebarCollapsed : ""}`}
+        aria-label="Desktop navigation sidebar"
+        aria-hidden={isCollapsed}
+      >
       <div className={styles.topSection}>
         {/* Header Row: BinRo Brand + ChatGPT-style Hamburger collapse button */}
         <div className={styles.headerRow}>
@@ -148,5 +162,6 @@ export function DesktopSidebar() {
         <div className={styles.bottomAccentLine} />
       </div>
     </aside>
+    </>
   );
 }

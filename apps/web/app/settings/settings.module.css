@@ -795,3 +795,23 @@
   height: 16px;
   border-radius: 4px;
 }
+
+/* ── Desktop Responsive Layout (>= 1024px) ── */
+@media (min-width: 1024px) {
+  .container {
+    min-height: auto;
+    background: transparent;
+    align-items: stretch;
+  }
+
+  .inner {
+    max-width: 900px;
+    margin: 0;
+    padding: 14px 28px 28px;
+    gap: 16px;
+  }
+
+  .navBar {
+    margin-bottom: 12px;
+  }
+}

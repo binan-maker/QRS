@@ -576,3 +576,18 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+/* ── Desktop Responsive Layout (>= 1024px) ── */
+@media (min-width: 1024px) {
+  .pageFrame {
+    padding-bottom: 32px;
+    min-height: auto;
+  }
+
+  .container {
+    max-width: 100%;
+    padding: 14px 28px 28px;
+    margin: 0;
+    gap: 16px;
+  }
+}

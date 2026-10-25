@@ -264,30 +264,18 @@ function ProfileContent() {
             </div>
           </header>
 
-          <div className={styles.guestCard}>
-            <div className={styles.guestIconWrap}>
-              <Ionicons name="person-outline" size={26} />
+          <div className={styles.emptyWrap}>
+            <div className={styles.emptyIconWrap}>
+              <Ionicons name="person-outline" size={32} color="var(--primary)" />
             </div>
-            <h2 className={styles.guestTitle}>Sign in to BinRo</h2>
-            <p className={styles.guestDesc}>
-              Access your verified scan history, manage your identity, and contribute
-              to community QR safety ratings.
+            <h2 className={styles.emptyTitle}>Sign in to view profile</h2>
+            <p className={styles.emptySub}>
+              Your profile is saved to your account and synced across all your devices.
             </p>
-
-            <div className={styles.guestActions}>
-              <Link
-                href="/login"
-                className={styles.guestPrimaryBtn}
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/register"
-                className={styles.guestSecondaryBtn}
-              >
-                Create Account
-              </Link>
-            </div>
+            <Link href="/login?returnUrl=/profile" className={styles.signInBtn}>
+              <Ionicons name="log-in-outline" size={17} color="#ffffff" />
+              <span>Sign In</span>
+            </Link>
           </div>
         </div>
 

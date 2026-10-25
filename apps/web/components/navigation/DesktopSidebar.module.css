@@ -48,6 +48,44 @@
   visibility: hidden !important;
 }
 
+/* ── Floating Hamburger Toggle Button (when sidebar is collapsed on desktop) ── */
+.floatingToggleBtn {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 18px;
+  z-index: 1000;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  color: var(--text);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 82, 204, 0.08);
+  transition: all 0.16s ease;
+}
+
+@media (min-width: 1024px) {
+  .floatingToggleBtn {
+    display: inline-flex;
+  }
+}
+
+.floatingToggleBtn:hover {
+  background-color: var(--primary-dim);
+  color: var(--primary);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 82, 204, 0.12);
+}
+
+.floatingToggleBtn:active {
+  transform: scale(0.96);
+}
+
 .topSection {
   display: flex;
   flex-direction: column;

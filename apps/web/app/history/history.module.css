@@ -148,18 +148,20 @@ html.dark .skeletonBone {
 /* ── Desktop Responsive Layout (>= 1024px) ── */
 @media (min-width: 1024px) {
   .container {
-    min-height: calc(100dvh - 60px);
+    min-height: auto;
+    background: transparent;
   }
 
   .inner {
-    max-width: 1200px;
-    padding: 20px 24px 36px;
+    max-width: 100%;
+    margin: 0;
+    padding: 14px 28px 28px;
     width: 100%;
     min-height: auto;
   }
 
   .listContainer {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    gap: 12px;
   }
 }

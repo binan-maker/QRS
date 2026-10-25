@@ -139,11 +139,11 @@ export function DesktopNavbar() {
                 showRing={true}
               />
             </Link>
-          ) : (
+          ) : isHome ? (
             <Link href="/login" className={styles.signInBtn}>
               Sign In
             </Link>
-          )}
+          ) : null}
         </div>
       </div>
     </header>

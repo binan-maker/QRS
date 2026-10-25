@@ -717,3 +717,22 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* ── Desktop Responsive Layout (>= 1024px) ── */
+@media (min-width: 1024px) {
+  .container {
+    min-height: auto;
+    background: transparent;
+    padding: 14px 28px 28px;
+    align-items: stretch;
+  }
+
+  .inner {
+    max-width: 800px;
+    margin: 0;
+  }
+
+  .navBar {
+    margin-bottom: 14px;
+  }
+}
