@@ -258,327 +258,335 @@ export default function SettingsPage() {
           <div className={styles.navSpacer} aria-hidden="true" />
         </header>
 
-        {/* ── SECTION 1: ACCOUNT ── */}
-        <section className={styles.section} aria-label="Account">
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Account</span>
-          </div>
+        <div className={styles.settingsGrid}>
+          {/* ── Left Column: Account, Appearance, Data, Session ── */}
+          <div className={styles.settingsCol}>
+            {/* ── SECTION 1: ACCOUNT ── */}
+            <section className={styles.section} aria-label="Account">
+              <div className={styles.sectionHeader}>
+                <span className={styles.sectionLabel}>Account</span>
+              </div>
 
-          {user ? (
-            <>
-              {/* Account Profile Card */}
-              <div className={styles.accountCard}>
-                <div className={styles.accountInfo}>
-                  <UserAvatar
-                    src={photoURL}
-                    name={displayName}
-                    size={46}
-                    showRing={true}
-                  />
-                  <div className={styles.accountMeta}>
-                    <strong className={styles.accountName}>{displayName}</strong>
-                    <span className={styles.accountEmail}>{user.email}</span>
-                    <div className={styles.accountTag}>
-                      {username && <span>@{username}</span>}
-                      {username && <span aria-hidden="true">·</span>}
-                      <span>Verified</span>
+              {user ? (
+                <>
+                  {/* Account Profile Card */}
+                  <div className={styles.accountCard}>
+                    <div className={styles.accountInfo}>
+                      <UserAvatar
+                        src={photoURL}
+                        name={displayName}
+                        size={46}
+                        showRing={true}
+                      />
+                      <div className={styles.accountMeta}>
+                        <strong className={styles.accountName}>{displayName}</strong>
+                        <span className={styles.accountEmail}>{user.email}</span>
+                        <div className={styles.accountTag}>
+                          {username && <span>@{username}</span>}
+                          {username && <span aria-hidden="true">·</span>}
+                          <span>Verified</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Link
+                      href="/settings/account-details"
+                      className={styles.editAccountBtn}
+                      aria-label="Edit account details"
+                    >
+                      Edit
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                /* Guest Sign In */
+                <div className={styles.guestCard}>
+                  <div className={styles.guestInfo}>
+                    <div className={styles.guestIconWrap}>
+                      <Ionicons name="person-outline" size={20} />
+                    </div>
+                    <div className={styles.guestTextCol}>
+                      <strong className={styles.guestTitle}>
+                        Sign in to your account
+                      </strong>
+                      <span className={styles.guestSub}>
+                        Sync scan history and community reputation
+                      </span>
                     </div>
                   </div>
+                  <Link
+                    href="/login?returnUrl=/settings"
+                    className={styles.guestSignInBtn}
+                  >
+                    Sign In
+                  </Link>
+                </div>
+              )}
+            </section>
+
+            {/* ── SECTION 2: PREFERENCES (THEME) ── */}
+            <section className={styles.section} aria-label="Appearance">
+              <div className={styles.sectionHeader}>
+                <span className={styles.sectionLabel}>Appearance</span>
+              </div>
+
+              <div className={styles.themeCard}>
+                <p className={styles.themePrompt}>Choose how BinRo looks on your device</p>
+
+                <div className={styles.themeRow} role="radiogroup" aria-label="Theme selection">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={themeMode === "system"}
+                    onClick={() => handleSelectTheme("system")}
+                    className={`${styles.themeOption} ${
+                      themeMode === "system" ? styles.themeOptionActive : ""
+                    }`}
+                  >
+                    <Ionicons
+                      name="desktop-outline"
+                      size={16}
+                      color={themeMode === "system" ? "var(--primary)" : "var(--text-secondary)"}
+                    />
+                    <span>System</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={themeMode === "light"}
+                    onClick={() => handleSelectTheme("light")}
+                    className={`${styles.themeOption} ${
+                      themeMode === "light" ? styles.themeOptionActive : ""
+                    }`}
+                  >
+                    <Ionicons
+                      name="sunny-outline"
+                      size={16}
+                      color={themeMode === "light" ? "var(--primary)" : "var(--text-secondary)"}
+                    />
+                    <span>Light</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={themeMode === "dark"}
+                    onClick={() => handleSelectTheme("dark")}
+                    className={`${styles.themeOption} ${
+                      themeMode === "dark" ? styles.themeOptionActive : ""
+                    }`}
+                  >
+                    <Ionicons
+                      name="moon-outline"
+                      size={15}
+                      color={themeMode === "dark" ? "var(--primary)" : "var(--text-secondary)"}
+                    />
+                    <span>Dark</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* ── SECTION 3: DATA & PRIVACY ── */}
+            <section className={styles.section} aria-label="Data">
+              <div className={styles.sectionHeader}>
+                <span className={styles.sectionLabel}>Data &amp; Storage</span>
+              </div>
+
+              <div className={styles.cardGroup}>
+                <button
+                  type="button"
+                  onClick={() => setClearModalOpen(true)}
+                  className={styles.menuItem}
+                >
+                  <div className={styles.menuIconWrap}>
+                    <Ionicons name="trash-outline" size={18} />
+                  </div>
+                  <div className={styles.menuTextCol}>
+                    <span className={styles.menuLabel}>Clear Local History</span>
+                    <span className={styles.menuSublabel}>
+                      Clear scan records on this device
+                    </span>
+                  </div>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color="var(--text-muted)"
+                  />
+                </button>
+              </div>
+            </section>
+
+            {/* ── SECTION 6: SESSION (Logged In Only) ── */}
+            {user && (
+              <section className={styles.section} aria-label="Session">
+                <div className={styles.sectionHeader}>
+                  <span className={styles.sectionLabel}>Session</span>
                 </div>
 
-                <Link
-                  href="/settings/account-details"
-                  className={styles.editAccountBtn}
-                  aria-label="Edit account details"
-                >
-                  Edit
+                <div className={styles.cardGroup}>
+                  {/* Sign Out */}
+                  <button
+                    type="button"
+                    onClick={() => setSignOutModalOpen(true)}
+                    className={styles.menuItem}
+                  >
+                    <div className={styles.menuIconWrap}>
+                      <Ionicons name="log-out-outline" size={18} />
+                    </div>
+                    <div className={styles.menuTextCol}>
+                      <span className={styles.menuLabel}>Sign Out</span>
+                      <span className={styles.menuSublabel}>
+                        Sign out of this device
+                      </span>
+                    </div>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color="var(--text-muted)"
+                    />
+                  </button>
+                </div>
+              </section>
+            )}
+          </div>
+
+          {/* ── Right Column: Help & Safety, Legal & About ── */}
+          <div className={styles.settingsCol}>
+            {/* ── SECTION 4: HELP & SAFETY ── */}
+            <section className={styles.section} aria-label="Help and safety">
+              <div className={styles.sectionHeader}>
+                <span className={styles.sectionLabel}>Help &amp; Safety</span>
+              </div>
+
+              <div className={styles.cardGroup}>
+                {/* 1. Safety Guide */}
+                <Link href="/guide" className={styles.menuItem}>
+                  <div className={styles.menuIconWrap}>
+                    <Ionicons name="book-outline" size={19} />
+                  </div>
+                  <div className={styles.menuTextCol}>
+                    <span className={styles.menuLabel}>Safety Guide</span>
+                    <span className={styles.menuSublabel}>
+                      Inspect codes and detect scams
+                    </span>
+                  </div>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color="var(--text-muted)"
+                  />
+                </Link>
+
+                <div className={styles.divider} />
+
+                {/* 2. Trust Scores */}
+                <Link href="/trust-scores" className={styles.menuItem}>
+                  <div className={styles.menuIconWrap}>
+                    <Ionicons name="shield-checkmark-outline" size={19} />
+                  </div>
+                  <div className={styles.menuTextCol}>
+                    <span className={styles.menuLabel}>Trust Scores</span>
+                    <span className={styles.menuSublabel}>
+                      How safety ratings are calculated
+                    </span>
+                  </div>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color="var(--text-muted)"
+                  />
+                </Link>
+
+                <div className={styles.divider} />
+
+                {/* 3. Send Feedback */}
+                <Link href="/feedback" className={styles.menuItem}>
+                  <div className={styles.menuIconWrap}>
+                    <Ionicons name="chatbubble-outline" size={19} />
+                  </div>
+                  <div className={styles.menuTextCol}>
+                    <span className={styles.menuLabel}>Send Feedback</span>
+                    <span className={styles.menuSublabel}>
+                      Report issues or suggest features
+                    </span>
+                  </div>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color="var(--text-muted)"
+                  />
+                </Link>
+
+                <div className={styles.divider} />
+
+                {/* 4. About BinRo */}
+                <Link href="/founder" className={styles.menuItem}>
+                  <div className={styles.menuIconWrap}>
+                    <Ionicons name="information-circle-outline" size={20} />
+                  </div>
+                  <div className={styles.menuTextCol}>
+                    <span className={styles.menuLabel}>About BinRo</span>
+                    <span className={styles.menuSublabel}>
+                      Founder story and mission
+                    </span>
+                  </div>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color="var(--text-muted)"
+                  />
                 </Link>
               </div>
-            </>
-          ) : (
-            /* Guest Sign In */
-            <div className={styles.guestCard}>
-              <div className={styles.guestInfo}>
-                <div className={styles.guestIconWrap}>
-                  <Ionicons name="person-outline" size={20} />
-                </div>
-                <div className={styles.guestTextCol}>
-                  <strong className={styles.guestTitle}>
-                    Sign in to your account
-                  </strong>
-                  <span className={styles.guestSub}>
-                    Sync scan history and community reputation
-                  </span>
-                </div>
-              </div>
-              <Link
-                href="/login?returnUrl=/settings"
-                className={styles.guestSignInBtn}
-              >
-                Sign In
-              </Link>
-            </div>
-          )}
-        </section>
+            </section>
 
-        {/* ── SECTION 2: PREFERENCES (THEME) ── */}
-        <section className={styles.section} aria-label="Appearance">
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Appearance</span>
+            {/* ── SECTION 5: LEGAL & ABOUT ── */}
+            <section className={styles.section} aria-label="Legal and about">
+              <div className={styles.sectionHeader}>
+                <span className={styles.sectionLabel}>Legal &amp; About</span>
+              </div>
+
+              <div className={styles.cardGroup}>
+                <Link href="/terms" className={styles.menuItem}>
+                  <div className={styles.menuIconWrap}>
+                    <Ionicons name="document-text-outline" size={18} />
+                  </div>
+                  <div className={styles.menuTextCol}>
+                    <span className={styles.menuLabel}>Terms of Service</span>
+                    <span className={styles.menuSublabel}>
+                      Terms and guidelines
+                    </span>
+                  </div>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color="var(--text-muted)"
+                  />
+                </Link>
+
+                <div className={styles.divider} />
+
+                <Link href="/privacy" className={styles.menuItem}>
+                  <div className={styles.menuIconWrap}>
+                    <Ionicons name="lock-closed-outline" size={18} />
+                  </div>
+                  <div className={styles.menuTextCol}>
+                    <span className={styles.menuLabel}>Privacy Policy</span>
+                    <span className={styles.menuSublabel}>
+                      Privacy pledge and data handling
+                    </span>
+                  </div>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color="var(--text-muted)"
+                  />
+                </Link>
+              </div>
+            </section>
           </div>
-
-          <div className={styles.themeCard}>
-            <p className={styles.themePrompt}>Choose how BinRo looks on your device</p>
-
-            <div className={styles.themeRow} role="radiogroup" aria-label="Theme selection">
-              <button
-                type="button"
-                role="radio"
-                aria-checked={themeMode === "system"}
-                onClick={() => handleSelectTheme("system")}
-                className={`${styles.themeOption} ${
-                  themeMode === "system" ? styles.themeOptionActive : ""
-                }`}
-              >
-                <Ionicons
-                  name="desktop-outline"
-                  size={16}
-                  color={themeMode === "system" ? "var(--primary)" : "var(--text-secondary)"}
-                />
-                <span>System</span>
-              </button>
-
-              <button
-                type="button"
-                role="radio"
-                aria-checked={themeMode === "light"}
-                onClick={() => handleSelectTheme("light")}
-                className={`${styles.themeOption} ${
-                  themeMode === "light" ? styles.themeOptionActive : ""
-                }`}
-              >
-                <Ionicons
-                  name="sunny-outline"
-                  size={16}
-                  color={themeMode === "light" ? "var(--primary)" : "var(--text-secondary)"}
-                />
-                <span>Light</span>
-              </button>
-
-              <button
-                type="button"
-                role="radio"
-                aria-checked={themeMode === "dark"}
-                onClick={() => handleSelectTheme("dark")}
-                className={`${styles.themeOption} ${
-                  themeMode === "dark" ? styles.themeOptionActive : ""
-                }`}
-              >
-                <Ionicons
-                  name="moon-outline"
-                  size={15}
-                  color={themeMode === "dark" ? "var(--primary)" : "var(--text-secondary)"}
-                />
-                <span>Dark</span>
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* ── SECTION 3: DATA & PRIVACY ── */}
-        <section className={styles.section} aria-label="Data">
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Data &amp; Storage</span>
-          </div>
-
-          <div className={styles.cardGroup}>
-            <button
-              type="button"
-              onClick={() => setClearModalOpen(true)}
-              className={styles.menuItem}
-            >
-              <div className={styles.menuIconWrap}>
-                <Ionicons name="trash-outline" size={18} />
-              </div>
-              <div className={styles.menuTextCol}>
-                <span className={styles.menuLabel}>Clear Local History</span>
-                <span className={styles.menuSublabel}>
-                  Clear scan records on this device
-                </span>
-              </div>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color="var(--text-muted)"
-              />
-            </button>
-          </div>
-        </section>
-
-        {/* ── SECTION 4: HELP & SAFETY ── */}
-        <section className={styles.section} aria-label="Help and safety">
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Help &amp; Safety</span>
-          </div>
-
-          <div className={styles.cardGroup}>
-            {/* 1. Safety Guide */}
-            <Link href="/guide" className={styles.menuItem}>
-              <div className={styles.menuIconWrap}>
-                <Ionicons name="book-outline" size={19} />
-              </div>
-              <div className={styles.menuTextCol}>
-                <span className={styles.menuLabel}>Safety Guide</span>
-                <span className={styles.menuSublabel}>
-                  Inspect codes and detect scams
-                </span>
-              </div>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color="var(--text-muted)"
-              />
-            </Link>
-
-            <div className={styles.divider} />
-
-            {/* 2. Trust Scores */}
-            <Link href="/trust-scores" className={styles.menuItem}>
-              <div className={styles.menuIconWrap}>
-                <Ionicons name="shield-checkmark-outline" size={19} />
-              </div>
-              <div className={styles.menuTextCol}>
-                <span className={styles.menuLabel}>Trust Scores</span>
-                <span className={styles.menuSublabel}>
-                  How safety ratings are calculated
-                </span>
-              </div>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color="var(--text-muted)"
-              />
-            </Link>
-
-            <div className={styles.divider} />
-
-            {/* 3. Send Feedback */}
-            <Link href="/feedback" className={styles.menuItem}>
-              <div className={styles.menuIconWrap}>
-                <Ionicons name="chatbubble-outline" size={19} />
-              </div>
-              <div className={styles.menuTextCol}>
-                <span className={styles.menuLabel}>Send Feedback</span>
-                <span className={styles.menuSublabel}>
-                  Report issues or suggest features
-                </span>
-              </div>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color="var(--text-muted)"
-              />
-            </Link>
-
-            <div className={styles.divider} />
-
-            {/* 4. About BinRo */}
-            <Link href="/founder" className={styles.menuItem}>
-              <div className={styles.menuIconWrap}>
-                <Ionicons name="information-circle-outline" size={20} />
-              </div>
-              <div className={styles.menuTextCol}>
-                <span className={styles.menuLabel}>About BinRo</span>
-                <span className={styles.menuSublabel}>
-                  Founder story and mission
-                </span>
-              </div>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color="var(--text-muted)"
-              />
-            </Link>
-          </div>
-        </section>
-
-        {/* ── SECTION 5: LEGAL & ABOUT ── */}
-        <section className={styles.section} aria-label="Legal and about">
-          <div className={styles.sectionHeader}>
-            <span className={styles.sectionLabel}>Legal &amp; About</span>
-          </div>
-
-          <div className={styles.cardGroup}>
-            <Link href="/terms" className={styles.menuItem}>
-              <div className={styles.menuIconWrap}>
-                <Ionicons name="document-text-outline" size={18} />
-              </div>
-              <div className={styles.menuTextCol}>
-                <span className={styles.menuLabel}>Terms of Service</span>
-                <span className={styles.menuSublabel}>
-                  Terms and guidelines
-                </span>
-              </div>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color="var(--text-muted)"
-              />
-            </Link>
-
-            <div className={styles.divider} />
-
-            <Link href="/privacy" className={styles.menuItem}>
-              <div className={styles.menuIconWrap}>
-                <Ionicons name="lock-closed-outline" size={18} />
-              </div>
-              <div className={styles.menuTextCol}>
-                <span className={styles.menuLabel}>Privacy Policy</span>
-                <span className={styles.menuSublabel}>
-                  Privacy pledge and data handling
-                </span>
-              </div>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color="var(--text-muted)"
-              />
-            </Link>
-          </div>
-        </section>
-
-        {/* ── SECTION 6: SESSION (Logged In Only) ── */}
-        {user && (
-          <section className={styles.section} aria-label="Session">
-            <div className={styles.sectionHeader}>
-              <span className={styles.sectionLabel}>Session</span>
-            </div>
-
-            <div className={styles.cardGroup}>
-              {/* Sign Out */}
-              <button
-                type="button"
-                onClick={() => setSignOutModalOpen(true)}
-                className={styles.menuItem}
-              >
-                <div className={styles.menuIconWrap}>
-                  <Ionicons name="log-out-outline" size={18} />
-                </div>
-                <div className={styles.menuTextCol}>
-                  <span className={styles.menuLabel}>Sign Out</span>
-                  <span className={styles.menuSublabel}>
-                    Sign out of this device
-                  </span>
-                </div>
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color="var(--text-muted)"
-                />
-              </button>
-            </div>
-          </section>
-        )}
+        </div>
 
         {/* ── FOOTER ── */}
         <footer className={styles.footer}>

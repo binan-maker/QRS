@@ -286,7 +286,9 @@ function renderSvgPath(name: string) {
           <polygon points="22 2 15 22 11 13 2 9 22 2" fill="currentColor" fillOpacity="0.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </>
       );
+    case "settings":
     case "settings-outline":
+    case "settings-sharp":
       return (
         <>
           <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -305,7 +307,9 @@ function renderSvgPath(name: string) {
           <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" strokeWidth="2" />
         </>
       );
+    case "time":
     case "time-outline":
+    case "time-sharp":
       return (
         <>
           <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />

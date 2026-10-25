@@ -723,16 +723,35 @@
   .container {
     min-height: auto;
     background: transparent;
-    padding: 14px 28px 28px;
+    padding: 14px 28px 36px;
     align-items: stretch;
+    width: 100%;
   }
 
   .inner {
-    max-width: 800px;
+    max-width: 860px;
+    width: 100%;
     margin: 0;
   }
 
   .navBar {
-    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+    height: auto;
+  }
+
+  .navTitle {
+    text-align: left;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    flex: none;
+  }
+
+  .navSpacer {
+    display: none;
   }
 }
