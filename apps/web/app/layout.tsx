@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { AuthProvider, AvatarProvider, ThemeProvider } from "@/contexts";
 import { DesktopNavbar } from "@/components/navigation/DesktopNavbar";
+import { DesktopShell } from "@/components/navigation/DesktopShell";
 import { OnboardingGuard } from "@/components/auth/OnboardingGuard";
 import { ReferralAttributionTracker } from "@/components/referral/ReferralAttributionTracker";
 import {
@@ -119,7 +120,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <OnboardingGuard>
                 <DesktopNavbar />
                 <ReferralAttributionTracker />
-                {children}
+                <DesktopShell>{children}</DesktopShell>
               </OnboardingGuard>
             </ThemeProvider>
           </AvatarProvider>

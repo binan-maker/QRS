@@ -1,0 +1,429 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BINRO WEB: DESKTOP TOP BAR
+   Visible strictly on Desktop screens (>= 1024px)
+   Matches Image 3 reference specifications:
+   - Hamburger sidebar toggle on left (ChatGPT style)
+   - History Search Bar on Home Page
+   - User Profile Pill with Avatar, Name, and Chevron
+   - (Notification icon removed per user instructions)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.topBar {
+  display: none;
+  width: 100%;
+  height: 68px;
+  position: sticky;
+  top: 0;
+  z-index: 800;
+  box-sizing: border-box;
+  padding: 0 32px;
+  align-items: center;
+  justify-content: space-between;
+  background-color: rgba(245, 248, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--surface-border);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+:global([data-theme="dark"]) .topBar,
+:global(.dark) .topBar {
+  background-color: rgba(10, 10, 10, 0.85);
+}
+
+@media (min-width: 1024px) {
+  .topBar {
+    display: flex;
+  }
+}
+
+/* ── Left Section: Hamburger + Search ── */
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.hamburgerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.hamburgerBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background-color: var(--primary-dim);
+  transform: translateY(-1px);
+}
+
+.hamburgerBtn:active {
+  transform: scale(0.96);
+}
+
+/* ── History Search Bar (Home Page Only) ── */
+.searchContainer {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+}
+
+.searchPill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 9999px;
+  background-color: var(--surface-light);
+  border: 1px solid var(--surface-border);
+  box-sizing: border-box;
+  transition: all 0.18s ease;
+}
+
+.searchPill:focus-within {
+  border-color: var(--primary);
+  background-color: var(--surface);
+  box-shadow: 0 0 0 3px var(--primary-dim);
+}
+
+.searchIcon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  padding: 0;
+}
+
+.searchInput::placeholder {
+  color: var(--text-muted);
+}
+
+.clearBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface-border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.clearBtn:hover {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+/* ── Live History Search Dropdown ── */
+.searchDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  box-shadow: 0 14px 34px -4px rgba(0, 82, 204, 0.12), 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  animation: dropdownFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdownHeader {
+  padding: 10px 16px 8px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.dropdownList {
+  display: flex;
+  flex-direction: column;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  text-decoration: none;
+  color: var(--text);
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.dropdownItem:last-child {
+  border-bottom: none;
+}
+
+.dropdownItem:hover {
+  background-color: var(--primary-dim);
+}
+
+.dropdownIconBox {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background-color: var(--primary-dim);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dropdownItemBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdownItemTitle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdownItemSub {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.dropdownViewAll {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 16px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  background-color: var(--surface-light);
+  transition: background-color 0.15s ease;
+}
+
+.dropdownViewAll:hover {
+  background-color: var(--primary-dim);
+}
+
+.dropdownEmpty {
+  padding: 24px 16px;
+  text-align: center;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ── Right Controls ── */
+.rightControls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── User Profile Pill with Name & Chevron (Image 3) ── */
+.profilePillWrapper {
+  position: relative;
+}
+
+.profilePill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 14px 4px 4px;
+  border-radius: 9999px;
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.16s ease;
+  text-decoration: none;
+}
+
+.profilePill:hover {
+  border-color: var(--primary);
+  box-shadow: 0 2px 10px rgba(0, 82, 204, 0.08);
+}
+
+.userName {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.2px;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chevronIcon {
+  color: var(--text-secondary);
+  transition: transform 0.16s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Profile Dropdown Menu */
+.profileMenu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 220px;
+  background-color: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 18px;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.12);
+  padding: 8px;
+  box-sizing: border-box;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: dropdownFadeIn 0.16s ease both;
+}
+
+.menuHeader {
+  padding: 8px 12px 10px;
+  border-bottom: 1px solid var(--surface-border);
+  margin-bottom: 4px;
+}
+
+.menuName {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menuHandle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.menuItem:hover {
+  background-color: var(--primary-dim);
+  color: var(--primary);
+}
+
+.menuDivider {
+  height: 1px;
+  background-color: var(--surface-border);
+  margin: 4px 0;
+}
+
+.menuItemDanger {
+  color: var(--danger, #dc2626);
+}
+
+.menuItemDanger:hover {
+  background-color: var(--danger-dim, rgba(220, 38, 38, 0.08));
+  color: var(--danger, #dc2626);
+}
+
+.signInBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  background: var(--primary);
+  color: #ffffff;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.signInBtn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}

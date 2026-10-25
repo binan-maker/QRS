@@ -51,6 +51,17 @@ export default function HistoryPage() {
     }
   }, [searchVisible]);
 
+  // Read URL search parameter if redirected from desktop top search bar
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const q = new URLSearchParams(window.location.search).get("q");
+      if (q) {
+        setSearchQuery(q);
+        setSearchVisible(true);
+      }
+    }
+  }, []);
+
   const handleBack = useCallback(() => {
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();

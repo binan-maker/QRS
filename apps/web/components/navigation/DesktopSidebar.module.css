@@ -1,0 +1,237 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BINRO WEB: DESKTOP LEFT SIDEBAR
+   Visible strictly on Desktop screens (>= 1024px)
+   Matches Image 2 reference specifications with ChatGPT-style smooth collapse
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sidebar {
+  display: none;
+  width: 250px;
+  min-width: 250px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  left: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--surface);
+  border-right: 1px solid var(--surface-border);
+  box-sizing: border-box;
+  z-index: 900;
+  padding: 24px 16px 28px;
+  user-select: none;
+  background-image: radial-gradient(circle at 10% 95%, var(--primary-dim) 0%, transparent 60%);
+  transition:
+    width 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    min-width 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    padding 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.2s ease,
+    border-color 0.2s ease;
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .sidebar {
+    display: flex;
+  }
+}
+
+.sidebarCollapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  border-right-color: transparent !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+.topSection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Brand Header Row with Collapse Button ── */
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.brandLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.brandLink:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.brandIconWrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 82, 204, 0.08);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.brandLogoImg {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  display: block;
+}
+
+.brandTitle {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--text);
+  line-height: 1;
+}
+
+.brandAccent {
+  color: var(--primary);
+}
+
+.collapseBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface-light);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.collapseBtn:hover {
+  background-color: var(--primary-dim);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.collapseBtn:active {
+  transform: scale(0.96);
+}
+
+/* ── Navigation Items List ── */
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 16px;
+  border-radius: 14px;
+  text-decoration: none;
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  white-space: nowrap;
+}
+
+.navItem:hover {
+  color: var(--text);
+  background-color: var(--primary-dim);
+  transform: translateX(2px);
+}
+
+.navItemActive {
+  background-color: var(--primary-dim) !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+
+.navIconWrap {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.navItem:hover .navIconWrap {
+  transform: scale(1.08);
+}
+
+.navLabel {
+  letter-spacing: -0.1px;
+}
+
+/* ── Bottom Section (Branding & Tagline) ── */
+.bottomSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 14px 4px;
+  white-space: nowrap;
+}
+
+.bottomBrandRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bottomLogoImg {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 5px;
+}
+
+.bottomBrandName {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+
+.bottomTagline {
+  font-family: var(--font-inter), "Inter", sans-serif;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.bottomAccentLine {
+  width: 32px;
+  height: 2.5px;
+  border-radius: 2px;
+  background-color: var(--primary);
+  margin-top: 4px;
+}

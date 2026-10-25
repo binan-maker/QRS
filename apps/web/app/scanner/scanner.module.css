@@ -1287,6 +1287,14 @@
 }
 
 @media (min-width: 1024px) {
+  .page,
+  .scannerLayout,
+  .scannerRootBlack,
+  .permissionRoot {
+    height: calc(100vh - 68px);
+    min-height: calc(100vh - 68px);
+  }
+
   .overlayTopBar {
     max-width: 100%;
     width: 100%;

@@ -777,13 +777,30 @@
 }
 
 @media (min-width: 1024px) {
+  .container {
+    margin-top: 0;
+    padding-top: 0;
+    min-height: auto;
+    background: transparent;
+  }
+
   .inner {
-    max-width: 1040px;
-    padding: 32px 24px calc(96px + env(safe-area-inset-bottom, 0px));
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 24px 32px calc(96px + env(safe-area-inset-bottom, 0px));
   }
 
   .topBar {
     margin-bottom: 8px;
+  }
+
+  .headerActions {
+    display: none;
+  }
+
+  .pageTitle {
+    font-size: 26px;
+    letter-spacing: -0.4px;
   }
 
   .desktopLayout {

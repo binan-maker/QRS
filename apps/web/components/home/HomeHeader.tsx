@@ -69,14 +69,25 @@ export function HomeHeader() {
     <header className={styles.header}>
       <div className={styles.headerLeft}>
         {user ? (
-          <h1 className={styles.greeting}>
-            {"👋 Hey, "}
-            <span className={styles.greetingHighlight}>
-              {firstName.length > 14 ? `${firstName.slice(0, 12)}…` : firstName}
-            </span>
-          </h1>
+          <div className={styles.greetingBlock}>
+            <span className={styles.welcomeKicker}>Welcome back,</span>
+            <h1 className={styles.greeting}>
+              {firstName}{" "}
+              <span className={styles.wavingHand} role="img" aria-label="Waving hand">
+                👋
+              </span>
+            </h1>
+          </div>
         ) : (
-          <h1 className={styles.greeting}>Welcome</h1>
+          <div className={styles.greetingBlock}>
+            <span className={styles.welcomeKicker}>Welcome to</span>
+            <h1 className={styles.greeting}>
+              BinRo{" "}
+              <span className={styles.wavingHand} role="img" aria-label="Waving hand">
+                👋
+              </span>
+            </h1>
+          </div>
         )}
       </div>
 

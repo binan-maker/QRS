@@ -644,6 +644,43 @@
   }
 }
 
+@media (min-width: 1024px) {
+  .container {
+    background: transparent;
+    min-height: auto;
+    padding: 20px 24px 64px;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .inner {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 16px 0 64px;
+    gap: 26px;
+  }
+
+  .navBar {
+    justify-content: flex-start;
+    height: auto;
+    margin-bottom: 6px;
+  }
+
+  .navBackBtn {
+    display: none !important;
+  }
+
+  .navSpacer {
+    display: none !important;
+  }
+
+  .navTitle {
+    text-align: left;
+    font-size: 26px;
+    letter-spacing: -0.4px;
+  }
+}
+
 /* ── Skeleton Loading ─────────────────────────────────────────────────────── */
 .skeletonPulse {
   background-color: var(--surface-light);
